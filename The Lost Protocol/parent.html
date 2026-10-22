@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Lost Protocol · Parent Dashboard</title>
+<meta name="description" content="Parent and Educator Dashboard for The Lost Protocol. Manage learner profiles, track programming puzzle progress, and launch game sessions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.parent-container {
+  max-width: 1040px;
+  margin: 30px auto 60px;
+  position: relative;
+  z-index: 5;
+}
+.parent-header {
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.parent-header h1 {
+  font-size: clamp(30px, 5vw, 48px);
+  font-style: italic;
+  margin: 4px 0;
+}
+.learners-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+.learner-card {
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform .2s, border-color .2s;
+}
+.learner-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--a);
+}
+.learner-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+.learner-card h3 {
+  font-size: 24px;
+  font-family: var(--serif);
+  color: var(--fg);
+  margin: 0;
+}
+.badge-pill {
+  font: 700 11px var(--sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--a) 20%, transparent);
+  color: var(--a);
+  border: 1px solid color-mix(in srgb, var(--a) 40%, transparent);
+}
+.meta-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+  font-size: 13px;
+  color: var(--mut);
+}
+.meta-item b {
+  color: var(--fg);
+}
+.stat-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.stat-chip {
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-chip b {
+  color: var(--b);
+  font-size: 16px;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+}
+.modal-pan {
+  width: min(540px, 100%);
+  border: 1px solid var(--a);
+  border-radius: 24px;
+  background: var(--bg);
+  padding: 30px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: pop .3s;
+}
+.backend-banner {
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+</style>
+</head>
+<body>
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div>
+
+<header><nav><div class="wrap">
+  <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
+  <a class="navlink" href="index.html"><span class="sp" aria-hidden="true">✦</span>Home</a>
+  <a class="navlink" href="webgame.html"><span class="sp" aria-hidden="true">✦</span>Play Game</a>
+  <a class="navlink on" href="parent.html"><span class="sp" aria-hidden="true">✦</span>Parent Area</a>
+  <div class="tools" id="themes"><small>mood:</small></div>
+</div></nav></header>
+
+<main>
+<div class="wrap parent-container">
+
+  <!-- BACKEND STATUS BAR -->
+  <div class="backend-banner">
+    <div>
+      <span id="backendDot" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f2c94c;margin-right:6px;"></span>
+      <span id="backendStatusLabel">Detecting Backend...</span>
+    </div>
+    <div id="parentAccountLabel" style="color:var(--mut);">Account: Loading...</div>
+  </div>
+
+  <!-- AUTH GUARD (SHOWN IF NOT LOGGED IN AS PARENT) -->
+  <div id="authGuardBox" class="card" style="display:none;text-align:center;padding:48px 24px;">
+    <h2 style="font-size:32px;margin-bottom:12px;">Protected Parent Area</h2>
+    <p style="color:var(--mut);max-width:540px;margin:0 auto 24px;">This area is for parents and educators to manage learners, review progress, and choose age-adapted learning paths. Please sign in with a Parent account or switch roles.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+      <a class="btn big" href="auth.html">Sign In / Register as Parent →</a>
+      <button class="btn ghost big" id="btnTestDemoMode" type="button">Use Local Demo Mode</button>
+    </div>
+  </div>
+
+  <!-- MAIN PARENT DASHBOARD (SHOWN WHEN AUTHENTICATED) -->
+  <div id="dashboardView" style="display:none;">
+    <div class="parent-header">
+      <div>
+        <span class="kick">Parent & Educator Oversight</span>
+        <h1 class="glitch" data-text="Learner Dashboard">Learner <em>Dashboard</em></h1>
+        <p style="color:var(--mut);">Monitor learning paths, difficulty levels, and puzzle milestones for your family.</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn" id="btnOpenAddModal" type="button">+ Add Learner</button>
+        <button class="btn ghost sm" id="btnParentLogout" type="button">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- SUMMARY METRICS -->
+    <div class="facts" style="margin-bottom:28px;">
+      <span><b id="summaryTotalLearners">0</b>Learners</span>
+      <span><b id="summaryTotalStars">0</b>Total Stars</span>
+      <span><b id="summaryCompletedChapters">0</b>Chapters Done</span>
+      <span><b id="summaryBadges">0</b>Guardians Defeated</span>
+    </div>
+
+    <!-- LEARNERS LIST -->
+    <div class="label">Your Learner Profiles</div>
+    <div id="learnersGrid" class="learners-grid">
+      <!-- Populated via JavaScript -->
+    </div>
+
+    <div id="noLearnersMsg" class="card" style="display:none;text-align:center;padding:36px 20px;margin-top:16px;">
+      <h3 style="font-size:22px;margin-bottom:8px;">No learner profiles yet</h3>
+      <p style="color:var(--mut);margin-bottom:18px;">Add your first learner profile to select their school-grade path and start their coding adventure.</p>
+      <button class="btn" id="btnAddFirstLearner" type="button">+ Add Learner Profile</button>
+    </div>
+
+    <!-- LEGACY RECOVERY ACCORDION -->
+    <div id="legacyRecoverySection" class="card" style="margin-top:36px;border-style:dashed;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+          <b style="font-family:var(--serif);font-size:18px;">📦 Legacy Browser Progress Recovery</b>
+          <p style="color:var(--mut);font-size:13px;margin:2px 0 0;">Did your child play The Lost Protocol before accounts were created? Check for recoverable saves in this browser.</p>
+        </div>
+        <button class="btn ghost sm" id="btnCheckLegacy" type="button">Inspect Saved Data</button>
+      </div>
+      <div id="legacyResultBox" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;"></div>
+    </div>
+
+  </div>
+
+</div>
+</main>
+
+<!-- ADD LEARNER MODAL -->
+<div id="addModal" class="modal" hidden>
+  <div class="modal-pan">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+      <h2 style="font-size:26px;margin:0;">Add Learner Profile</h2>
+      <button id="btnCloseModal" type="button" style="background:none;border:0;color:var(--fg);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+
+    <form id="addLearnerForm">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;">Child / Learner Name</label>
+        <input type="text" id="newLearnerName" required placeholder="e.g. Alex, Maya" maxlength="24" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,0.3);color:var(--fg);">
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;">School Grade / Age Range (Automatic Path)</label>
+        <select id="newLearnerGrade" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,0.4);color:var(--fg);">
+          <option value="g16">🎓 Grades 1–6 (Ages 6–12) → Visual analogies & playful exploration</option>
+          <option value="g710" selected>🚀 Grades 7–10 (Ages 12–16) → Structured logic & computational flow</option>
+          <option value="g1112">⚡ Grades 11–12 (Ages 16–18) → Computer science principles & syntax</option>
+          <option value="adult">🔬 College & Adult → Software engineering depth & memory models</option>
+        </select>
+        <small style="display:block;color:var(--mut);margin-top:6px;font-size:12px;">The learning path adapts explanations and visuals while keeping all 30 chapter/boss entries accessible.</small>
+      </div>
+
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font:700 12px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:6px;">Starting Difficulty (Independent from path)</label>
+        <select id="newLearnerDiff" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:rgba(0,0,0,0.4);color:var(--fg);">
+          <option value="beg">Beginner (5 Boss Hearts · Step-by-step Coach tips)</option>
+          <option value="int" selected>Intermediate (3 Boss Hearts · Standard challenge)</option>
+          <option value="pro">Professional (2 Boss Hearts · Terminal view · Code mode)</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn ghost" id="btnCancelAdd">Cancel</button>
+        <button type="submit" class="btn" id="btnSubmitAdd">Create Profile</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<footer><div class="wrap">
+  <span>The Lost Protocol · Educational Programming Game</span>
+  <span>Parent & Educator Dashboard · May 2026</span>
+</div></footer>
+
+<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="tlp-auth.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+
+// Canvas Matrix Rain
+const cv = $('#rain'), cx = cv.getContext('2d'), GL = '01{}[]<>/=+;()#$%&LOGIC', fs = 16;
+let cols = [], hue = 200;
+function fit() {
+  cv.width = innerWidth; cv.height = innerHeight;
+  cols = Array.from({ length: Math.ceil(cv.width / fs) }, () => Math.random() * cv.height / fs);
+}
+addEventListener('resize', fit);
+fit();
+function rain() {
+  cx.fillStyle = 'rgba(8, 12, 16, 0.15)';
+  cx.fillRect(0, 0, cv.width, cv.height);
+  cx.font = fs + 'px monospace';
+  cols.forEach((y, i) => {
+    const x = i * fs;
+    cx.fillStyle = `hsl(${hue + (i % 9) * 7} 85% 60%)`;
+    cx.fillText(GL[Math.random() * GL.length | 0], x, y * fs);
+    cols[i] = y * fs > cv.height && Math.random() > .975 ? 0 : y + .45;
+  });
+}
+setInterval(rain, 50);
+
+// Mood colors
+const MOODS = [["Ocean", 200], ["Dusk", 265], ["Rose", 340], ["Amber", 32], ["Moss", 145]];
+$('#themes').insertAdjacentHTML('beforeend', MOODS.map(([n, h]) => `<button class="sw" data-v="${h}" title="${n}" aria-label="${n}" style="background:hsl(${h} 75% 58%)"></button>`).join(''));
+$$('.sw').forEach(b => b.onclick = () => {
+  hue = +b.dataset.v;
+  document.documentElement.style.setProperty('--h', hue);
+  $$('.sw').forEach(s => s.classList.toggle('on', s === b));
+});
+
+// Init and Dashboard Logic
+async function loadParentDashboard() {
+  await window.TLP_AUTH.init();
+  const user = window.TLP_AUTH.getCurrentUser();
+  const isCloud = window.TLP_AUTH.isCloudConfigured();
+
+  // Status badge
+  const dot = $('#backendDot');
+  const label = $('#backendStatusLabel');
+  if (isCloud) {
+    dot.style.background = '#4fc98a';
+    dot.style.boxShadow = '0 0 8px #4fc98a';
+    label.textContent = 'Cloud Backend Active (Supabase)';
+  } else {
+    dot.style.background = '#f2c94c';
+    dot.style.boxShadow = 'none';
+    label.textContent = 'Local Demo Storage (Configure config.js for cloud)';
+  }
+
+  // Auth Guard
+  if (!user || user.role !== 'parent') {
+    $('#authGuardBox').style.display = 'block';
+    $('#dashboardView').style.display = 'none';
+    $('#parentAccountLabel').textContent = user ? `Logged in as Learner: ${user.email}` : 'Not Signed In';
+    return;
+  }
+
+  $('#authGuardBox').style.display = 'none';
+  $('#dashboardView').style.display = 'block';
+  $('#parentAccountLabel').textContent = `Parent Account: ${user.email}`;
+
+  await renderLearnersList();
+}
+
+async function renderLearnersList() {
+  const user = window.TLP_AUTH.getCurrentUser();
+  const learners = await window.TLP_AUTH.getLearners(user.id);
+  const grid = $('#learnersGrid');
+  const empty = $('#noLearnersMsg');
+
+  grid.innerHTML = '';
+  if (!learners.length) {
+    empty.style.display = 'block';
+    updateMetrics(0, 0, 0, 0);
+    return;
+  }
+  empty.style.display = 'none';
+
+  let totalStars = 0, totalMissions = 0, totalBadges = 0;
+
+  for (const l of learners) {
+    const path = l.assigned_path || l.assignedPath || 'g710';
+    const diff = l.current_diff || l.currentDiff || 'int';
+    const pathInfo = window.TLP_AUTH.getPathInfo(path);
+    const diffInfo = window.TLP_AUTH.getDiffInfo(diff);
+
+    // Read progress bundle for this learner + path + diff
+    const bundle = await window.TLP_AUTH.getProgressBundle(l.id, path, diff);
+    const progKeys = Object.keys(bundle.prog || {});
+    const missionsCount = progKeys.length;
+    const starsCount = Object.values(bundle.prog || {}).reduce((sum, v) => sum + (typeof v === 'number' ? v : 0), 0);
+    const badgesCount = (bundle.badges || []).length;
+
+    totalStars += starsCount;
+    totalMissions += missionsCount;
+    totalBadges += badgesCount;
+
+    const card = document.createElement('div');
+    card.className = 'learner-card';
+    card.innerHTML = `
+      <div>
+        <div class="learner-card-header">
+          <h3>${escapeHtml(l.name)}</h3>
+          <span class="badge-pill">${pathInfo.label}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-item">Path: <b>${pathInfo.label}</b></span>
+          <span class="meta-item">Level: <b>${diffInfo.label}</b></span>
+        </div>
+        <div style="font-size:12px;color:var(--mut);margin-bottom:14px;">${pathInfo.desc}</div>
+        <div class="stat-chips">
+          <div class="stat-chip">⭐ <b>${starsCount}</b> stars</div>
+          <div class="stat-chip">🧩 <b>${missionsCount}</b> missions</div>
+          <div class="stat-chip">🔐 <b>${badgesCount}</b> bosses</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+        <button class="btn sm btn-play" data-id="${l.id}">Launch Game ▶</button>
+        <button class="btn ghost sm btn-switch-path" data-id="${l.id}">Change Grade/Path</button>
+      </div>
+    `;
+
+    card.querySelector('.btn-play').onclick = () => {
+      window.TLP_AUTH.setActiveLearner(l);
+      window.location.href = `webgame.html?learnerId=${encodeURIComponent(l.id)}`;
+    };
+
+    card.querySelector('.btn-switch-path').onclick = () => {
+      promptChangePath(l);
+    };
+
+    grid.appendChild(card);
+  }
+
+  updateMetrics(learners.length, totalStars, Math.round(totalMissions / 3), totalBadges);
+}
+
+function updateMetrics(learners, stars, chapters, bosses) {
+  $('#summaryTotalLearners').textContent = learners;
+  $('#summaryTotalStars').textContent = stars;
+  $('#summaryCompletedChapters').textContent = chapters;
+  $('#summaryBadges').textContent = bosses;
+}
+
+function escapeHtml(str) {
+  return (str || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[m]);
+}
+
+// Modal handling
+$('#btnOpenAddModal').onclick = () => { $('#addModal').hidden = false; };
+$('#btnAddFirstLearner').onclick = () => { $('#addModal').hidden = false; };
+$('#btnCloseModal').onclick = () => { $('#addModal').hidden = true; };
+$('#btnCancelAdd').onclick = () => { $('#addModal').hidden = true; };
+
+$('#addLearnerForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const name = $('#newLearnerName').value.trim();
+  const grade = $('#newLearnerGrade').value;
+  const diff = $('#newLearnerDiff').value;
+
+  try {
+    await window.TLP_AUTH.createLearnerForParent({
+      name,
+      gradeRange: grade,
+      currentDiff: diff
+    });
+    $('#addModal').hidden = true;
+    $('#addLearnerForm').reset();
+    await renderLearnersList();
+  } catch (err) {
+    alert(err.message || 'Failed to create learner profile.');
+  }
+};
+
+async function promptChangePath(learner) {
+  const currentPath = learner.assigned_path || learner.assignedPath || 'g710';
+  const grade = prompt(`Update school-grade range for ${learner.name}:\nEnter: g16 (Grades 1-6), g710 (Grades 7-10), g1112 (Grades 11-12), or adult (College/Adult):`, currentPath);
+  if (!grade) return;
+  const valid = ['g16', 'g710', 'g1112', 'adult'].includes(grade.trim().toLowerCase());
+  if (!valid) {
+    alert('Invalid grade range. Please enter g16, g710, g1112, or adult.');
+    return;
+  }
+  try {
+    await window.TLP_AUTH.updateLearnerProfile(learner.id, {
+      gradeRange: grade.trim().toLowerCase()
+    });
+    await renderLearnersList();
+  } catch (err) {
+    alert(err.message || 'Could not update learner profile.');
+  }
+}
+
+// Demo Mode button for testing when not logged in
+$('#btnTestDemoMode').onclick = async () => {
+  // Create a local demo parent account
+  const demoEmail = 'parent.demo@robounison.org';
+  try {
+    await window.TLP_AUTH.registerUser({
+      email: demoEmail,
+      password: 'password123',
+      role: 'parent',
+      displayName: 'Demo Parent'
+    });
+  } catch (e) {
+    await window.TLP_AUTH.loginUser({ email: demoEmail, password: 'password123' });
+  }
+  loadParentDashboard();
+};
+
+// Logout
+$('#btnParentLogout').onclick = async () => {
+  await window.TLP_AUTH.logoutUser();
+  loadParentDashboard();
+};
+
+// Legacy Data Recovery
+$('#btnCheckLegacy').onclick = () => {
+  const box = $('#legacyResultBox');
+  box.style.display = 'block';
+  const archive = window.TLP_AUTH.getLegacyArchive();
+  if (!archive || !archive.data || Object.keys(archive.data).length === 0) {
+    box.innerHTML = `<span style="color:var(--mut);">No unmigrated legacy browser saves were detected. All saves are current.</span>`;
+    return;
+  }
+  const keys = Object.keys(archive.data);
+  box.innerHTML = `
+    <div style="background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:10px;margin-bottom:10px;">
+      <b>Found ${keys.length} archived legacy keys</b> from earlier browser sessions (Archived at: ${new Date(archive.archivedAt).toLocaleString()}).
+      <div style="margin-top:6px;font-size:12px;color:var(--mut);">Keys: ${keys.slice(0, 6).join(', ')}${keys.length > 6 ? '...' : ''}</div>
+    </div>
+    <p style="margin:6px 0 10px;">You can import this legacy progress into any active learner profile below:</p>
+    <div id="legacyImportButtons" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+  `;
+
+  window.TLP_AUTH.getLearners().then(learners => {
+    const btnContainer = $('#legacyImportButtons');
+    if (!learners.length) {
+      btnContainer.innerHTML = `<small style="color:var(--mut);">Create a learner profile first to import legacy data.</small>`;
+      return;
+    }
+    learners.forEach(l => {
+      const btn = document.createElement('button');
+      btn.className = 'btn ghost sm';
+      btn.textContent = `Import into ${l.name}`;
+      btn.onclick = () => {
+        try {
+          const res = window.TLP_AUTH.restoreLegacyProgressToProfile(l.id, l.assigned_path || 'g710', l.current_diff || 'int');
+          alert(`Successfully imported legacy progress into ${l.name}'s profile (${Object.keys(res.prog).length} missions restored)!`);
+          renderLearnersList();
+        } catch (err) {
+          alert('Import failed: ' + err.message);
+        }
+      };
+      btnContainer.appendChild(btn);
+    });
+  });
+};
+
+window.addEventListener('DOMContentLoaded', loadParentDashboard);
+</script>
+</body>
+</html>

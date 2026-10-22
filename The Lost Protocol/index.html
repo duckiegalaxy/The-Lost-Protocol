@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Lost Protocol</title>
+<meta name="description" content="The Lost Protocol is an interactive educational game that teaches programming through puzzles and missions. Play it right in your browser.">
+<meta property="og:title" content="The Lost Protocol">
+<meta property="og:description" content="Learn programming by playing. Play it in your browser, nothing to install.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div><div id="prog"></div>
+
+<div id="intro">
+  <button id="skip">skip intro</button>
+  <div id="s1">
+    <p>A protocol went missing.</p>
+    <p>Only logic can bring it back.</p>
+    <p class="small">This is the home of The Lost Protocol. Play it right in your browser, nothing to install.</p>
+  </div>
+  <div id="s2">
+    <h1 id="ttl" aria-label="The Lost Protocol"></h1>
+    <span class="hand">a puzzle game that teaches you to think like a programmer</span>
+    <button class="btn big" id="enter">Begin</button>
+  </div>
+</div>
+
+<header><nav><div class="wrap">
+  <a class="logo glitch" data-text="The Lost Protocol" href="#/">The Lost Protocol</a>
+  <a class="navlink" href="#/about"><span class="sp" aria-hidden="true">✦</span>About me</a>
+  <button class="navlink" id="fbBtn" type="button"><span class="sp" aria-hidden="true">✦</span>Feedback</button>
+  <a class="navlink" href="auth.html" id="navAccount"><span class="sp" aria-hidden="true">✦</span>Account</a>
+  <a class="navlink" href="parent.html" id="navParent"><span class="sp" aria-hidden="true">✦</span>Parent Area</a>
+  <div class="tools" id="themes"><button id="fx" class="fxb" aria-pressed="true">effects: on</button><small>mood:</small></div>
+</div></nav></header>
+
+<main>
+<div id="home" class="view"><div class="wrap">
+  <div class="hero">
+    <span class="kick">welcome, player</span>
+    <h1 class="glitch" data-text="The Lost Protocol">The Lost <em>Protocol</em></h1>
+    <p class="lead">An interactive educational game that teaches programming through puzzles and missions. Challenges and rewards keep you going, and instant visual feedback shows what every decision does. Open it in your browser and start playing.</p>
+  </div>
+  <div class="label">Ready to play?</div>
+  <a class="playcard" href="webgame.html">
+    <div class="pc-main"><span class="pill live">Playable now</span><h3 class="glitch" data-text="Play in your browser">Play in your browser</h3><p>Six sections, twenty-four chapters and six guardians to defeat. Nothing to install: open it, drag the blocks and start solving.</p></div>
+    <span class="pc-cta"><span class="lbl">Play now</span><i>→</i></span>
+  </a>
+  <div class="guards" aria-hidden="true"><div class="gbot" style="--ec:#ef7a8c;--d:0s"><b></b><b></b></div><div class="gbot" style="--ec:#e8a23a;--d:.6s"><b></b><b></b></div><div class="gbot" style="--ec:#9b5cf0;--d:1.2s"><b></b><b></b></div><div class="gbot" style="--ec:#35c9e8;--d:1.8s"><b></b><b></b></div><div class="gbot" style="--ec:#3ddc84;--d:2.4s"><b></b><b></b></div><div class="gbot" style="--ec:#f2c94c;--d:3s"><b></b><b></b></div></div>
+  <p class="gcap">Six guardians wait in the dark. Beat them all to bring the light back.</p>
+  <div class="label">What you will learn</div>
+  <div class="chipsrow"><span class="cchip">Programming</span><span class="cchip">Variables</span><span class="cchip">Loops</span><span class="cchip">If statements</span><span class="cchip">Constants</span><span class="cchip">Data types</span><span class="cchip">Type casting</span><span class="cchip">Strings</span><span class="cchip">Operators</span><span class="cchip">Arrays</span><span class="cchip">Input and output</span><span class="cchip">Comments</span><span class="cchip">Functions</span><span class="cchip">Scope</span><span class="cchip">Recursion</span><span class="cchip">Bits and bytes</span><span class="cchip">Binary counting</span><span class="cchip">Binary maths</span><span class="cchip">Bit operations</span><span class="cchip">Debugging</span><span class="cchip">Searching</span><span class="cchip">Finding the biggest</span><span class="cchip">Optimising</span></div>
+  <div class="facts"><span><b>6</b>sections</span><span><b>24</b>chapters</span><span><b>6</b>guardians</span><span><b>0</b>coding experience needed</span></div>
+  <p class="tally" id="tally"></p>
+
+</div></div>
+<div id="page" class="view" hidden></div>
+<div id="aboutme" class="view" hidden></div>
+</main>
+
+<footer><div class="wrap">
+  <span>The Lost Protocol, an interactive educational game by Joumana Amir Eldeeb</span>
+  <span>Faculty of Computer Studies · Final Year Project, May 2026 · Supervisor: Dr. Ramadan Babers · <a href="#" id="replay" style="color:inherit">replay intro</a></span>
+</div></footer>
+
+
+<div id="fb" class="fbm" hidden>
+  <div class="fbp" role="dialog" aria-modal="true" aria-labelledby="fbt">
+    <button class="fbx" id="fbx" type="button" aria-label="Close">✕</button>
+    <div id="fbform">
+      <h2 id="fbt">Tell us what you think</h2>
+      <p class="fbs">It takes one minute and goes straight into the project notes.</p>
+      <form id="fbf" autocomplete="off">
+        <div class="fbl">How was it?</div>
+        <div class="fbstars" id="fbstars" role="radiogroup" aria-label="Rating">
+          <button type="button" data-v="1" aria-label="1 star">★</button><button type="button" data-v="2" aria-label="2 stars">★</button><button type="button" data-v="3" aria-label="3 stars">★</button><button type="button" data-v="4" aria-label="4 stars">★</button><button type="button" data-v="5" aria-label="5 stars">★</button>
+        </div>
+        <div class="fbl">What fits? (optional)</div>
+        <div class="fbchips" id="fbchips">
+          <button type="button">Fun</button><button type="button">Easy to understand</button><button type="button">Too hard</button><button type="button">Too easy</button><button type="button">Confusing</button><button type="button">Found a bug</button>
+        </div>
+        <textarea id="fbmsg" maxlength="800" rows="4" placeholder="What did you like? What was confusing? What should we add?"></textarea>
+        <input id="fbname" maxlength="40" placeholder="Your name (optional)">
+        <input class="fbhp" id="fbhp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn big" type="submit" id="fbsend">Send feedback</button>
+        <p class="fbn" id="fbnote" aria-live="polite"></p>
+      </form>
+    </div>
+    <div id="fbok" class="fbok" hidden>
+      <div class="fbcheck">✓</div>
+      <h2>Thank you!</h2>
+      <p id="fbokmsg">Your feedback was sent.</p>
+      <button class="btn" type="button" id="fbdone">Close</button>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
