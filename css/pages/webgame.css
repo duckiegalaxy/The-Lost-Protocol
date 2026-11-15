@@ -1,3 +1,27 @@
+/* =============================================================================
+   GAME STYLES  (webgame.html)
+   -----------------------------------------------------------------------------
+   Every visual in the playable game: the chapter menu, the track and robot, the
+   block palette and script area, the boss arena, cinematics, toasts, the
+   achievement popups and the professional-mode terminal.
+   
+   This file re-declares the design tokens at the top so the game looks the same
+   even if the page is opened without the shared site stylesheet. The four
+   learning-path blocks near the bottom adjust the look per age group; the
+   difficulty classes (d-beg, d-int, d-pro) are applied to <body> by the engine.
+   
+   Game logic never depends on these rules: a missing style should degrade, not
+   break a run.
+   Areas in this file:
+     - tokens and base layout
+     - chapter menu
+     - game screen: track, robot, palette, script
+     - boss arena and fight feedback
+     - cinematics, toasts and achievements
+     - per-path visual themes
+     - professional-mode terminal and effects
+     - responsive rules
+   ============================================================================= */
 :root{--h:200;--bg:hsl(var(--h) 26% 8%);--fg:#f3efe8;--mut:hsl(var(--h) 12% 76%);--line:rgba(255,255,255,.14);--a:hsl(var(--h) 80% 64%);--b:hsl(calc(var(--h) + 45) 85% 72%);--ink:#0b0f14;--bad:#ef7a8c;--ok:#4fc98a;
 --serif:'Fraunces',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif;--hand:'Caveat','Segoe Print',cursive;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:light){:root{--bg:hsl(var(--h) 45% 95%);--fg:#17202b;--mut:hsl(var(--h) 18% 30%);--line:rgba(20,30,45,.18);--a:hsl(var(--h) 75% 34%);--b:hsl(calc(var(--h) + 45) 70% 36%);--ink:#fff;--bad:#b8324b;--ok:#1b7a4c}}
@@ -45,6 +69,9 @@ input,select{font:inherit;color:inherit}
 .lab{font:700 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
 #msg{min-height:50px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);color:var(--mut)}#msg.bad{border-color:var(--bad);color:var(--fg);animation:sk .5s}#msg.hint{border-color:var(--b);color:var(--fg)}
 .bar{display:flex;gap:10px;flex-wrap:wrap}
+/* Run / Reset / Hint row under the script area. Moved out of an inline style in
+   webgame.html; the spacing is unchanged. */
+.bar-top{margin-top:16px}
 .work{display:grid;grid-template-columns:150px 1fr;gap:14px}@media(max-width:600px){.work{grid-template-columns:1fr}}
 #pal{border:2px dashed transparent;border-radius:12px;padding:4px}#pal.over{border-color:var(--bad)}
 .blk{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;color:#0b0f14;font:700 14px var(--sans);cursor:grab;margin:6px 0;box-shadow:0 3px 0 rgba(0,0,0,.3);animation:pop .3s;transition:transform .2s}
@@ -176,17 +203,8 @@ body[data-sec="1"] .track{box-shadow:0 0 22px color-mix(in srgb,var(--a) 25%,tra
 body.d-beg .blk{font-size:15px;padding:8px 13px;border-radius:16px}body.d-beg .card{border-radius:24px}body.d-beg .bd{width:44px;height:38px}body.d-beg .track i{border-style:solid}
 body.d-pro{font-family:'JetBrains Mono','Courier New',monospace}body.d-pro .card{border-radius:6px;border-color:var(--a);box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 28%,transparent),inset 0 0 30px rgba(0,0,0,.2)}body.d-pro .blk{border-radius:3px;box-shadow:none;border:1px solid rgba(0,0,0,.45);font-family:inherit}body.d-pro .btn,body.d-pro .dp{border-radius:4px}body.d-pro .track{border-radius:4px;background:repeating-linear-gradient(0deg,transparent 0 11px,color-mix(in srgb,var(--a) 14%,transparent) 11px 12px)}body.d-pro .track.fog i:before{opacity:0}body.d-pro h1,body.d-pro h2,body.d-pro h3{font-family:'JetBrains Mono','Courier New',monospace;font-style:normal}
 .while{display:block;background:hsl(calc(var(--h) + 240) 80% 72%)}
-#bolt{position:fixed;right:16px;bottom:16px;z-index:56}
-#bfab{position:relative;width:62px;height:62px;border-radius:50%;border:2px solid var(--a);background:var(--bg);cursor:pointer;display:grid;place-items:center;box-shadow:0 8px 28px rgba(0,0,0,.3);transition:transform .25s}#bfab:hover{transform:scale(1.1) rotate(-5deg)}#bfab.on{box-shadow:0 0 24px var(--a)}
-.bping{position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--a);animation:bping 2.4s ease-out infinite;pointer-events:none}#bfab.on .bping{display:none}@keyframes bping{from{opacity:.8;transform:scale(.9)}to{opacity:0;transform:scale(1.35)}}
 .bface{position:relative;display:block;width:36px;height:28px;border-radius:9px 9px 6px 6px;background:var(--a);--ey:#fff}.bface .eye{position:absolute;top:9px;width:7px;height:7px;border-radius:50%;background:var(--ey);box-shadow:0 0 8px var(--ey);animation:bl 4s infinite}.bface .eye:nth-of-type(1){left:8px}.bface .eye:nth-of-type(2){right:8px}.bface .ant{position:absolute;left:16px;top:-9px;width:3px;height:9px;background:var(--b)}.bface .ant:after{content:"";position:absolute;left:-2px;top:-5px;width:7px;height:7px;border-radius:50%;background:var(--b);animation:led 1.2s infinite}
 .bface[data-m=ok]{--ey:#7dffb2}.bface[data-m=bad]{--ey:#ff5d73;animation:sk .5s}.bface[data-m=warn]{--ey:#ffd36a}@keyframes led{50%{opacity:.25}}
-#bpan{position:absolute;right:0;bottom:78px;width:min(360px,92vw);height:min(470px,70vh);display:flex;flex-direction:column;border:1px solid var(--a);border-radius:18px;background:color-mix(in srgb,var(--bg) 94%,#000);box-shadow:0 18px 60px rgba(0,0,0,.45);overflow:hidden;animation:pop .35s;font-family:'Courier New',monospace}
-#bpan:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);z-index:2}
-.bhd{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--a) 14%,transparent)}.bhd b{display:block;letter-spacing:.2em;font-size:15px}.bhd small{color:var(--mut);font-size:11px;letter-spacing:.1em}.bhd button{margin-left:auto;background:none;border:0;color:var(--fg);cursor:pointer;font-size:16px}.bhd button+button{margin-left:0}
-#blog{flex:1;overflow:auto;padding:12px;display:grid;gap:8px;align-content:start}
-.bm2{padding:8px 11px;border-radius:10px;font-size:13px;line-height:1.45;max-width:88%;word-break:break-word}.bm2.rb{background:color-mix(in srgb,var(--a) 16%,transparent);border:1px solid color-mix(in srgb,var(--a) 40%,transparent);letter-spacing:.03em}.bm2.rb.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent);animation:sk .4s}.bm2.rb.warn{border-color:#ffd36a}.bm2.me{justify-self:end;background:var(--a);color:var(--ink)}.bm2.think{opacity:.7;animation:led .6s infinite}
-.bin{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}.bin input{flex:1;background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:13px 'Courier New',monospace;color:var(--fg)}.bin button{border:0;border-radius:8px;background:var(--a);color:var(--ink);font:700 12px 'Courier New',monospace;padding:0 14px;cursor:pointer}
 .bnote{padding:0 12px 8px;font-size:11px;color:var(--mut);letter-spacing:.05em}
 .base{background:hsl(calc(var(--h) + 75) 70% 74%)}
 .bb.k4 .bh2,.bb.k4 .ant{background:#3ddc84}.bb.k4 .eye{box-shadow:0 0 .8em #fff,0 0 1.6em #3ddc84}
@@ -195,13 +213,73 @@ body.d-pro{font-family:'JetBrains Mono','Courier New',monospace}body.d-pro .card
 .bd5 .bico{animation:bd5 1.3s steps(9)}.bd5 .ring{animation:shock 1s .6s steps(5) 3}.bd6 .bico{animation:bd6 2s cubic-bezier(.2,1.2,.4,1)}.bd6 .ring{animation:shock 1.6s .8s ease-out infinite}
 @keyframes bd5{from{clip-path:inset(0 100% 0 0);filter:hue-rotate(90deg)}to{clip-path:inset(0 0 0 0)}}@keyframes bd6{0%{transform:scale(0) rotate(-180deg);opacity:0}60%{transform:scale(1.45) rotate(14deg)}100%{transform:none}}
 .sw4,.sw5{position:absolute;opacity:0;transition:opacity 1.8s}.sw4{left:20%;top:24%}.sw5{right:20%;top:28%}.sw4.on,.sw5.on{opacity:1}
-body.d-beg{--bg:hsl(var(--h) 70% 96%);--fg:#1b2430;--mut:hsl(var(--h) 25% 32%);--line:rgba(20,30,45,.16);--ink:#fff}body.d-beg .btn{font-size:17px;padding:14px 30px}
+/* Difficulty Styling (Independent from age path) */
+body.d-beg .btn{font-size:16px;font-weight:800}
 body.d-pro{--bg:#060b0e;--fg:#cdeedd;--mut:#7fa392;--line:rgba(120,255,180,.22);--ink:#04110a}
+body.d-pro .cv{display:block}
 .cv{margin:12px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:#02080a;color:#6dffa8;font:12px/1.5 monospace;white-space:pre-wrap;max-height:170px;overflow:auto}
 @media(min-width:601px){.work{grid-template-columns:150px minmax(0,1fr)}}
 @media(min-width:1101px){.game{grid-template-columns:minmax(0,.88fr) minmax(0,.95fr) minmax(0,1.4fr)}}
 .blk{min-width:0;max-width:100%}.blk select,.blk input{max-width:100%;min-width:0}.zone{min-width:0}.cv{overflow-wrap:anywhere}
 .col{min-width:0;grid-template-columns:minmax(0,1fr)}.card{min-width:0}.work>div{min-width:0}
+
+/* =========================================================================
+   AGE-ADAPTED VISUAL VARIANTS (g16, g710, g1112, adult)
+   ========================================================================= */
+
+/* 1. Grades 1-6 (g16): Playful, cheerful, friendly emojis & bright accents */
+body.path-g16{--bg:#140f33;--fg:#fff8ef;--mut:#d6cdf2;--line:rgba(255,255,255,.2);--ink:#1b1030;background:radial-gradient(circle at 15% 8%,#4a2a92,transparent 42%),radial-gradient(circle at 88% 18%,#0e6b8c,transparent 38%),radial-gradient(circle at 50% 96%,#8a2a70,transparent 44%),#140f33}
+body.path-g16 .card{border-radius:30px;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);box-shadow:0 10px 36px rgba(0,0,0,.28)}
+body.path-g16 .blk{border-radius:16px;border:2px solid rgba(255,255,255,.55);box-shadow:0 4px 0 rgba(0,0,0,.35);transition:transform .2s}
+body.path-g16 .blk:hover{animation:wig .5s}
+body.path-g16 .blk.set:before,body.path-g16 .blk.change:before{content:none}
+body.path-g16 .blk.move:before{content:none}
+body.path-g16 .blk.say:before{content:none}
+body.path-g16 .blk.rep:before,body.path-g16 .blk.while:before{content:none}
+body.path-g16 .blk.if:before{content:none}
+body.path-g16 .blk.note:before{content:none}
+body.path-g16 .blk.ask:before{content:none}
+body.path-g16 .blk.calc:before{content:none}
+body.path-g16 .blk.join:before{content:none}
+body.path-g16 .blk.def:before,body.path-g16 .blk.call:before{content:none}
+body.path-g16 .blk.bit:before{content:none}
+body.path-g16 .blk.pick:before{content:none}
+body.path-g16 .blk.cast:before,body.path-g16 .blk.base:before{content:none}
+body.path-g16 .btn{border-radius:999px;font-weight:800;box-shadow:0 5px 0 rgba(0,0,0,.35)}
+body.path-g16 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+body.path-g16 h1,body.path-g16 h2,body.path-g16 .logo{background:linear-gradient(90deg,#ffd36a,#ff8fcf,#7ad9ff,#ffd36a);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite}
+body.path-g16 .bot{animation:bobble 2.4s ease-in-out infinite}
+body.path-g16 .bd{box-shadow:0 0 18px color-mix(in srgb,var(--b) 60%,transparent)}
+body.path-g16 .blk.glow{animation:blkglow 1.4s ease-in-out infinite}
+body.path-g16 .track{border-radius:22px}
+
+/* 2. Grades 7-10 (g710): Cybernetic neon, structured sci-fi, no childish emojis */
+body.path-g710 .card{border-radius:18px;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.35)}
+body.path-g710 .blk{border-radius:10px;box-shadow:0 3px 0 rgba(0,0,0,.35);transition:transform .2s,box-shadow .2s}
+body.path-g710 .blk:hover{transform:translateY(-2px);box-shadow:0 6px 14px color-mix(in srgb,var(--a) 30%,transparent)}
+body.path-g710 .track{border-radius:14px;box-shadow:inset 0 0 18px rgba(0,0,0,.3)}
+
+/* 3. Grades 11-12 (g1112): Sleek technical engineering panels, polished transitions */
+body.path-g1112 .card{border-radius:12px;border:1px solid color-mix(in srgb,var(--a) 32%,var(--line));background:color-mix(in srgb,var(--bg) 84%,transparent);box-shadow:inset 0 0 20px rgba(0,0,0,.25)}
+body.path-g1112 .blk{border-radius:6px;font-family:var(--sans);font-weight:600;letter-spacing:.02em;border-left:3px solid var(--a);box-shadow:0 2px 5px rgba(0,0,0,.3)}
+body.path-g1112 .track{border-radius:8px;border-color:color-mix(in srgb,var(--a) 40%,var(--line))}
+body.path-g1112 .diff{font-family:'Courier New',monospace;border-radius:6px}
+
+/* 4. College & Adults (adult): Refined obsidian & cinematic telemetry, zero childish elements */
+body.path-adult{--bg:#070a0f;--line:rgba(255,255,255,.12);--mut:hsl(var(--h) 10% 70%)}
+body.path-adult .card{border-radius:8px;border:1px solid var(--line);background:rgba(10,14,20,.88);backdrop-filter:blur(14px);box-shadow:0 12px 34px rgba(0,0,0,.5)}
+body.path-adult .blk{border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.45);font-size:13.5px;border:1px solid rgba(0,0,0,.35)}
+body.path-adult .btn{border-radius:8px;font-weight:600;letter-spacing:.03em}
+body.path-adult .track{border-radius:6px;border-color:rgba(255,255,255,.16)}
+body.path-adult h1,body.path-adult h2,body.path-adult h3{font-family:var(--serif);letter-spacing:-.01em}
+
+#bfx{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+#bfx i{position:absolute;bottom:-40px;font-style:normal;opacity:.55;animation:floatup linear infinite}
+.coach{display:flex;gap:12px;margin-top:14px;padding:12px 14px;border-radius:22px;background:color-mix(in srgb,var(--b) 16%,transparent);border:2px dashed color-mix(in srgb,var(--b) 55%,transparent);animation:pop .5s}.coach .cface{padding-top:12px}.coach .cbody{flex:1;font-size:14px}.csteps{margin:6px 0 10px;padding-left:20px;display:grid;gap:5px}.csteps li{animation:pop .4s}
+@keyframes wig{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}@keyframes rainbow{to{background-position:300% 0}}@keyframes bobble{50%{margin-top:-4px}}@keyframes blkglow{50%{box-shadow:0 0 0 3px #ffd36a,0 0 22px #ffd36a}}@keyframes floatup{from{transform:translateY(0) rotate(0);opacity:0}10%{opacity:.6}to{transform:translateY(-115vh) rotate(360deg);opacity:0}}
+body.d-pro.glitchy .card,body.d-pro.glitchy .top{animation:pglitch .38s steps(4)}body.d-pro.glitchy h2,body.d-pro.glitchy h3,body.d-pro.glitchy .logo{text-shadow:3px 0 #ff2bd6,-3px 0 #00e5ff}
+@keyframes pglitch{0%{transform:translate(-3px,0) skewX(-1deg);filter:hue-rotate(40deg)}25%{transform:translate(4px,1px);clip-path:inset(0 0 40% 0)}50%{transform:translate(-2px,-1px);clip-path:inset(30% 0 0 0)}75%{transform:translate(3px,0);filter:saturate(2)}100%{transform:none;clip-path:none;filter:none}}
+body.d-beg,body.d-pro{--a:hsl(var(--h) 80% 66%);--b:hsl(calc(var(--h) + 45) 85% 74%);--bad:#ef7a8c;--ok:#4fc98a}
 [hidden]{display:none!important}
 @keyframes up{from{opacity:0;transform:translateY(20px)}}
 @keyframes pop{from{opacity:0;transform:scale(.85)}}
@@ -211,3 +289,28 @@ body.d-pro{--bg:#060b0e;--fg:#cdeedd;--mut:#7fa392;--line:rgba(120,255,180,.22);
 @keyframes jp{40%{transform:translateY(-34px) rotate(180deg)}80%{transform:translateY(0) rotate(360deg)}}
 @keyframes sk{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
+.hud{flex-wrap:wrap;row-gap:8px;max-width:100%}
+.hud .btn.sm{min-height:40px;padding-top:0;padding-bottom:0;display:inline-flex;align-items:center}
+body.path-g16{font-size:1.06em}
+body:has(#res:not([hidden])) .coach,body:has(#cine) .coach{display:none}
+.coach{position:fixed!important;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(680px,94vw);max-height:28vh;overflow:auto;z-index:35;margin:0!important;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.psum{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:6px 0}.psum b{display:block;font:800 18px var(--serif)}.psum span{display:block;margin:4px 0 8px;font-size:14px;color:var(--mut);line-height:1.45}
+.dsopt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:transparent;color:inherit;font:inherit;cursor:pointer}.dsopt b{display:block;font:800 17px var(--serif)}.dsopt span{display:block;font-size:14px;color:var(--mut);margin:3px 0}.dsopt em{font-style:normal;font-size:13px;font-weight:700}
+.warnx{border:1px solid #ef7a8c;border-radius:12px;padding:10px 12px;margin:12px 0 8px;line-height:1.45}
+#bonusLink.lockedx{opacity:.5}
+.bico.bhead{display:grid;place-items:center;animation:bhPop .9s ease both}@keyframes bhPop{0%{transform:scale(.4) rotate(-12deg);opacity:0}60%{transform:scale(1.15) rotate(4deg);opacity:1}100%{transform:scale(1)}}
+body.path-g16 .btn,body.path-g16 .lb,body.path-g16 .dp{min-height:52px}
+body.path-g1112 .btn,body.path-g1112 .lb,body.path-adult .btn,body.path-adult .lb{min-height:44px}
+body.path-adult .spark{display:none}
+.sbody{margin:14px 0;text-align:left}.sobj{margin:12px 0;padding:10px 12px;border:1px dashed var(--a);border-radius:10px}.actt{display:block;margin-bottom:4px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+/* Sections as horizontal screens */
+#chs .hs-nav{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 8px;flex-wrap:wrap}
+#chs .hs-nav button{min-width:44px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px inherit;cursor:pointer}
+#chs .hs-nav button:disabled{opacity:.4;cursor:default}
+#chs .hs-dots{display:flex;gap:8px;align-items:center}
+#chs .hs-dots i{width:12px;height:12px;border-radius:50%;background:var(--line);display:block}
+#chs .hs-dots i.on{background:var(--a);transform:scale(1.25)}
+#chs .hs-lbl{font-weight:700;min-width:9em;text-align:center}
+#chs .hs-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;gap:16px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:6px}
+#chs .hs-track>.sec{flex:0 0 100%;min-width:0;scroll-snap-align:start;box-sizing:border-box}
+#chs .hs-track:focus-visible{outline:2px solid var(--a);outline-offset:4px}

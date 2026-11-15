@@ -1,3 +1,19 @@
+/* =============================================================================
+   HOME PAGE SCRIPT  (js/script.js)
+   -----------------------------------------------------------------------------
+   Powers index.html only: the intro sequence, the animated background, the mood
+   swatches, the hash router for the About view, the home tally and the feedback
+   modal. The game itself lives in webgame.html and js/pages/webgame.js.
+   
+   If you add markup to index.html, add its behaviour here rather than inline.
+   Areas in this file:
+     - page constants and mood state
+     - intro sequence and title effects
+     - the rain canvas and reduced-effects handling
+     - the hash router (home / about) and view transitions
+     - the home tally
+     - the feedback modal and its offline queue
+   ============================================================================= */
 const LINKS = {
     web: "webgame.html"
 };
@@ -104,6 +120,12 @@ let mx = -999;
 let bgt = 0;
 let bgm = [8, 12, 16];
 
+/* -----------------------------------------------------------------------------
+   Background canvas
+   The rain loop is the only per-frame work on this page. It stops when the tab
+   is hidden or when reduced effects are on, so it never burns battery in the
+   background.
+   -------------------------------------------------------------------------- */
 function fit() {
     cv.width = innerWidth;
     cv.height = innerHeight;
@@ -381,7 +403,7 @@ function effect(b, label, k) {
         }, 2200);
     }, 1350);
 }
-const ME={photo:"Screenshot_20261013_112542.jpg",name:"Joumana Amir Eldeeb",lines:[
+const ME={photo:"assets/Screenshot_20261013_112542.jpg",name:"Joumana Amir Eldeeb",lines:[
 "I'm Joumana, a final-year student at the Faculty of Computer Studies. The Lost Protocol is my final-year project, supervised by Dr. Ramadan Babers.",
 "I picked this idea because programming can feel abstract when you are just starting out. Loops, variables and logic are much easier to understand when you can watch a little robot do exactly what your code says.",
 "I built The Lost Protocol as a web game so anyone can play it in a browser with nothing to install. It has six sections, twenty-four chapters and six guardians to defeat.",
@@ -398,6 +420,11 @@ $('#phin').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileR
 r.onload=()=>{const im=new Image();im.onload=()=>{const m=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*m);c.height=Math.round(im.height*m);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const d=c.toDataURL('image/jpeg',.85);show(d);try{localStorage.setItem('tlp-photo',d)}catch(x){}};im.src=r.result};
 r.readAsDataURL(f)}}
 
+/* -----------------------------------------------------------------------------
+   Router
+   Hash-only routing (#/about) because the site is plain files on a static
+   host. Unknown hashes fall back to the home view.
+   -------------------------------------------------------------------------- */
 function route() {
     const k = location.hash.replace('#/', '');
     const pg = PAGES[k];
@@ -466,6 +493,11 @@ if (TALLY_URL) {
 
 const FB = { rating: 0, tags: [] };
 
+/* -----------------------------------------------------------------------------
+   Feedback modal
+   Submits through TLP_AUTH when online and queues the entry in localStorage
+   when it fails, so a reviewer never loses a comment on a flaky network.
+   -------------------------------------------------------------------------- */
 function openFb() {
     $('#fb').hidden = false;
     $('#fbform').hidden = false;

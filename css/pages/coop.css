@@ -1,0 +1,46 @@
+/* =============================================================================
+   CO-OP LOBBY STYLES  (coop.html)
+   -----------------------------------------------------------------------------
+   Styles for the two-player mission screen: the connection gate, the waiting
+   room, the shared program lanes, the chat log and the result table. Names are
+   deliberately short (.co, .lane, .chat) because the markup is built in JS.
+   Areas in this file:
+     - page frame
+     - gate and lobby cards
+     - mission lanes and composer
+     - chat log
+     - results
+   ============================================================================= */
+.co{max-width:1100px;margin:28px auto 70px;position:relative;z-index:5}
+.co h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.co .lead{color:var(--mut);margin:0 0 16px;max-width:75ch;line-height:1.5}
+.pn{border:1px solid var(--line);border-radius:18px;padding:18px;margin:0 0 14px}
+.pn h2{margin:0 0 8px;font:800 22px var(--serif)}
+.pn p.m{color:var(--mut);font-size:14px;line-height:1.5;margin:4px 0}
+.row3{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.co input[type=text],.co select{min-height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:15px var(--sans);max-width:100%}
+.co select option{color:#111}
+.code{font:800 30px var(--sans);letter-spacing:.2em;padding:6px 14px;border:1px dashed var(--a);border-radius:12px}
+.pill2{display:inline-block;padding:3px 10px;border:1px solid var(--line);border-radius:999px;font:700 12px var(--sans)}
+.pill2.on{border-color:#3ddc84;color:#3ddc84}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}
+.lane{border:1px solid var(--line);border-radius:14px;padding:12px}
+.lane.mine{border-color:var(--a)}
+.lane h3{margin:0 0 6px;font:800 17px var(--serif)}
+ol.prog{margin:6px 0;padding-left:22px;font-size:14px;line-height:1.6}
+ol.prog li button{margin-left:8px;min-height:30px;padding:0 10px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font-size:12px;cursor:pointer}
+table.st{width:100%;border-collapse:collapse;font-size:14px}
+table.st th,table.st td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+table.st td.ok{color:#3ddc84;font-weight:700}table.st td.no{color:#ef7a8c}
+.timer{font:800 26px var(--sans)}
+.msg4{min-height:1.4em;margin-top:8px;font-size:14px}
+.chat button{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:600 13px var(--sans);cursor:pointer;margin:3px}
+#log{max-height:140px;overflow:auto;font-size:14px;margin-top:8px}
+.fld3{display:flex;flex-direction:column;gap:3px;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+/* Layout helpers that used to live as inline styles in coop.html. Keeping them
+   here means the page markup stays free of CSS. */
+.row3.between{justify-content:space-between}
+.row3.end{align-items:flex-end}
+.row3.inner-line{align-items:flex-end;border-top:1px solid var(--line);padding-top:10px}
+.pn.mt{margin-top:14px}
+.scroll-x{overflow-x:auto;margin-top:10px}

@@ -10,7 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages/home.css">
 </head>
 <body>
 <canvas id="rain"></canvas>
@@ -53,7 +54,7 @@
     <div class="pc-main"><span class="pill live">Playable now</span><h3 class="glitch" data-text="Play in your browser">Play in your browser</h3><p>Six sections, twenty-four chapters and six guardians to defeat. Nothing to install: open it, drag the blocks and start solving.</p></div>
     <span class="pc-cta"><span class="lbl">Play now</span><i>→</i></span>
   </a>
-  <div class="guards" aria-hidden="true"><div class="gbot" style="--ec:#ef7a8c;--d:0s"><b></b><b></b></div><div class="gbot" style="--ec:#e8a23a;--d:.6s"><b></b><b></b></div><div class="gbot" style="--ec:#9b5cf0;--d:1.2s"><b></b><b></b></div><div class="gbot" style="--ec:#35c9e8;--d:1.8s"><b></b><b></b></div><div class="gbot" style="--ec:#3ddc84;--d:2.4s"><b></b><b></b></div><div class="gbot" style="--ec:#f2c94c;--d:3s"><b></b><b></b></div></div>
+  <div class="guards" aria-hidden="true"><div class="gbot"><b></b><b></b></div><div class="gbot"><b></b><b></b></div><div class="gbot"><b></b><b></b></div><div class="gbot"><b></b><b></b></div><div class="gbot"><b></b><b></b></div><div class="gbot"><b></b><b></b></div></div>
   <p class="gcap">Six guardians wait in the dark. Beat them all to bring the light back.</p>
   <div class="label">What you will learn</div>
   <div class="chipsrow"><span class="cchip">Programming</span><span class="cchip">Variables</span><span class="cchip">Loops</span><span class="cchip">If statements</span><span class="cchip">Constants</span><span class="cchip">Data types</span><span class="cchip">Type casting</span><span class="cchip">Strings</span><span class="cchip">Operators</span><span class="cchip">Arrays</span><span class="cchip">Input and output</span><span class="cchip">Comments</span><span class="cchip">Functions</span><span class="cchip">Scope</span><span class="cchip">Recursion</span><span class="cchip">Bits and bytes</span><span class="cchip">Binary counting</span><span class="cchip">Binary maths</span><span class="cchip">Bit operations</span><span class="cchip">Debugging</span><span class="cchip">Searching</span><span class="cchip">Finding the biggest</span><span class="cchip">Optimising</span></div>
@@ -67,7 +68,7 @@
 
 <footer><div class="wrap">
   <span>The Lost Protocol, an interactive educational game by Joumana Amir Eldeeb</span>
-  <span>Faculty of Computer Studies · Final Year Project, May 2026 · Supervisor: Dr. Ramadan Babers · <a href="#" id="replay" style="color:inherit">replay intro</a></span>
+  <span>Faculty of Computer Studies · Final Year Project, May 2026 · Supervisor: Dr. Ramadan Babers · <a href="#" id="replay">replay intro</a></span>
 </div></footer>
 
 
@@ -107,9 +108,9 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script src="tlp-auth.js"></script>
-<script src="tlp-common.js"></script>
-<script src="script.js"></script>
+<script src="js/config.js"></script>
+<script src="js/tlp-auth.js"></script>
+<script src="js/tlp-common.js"></script>
+<script src="js/script.js"></script>
 </body>
 </html>

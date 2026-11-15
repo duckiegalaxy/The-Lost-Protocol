@@ -8,27 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<style>
-.adm{max-width:1100px;margin:30px auto 60px;position:relative;z-index:5}
-.adm h1{font-size:clamp(28px,5vw,40px);margin:0 0 6px}
-.adm .sub{color:var(--mut);margin:0 0 18px}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
-.tabs button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 14px var(--sans);cursor:pointer}
-.tabs button[aria-selected=true]{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
-.panel{border:1px solid var(--line);border-radius:18px;padding:16px;overflow-x:auto}
-.panel table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
-.panel th,.panel td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-.panel th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
-.row-btn{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 13px var(--sans);cursor:pointer}
-.row-btn.danger{border-color:#ef7a8c;color:#ef7a8c}
-.msg{margin:12px 0;min-height:1.3em}
-.warn{border:1px solid #ef7a8c;border-radius:14px;padding:14px;margin:12px 0}
-.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
-.kv div{border:1px solid var(--line);border-radius:12px;padding:10px}
-.kv b{display:block;font-size:24px}
-.adm input[type=text],.adm select,.adm textarea{padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:15px var(--sans);max-width:100%}
-</style>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/pages/admin.css">
 </head>
 <body>
 <header><nav><div class="wrap">
@@ -68,146 +49,9 @@
 </div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="config.js"></script>
-<script src="tlp-auth.js"></script>
-<script src="tlp-common.js"></script>
-<script>
-const $ = (s) => document.querySelector(s);
-const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const A = () => window.TLP_AUTH;
-const fmt = (d) => { try { return d ? new Date(d).toLocaleString() : ''; } catch (e) { return ''; } };
-const say = (t, bad) => { const m = $('#msg'); m.textContent = t || ''; m.style.color = bad ? '#ef7a8c' : ''; };
-let current = 'overview';
-
-function table(head, rows) {
-  if (!rows.length) return '<p>Nothing to show.</p>';
-  return '<table><thead><tr>' + head.map((h) => '<th>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table>';
-}
-
-const TABS = {
-  async overview() {
-    let d = null;
-    try { d = await A().runDiagnostics(); } catch (e) {}
-    const profiles = await A().getAllProfiles().catch(() => []);
-    const learners = await A().getAllLearners().catch(() => []);
-    const bugs = await A().getBugReports().catch(() => []);
-    const open = bugs.filter((b) => b.status === 'new' || b.status === 'investigating').length;
-    return '<div class="kv"><div><b>' + profiles.length + '</b>accounts</div><div><b>' + learners.length + '</b>learners</div><div><b>' + bugs.length + '</b>bug reports</div><div><b>' + open + '</b>open bugs</div></div>' +
-      (d ? '<h3>Diagnostics</h3><pre style="white-space:pre-wrap;font-size:13px">' + esc(JSON.stringify(d, null, 2)) + '</pre>' : '');
-  },
-  async users() {
-    const rows = (await A().getAllProfiles()).map((p) => '<tr><td>' + esc(p.display_name || p.displayName) + '</td><td>' + esc(p.role) + (p.is_admin ? ' (admin)' : '') + '</td><td>' + (p.is_test_account || p.isTestAccount ? 'test' : '') + '</td><td>' + esc(fmt(p.created_at || p.createdAt)) + '</td></tr>');
-    return '<p>Admin rights can only be granted by you in the Supabase SQL Editor, never from this page.</p>' + table(['Name', 'Role', 'Flag', 'Created'], rows);
-  },
-  async learners() {
-    const list = await A().getAllLearners();
-    let sumMap = {};
-    try {
-      const summaries = await A().getProgressSummaries(list.map(l => l.id || l.user_id));
-      summaries.forEach(s => {
-        const lid = s.learner_id;
-        if (!sumMap[lid]) sumMap[lid] = [];
-        sumMap[lid].push(s);
-      });
-    } catch (e) {}
-
-    const rows = list.map((l) => {
-      const pRecs = sumMap[l.id] || sumMap[l.user_id] || [];
-      let totalSolved = 0, totalStars = 0;
-      pRecs.forEach(r => {
-        if (r.prog) {
-          Object.values(r.prog).forEach(cp => {
-            if (cp && cp.solved) {
-              totalSolved++;
-              totalStars += (cp.stars || 0);
-            }
-          });
-        }
-      });
-      const progText = pRecs.length ? (totalSolved + ' missions (' + totalStars + ' ★)') : 'No missions yet';
-      return '<tr><td><b>' + esc(l.player_id || l.playerId || '-') + '</b></td><td>' + esc(l.name) + '</td><td>' + esc(l.assigned_path || l.assignedPath) + '</td><td>' + esc(l.current_diff || l.currentDiff) + '</td><td>' + ((l.parent_user_id || l.parentUserId) ? 'linked to a parent' : 'self') + '</td><td>' + esc(progText) + '</td><td>' + ((l.is_test || l.isTest) ? 'test' : '') + '</td></tr>';
-    });
-    return table(['Player ID', 'Learner', 'Path', 'Difficulty', 'Owner', 'Progress', 'Flag'], rows);
-  },
-  async bugs() {
-    const bugs = await A().getBugReports();
-    const rows = bugs.map((b) => '<tr data-id="' + esc(b.id) + '"><td>' + esc(fmt(b.created_at)) + '</td><td><b>' + esc(b.title) + '</b><br><small>' + esc(b.page_feature) + '</small><br>' + esc(b.description) +
-      (b.steps_to_reproduce ? '<br><small>Steps: ' + esc(b.steps_to_reproduce) + '</small>' : '') + (b.attachment_path ? '<br><button class="row-btn batt" type="button" data-path="' + esc(b.attachment_path) + '">Open attachment</button>' : '') + '</td><td><select class="bst" aria-label="Status">' +
-      ['new', 'investigating', 'fixed', 'closed'].map((s) => '<option' + (b.status === s ? ' selected' : '') + '>' + s + '</option>').join('') + '</select></td>' +
-      '<td><input type="text" class="bnote" maxlength="500" value="' + esc(b.admin_notes || '') + '" aria-label="Admin note" placeholder="Note"></td><td><button class="row-btn bsave" type="button">Save</button></td></tr>');
-    return table(['Date', 'Report', 'Status', 'Note', ''], rows);
-  },
-  async board() {
-    const rows = (await A().getAdminLeaderboardEntries()).map((e) => '<tr data-id="' + esc(e.id) + '"><td>' + esc(e.display_name) + '</td><td>' + esc(e.learning_path) + ' / ' + esc(e.game_diff) + '</td><td>' + esc(e.total_score) + '</td><td>' + esc(e.total_stars) + '</td><td>' + (e.is_test ? 'test' : '') + '</td><td><button class="row-btn danger bdel" type="button">Remove</button></td></tr>');
-    return '<p>Scores are calculated by the database from saved progress. Remove an entry only if it looks wrong.</p>' + table(['Name', 'Path / level', 'Score', 'Stars', 'Flag', ''], rows);
-  },
-  async coop() {
-    const rows = (await A().getCoopMatchesAdmin()).map((m) => '<tr><td>' + esc(fmt(m.finished_at)) + '</td><td>' + esc(m.challenge_id) + '</td><td>' + esc(m.score) + '</td><td>' + esc(m.correct) + ' of 11</td><td>' + esc(m.steps) + '</td><td>' + esc(Math.round(m.duration_ms / 1000)) + ' s</td><td>' + (m.is_test ? 'test' : '') + '</td></tr>');
-    return '<p>Every completed co-op match, including test matches. Results are verified by the server.</p>' + table(['Finished', 'Mission', 'Score', 'Correct', 'Steps', 'Time', 'Flag'], rows);
-  },
-  async feedback() {
-    const rows = (await A().getAllFeedback()).map((f) => '<tr><td>' + esc(fmt(f.created_at)) + '</td><td>' + esc(f.rating) + '</td><td>' + esc(f.age_group) + '</td><td>' + esc(f.tags) + '</td><td>' + esc(f.message) + '</td><td>' + esc(f.name) + '</td></tr>');
-    return '<p>Copies of feedback sent from the home page since this feature was installed.</p>' + table(['Date', 'Rating', 'Age group', 'Tags', 'Message', 'Name'], rows);
-  },
-  async test() {
-    const p = await A().previewTestData();
-    const total = p.testProfiles + p.testLearners + p.testProgress + p.testLeaderboard;
-    return '<h3>Preview (nothing is deleted yet)</h3><div class="kv"><div><b>' + p.testProfiles + '</b>test accounts</div><div><b>' + p.testLearners + '</b>test learners</div><div><b>' + p.testProgress + '</b>test progress records</div><div><b>' + p.testLeaderboard + '</b>test leaderboard rows</div></div>' +
-      '<p>Only rows flagged as test data are affected. Genuine learners and scores are never touched.</p>' +
-      (total ? '<div class="warn"><label><input type="checkbox" id="tconfirm"> I have read the preview above and want to permanently delete these test records.</label><p><label for="ttype">Type <b>DELETE TEST DATA</b> to continue:</label><br><input type="text" id="ttype" autocomplete="off"></p><button class="row-btn danger" id="tgo" type="button" disabled>Delete test data</button></div>' : '<p>No test data found.</p>');
-  }
-};
-
-async function show(name) {
-  current = name;
-  document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === name));
-  const panel = $('#panel');
-  panel.textContent = 'Loading...'; say('');
-  try { panel.innerHTML = await TABS[name](); }
-  catch (e) { panel.textContent = ''; say('Could not load: ' + (e && e.message ? e.message : 'unknown error'), true); }
-}
-
-document.addEventListener('click', async (e) => {
-  const t = e.target;
-  if (t.matches('.tabs button')) return show(t.dataset.tab);
-  if (t.classList.contains('bsave')) {
-    const tr = t.closest('tr');
-    try { await A().updateBugReportStatus(tr.dataset.id, tr.querySelector('.bst').value, tr.querySelector('.bnote').value); say('Saved.'); }
-    catch (err) { say('Could not save: ' + err.message, true); }
-  }
-  if (t.classList.contains('batt')) {
-    try { const url = await A().getAttachmentUrl(t.dataset.path); window.open(url, '_blank', 'noopener'); } catch (err) { say('Could not open the attachment: ' + err.message, true); }
-  }
-  if (t.classList.contains('bdel')) {
-    if (!confirm('Remove this leaderboard entry?')) return;
-    try { await A().deleteLeaderboardEntry(t.closest('tr').dataset.id); say('Entry removed.'); show('board'); }
-    catch (err) { say('Could not remove: ' + err.message, true); }
-  }
-  if (t.id === 'tgo') {
-    try { const r = await A().purgeTestData(); say('Done. ' + JSON.stringify(r)); show('test'); }
-    catch (err) { say('Could not delete: ' + err.message, true); }
-  }
-});
-document.addEventListener('input', () => {
-  const c = $('#tconfirm'), ty = $('#ttype'), go = $('#tgo');
-  if (c && ty && go) go.disabled = !(c.checked && ty.value.trim() === 'DELETE TEST DATA');
-});
-
-async function adminBoot() {
-  const gate = $('#gate');
-  try {
-    await A().init();
-    const u = A().getCurrentUser();
-    if (!u) { gate.hidden = false; gate.innerHTML = 'Please <a href="auth.html">sign in</a> with an administrator account.'; return; }
-    if (!A().isCurrentUserAdmin()) { gate.hidden = false; gate.textContent = 'This account is not the administrator, so nothing is shown here. The administrator account is set up once by the site owner in the Supabase SQL Editor (see the owner setup instructions).'; return; }
-    $('#app').hidden = false; gate.hidden = true;
-    show('overview');
-  } catch (e) {
-    gate.hidden = false; gate.textContent = 'Could not check your access: ' + (e && e.message ? e.message : 'unknown error');
-  }
-}
-window.adminBoot = adminBoot;
-adminBoot();
-</script>
+<script src="js/config.js"></script>
+<script src="js/tlp-auth.js"></script>
+<script src="js/tlp-common.js"></script>
+<script src="js/pages/admin.js"></script>
 </body>
 </html>

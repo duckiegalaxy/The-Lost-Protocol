@@ -435,6 +435,38 @@
     }
 
     // -------------------------------------------------------------------------
+    // PASSWORD RECOVERY
+    // -------------------------------------------------------------------------
+    // Two separate steps, because the user who forgot a password cannot be
+    // signed in to change it:
+    //   1. requestPasswordReset(email) emails a one-time link that returns the
+    //      browser to this page with a recovery session in the URL hash.
+    //   2. updatePassword(newPassword) runs after that return, using the
+    //      short-lived recovery session instead of the normal login session.
+    // The redirect target is always the current page, so the same code works on
+    // localhost and on the deployed site without hard-coding a hostname. The
+    // host still has to be allowlisted in Supabase Auth -> URL Configuration.
+    async requestPasswordReset(email) {
+      await this.init();
+      email = (email || '').trim().toLowerCase();
+      if (!email) throw new Error('Please enter the email address for your account.');
+      if (!this.isCloudConfigured()) throw new Error('The online service is not configured, so password reset is unavailable.');
+      const redirectTo = window.location.origin + window.location.pathname;
+      const { error } = await this.supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      if (error) throw error;
+      return true;
+    }
+
+    async updatePassword(newPassword) {
+      await this.init();
+      if (!newPassword || newPassword.length < 6) throw new Error('Use a password of at least 6 characters.');
+      if (!this.isCloudConfigured()) throw new Error('The online service is not configured, so the password cannot be changed.');
+      const { data, error } = await this.supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      return data;
+    }
+
+    // -------------------------------------------------------------------------
     // LEARNER MANAGEMENT (PARENT AREA)
     // -------------------------------------------------------------------------
     async getLearners(userId) {

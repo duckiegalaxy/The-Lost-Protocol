@@ -1,0 +1,57 @@
+/* =============================================================================
+   BONUS LAB STYLES  (bonus.html)
+   -----------------------------------------------------------------------------
+   Styles for the logic-gate playground: the circuit canvas, the switch and gate
+   palette, the truth table and the achievement strip. The canvas itself is drawn
+   by js/pages/bonus.js; this file only sizes and colours it.
+   Areas in this file:
+     - page frame
+     - circuit board and components
+     - truth table
+     - feedback messages
+     - achievement strip
+   ============================================================================= */
+.bl{max-width:1100px;margin:28px auto 80px;position:relative;z-index:5}
+.bl h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.bl .lead{color:var(--mut);margin:0 0 14px;max-width:78ch;line-height:1.55}
+.nt{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.nt button,.bb{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px var(--sans);cursor:pointer}
+.nt button[aria-selected=true],.bb.pri{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
+.bb.sm{min-height:36px;padding:0 14px;font-size:13px}.bb:disabled{opacity:.45;cursor:default}
+.bp{border:1px solid var(--line);border-radius:18px;padding:18px;margin:0 0 14px}
+.bp h2{margin:0 0 8px;font:800 22px var(--serif)}.bp h3{margin:12px 0 4px;font:800 17px var(--serif)}
+.bp p{line-height:1.55;margin:6px 0}.mm{color:var(--mut);font-size:14px}
+.gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.gc{border:1px solid var(--line);border-radius:14px;padding:12px}
+.gc svg{width:80px;height:50px;display:block;margin-bottom:6px}
+.gc svg *,.ach svg *{stroke:var(--a);stroke-width:3;fill:none;stroke-linejoin:round;stroke-linecap:round}
+.tg{display:inline-flex;gap:6px;margin:6px 6px 6px 0}
+.tg button{min-width:44px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;font:800 15px var(--sans);cursor:pointer}
+.tg button[aria-pressed=true]{background:var(--a);color:var(--ink,#0b0f14);border-color:transparent}
+.out{display:inline-block;min-width:44px;padding:6px 10px;border-radius:10px;border:1px dashed var(--a);font:800 15px var(--sans);text-align:center}
+.out.on{background:#f2c94c;color:#111;border-style:solid;box-shadow:0 0 14px #f2c94c}
+table.tt{border-collapse:collapse;font-size:13px;margin-top:6px}table.tt td,table.tt th{border:1px solid var(--line);padding:3px 9px;text-align:center}
+.tt tr.ok td{background:color-mix(in srgb,#3ddc84 22%,transparent)}.tt tr.bad td{background:color-mix(in srgb,#ef7a8c 22%,transparent)}
+svg#cv{width:100%;height:auto;max-height:430px;border:1px solid var(--line);border-radius:14px;touch-action:none;background:color-mix(in srgb,var(--bg) 70%,transparent)}
+.comp{cursor:grab}.comp.sel .bd{stroke:#f2c94c}
+.port{fill:var(--bg);stroke:var(--a);stroke-width:3;cursor:pointer}.port.act{fill:var(--a)}
+.wire{fill:none;stroke:var(--mut);stroke-width:4;cursor:pointer}.wire.on{stroke:#f2c94c;stroke-dasharray:10 6;animation:flow .8s linear infinite}.wire.sel{stroke:#ef7a8c}
+@keyframes flow{to{stroke-dashoffset:-16}}
+.bulb{fill:#333}.bulb.on{fill:#f2c94c;filter:drop-shadow(0 0 8px #f2c94c)}
+.fb{min-height:1.4em;margin-top:8px;font-weight:600}.fb.good{color:#3ddc84}.fb.bad{color:#ef7a8c}
+.arr{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin:12px 0;min-height:90px}
+.bx{min-width:48px;padding:10px 6px;border-radius:10px;border:2px solid var(--line);background:transparent;color:inherit;font:800 17px var(--sans);text-align:center;cursor:pointer;transition:transform .25s,background .25s}
+.bx small{display:block;font:600 11px var(--sans);color:var(--mut)}
+.bx.hl{border-color:var(--a);transform:translateY(-6px)}.bx.fnd{background:#3ddc84;color:#111;border-color:#3ddc84}.bx.srt{border-color:#3ddc84}.bx.dim{opacity:.35}.bx.hid{color:transparent;text-shadow:0 0 0}
+.gap{width:22px;min-height:60px;border:2px dashed var(--a);border-radius:8px;background:transparent;color:var(--a);cursor:pointer;font-weight:800}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+.ach{display:inline-block;width:150px;text-align:center;padding:10px;border:1px solid var(--line);border-radius:14px;margin:6px;vertical-align:top}
+.ach svg{width:70px;height:56px}.ach.lk{opacity:.4}
+#achPop{position:fixed;inset:0;z-index:96;display:grid;place-items:center;background:rgba(5,8,12,.8);color:#f3efe8;text-align:center;padding:20px}
+#achPop svg{width:150px;height:120px}#achPop svg *{stroke:#f2c94c;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.an0{animation:an0 1.2s ease both}.an1{animation:an1 1.2s ease both}.an2{animation:an2 1.2s ease both}.an3{animation:an3 1.2s ease both}
+@keyframes an0{0%{transform:scale(.2) rotate(-180deg);opacity:0}70%{transform:scale(1.2) rotate(8deg);opacity:1}100%{transform:scale(1)}}
+@keyframes an1{0%{transform:translateY(80px);opacity:0}60%{transform:translateY(-12px);opacity:1}100%{transform:none}}
+@keyframes an2{0%{transform:scale(.5);opacity:0}40%{transform:scale(1.3)}60%{transform:scale(.95)}100%{transform:scale(1);opacity:1}}
+@keyframes an3{0%{transform:translateX(-120px) skewX(20deg);opacity:0}70%{transform:translateX(10px)}100%{transform:none;opacity:1}}
+html.reduce-fx #achPop svg{animation:none!important}

@@ -1,0 +1,37 @@
+/* =============================================================================
+   LEADERBOARD STYLES  (leaderboard.html)
+   -----------------------------------------------------------------------------
+   Two boards on one page: individual and co-op. The tab bar sits above a single
+   table slot that each board re-renders, so the page never grows two competing
+   scroll areas.
+   Areas in this file:
+     - page frame and tab bar
+     - rank table
+     - empty and error states
+     - responsive columns
+   ============================================================================= */
+.lbp{max-width:1000px;margin:30px auto 70px;position:relative;z-index:5}
+.lbp h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.lbp .lead{color:var(--mut);margin:0 0 16px;max-width:70ch;line-height:1.5}
+.swt{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+.swt button,.tabs2 button,.chips2 button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px var(--sans);cursor:pointer}
+.swt button[aria-selected=true],.tabs2 button[aria-selected=true],.chips2 button[aria-pressed=true]{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
+.vw{overflow:hidden;border-radius:18px}
+.slides{display:flex;width:200%;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.slides.co{transform:translateX(-50%)}
+.slide{width:50%;box-sizing:border-box;padding:0 2px;min-width:0}
+.tabs2{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 0 10px;scroll-snap-type:x proximity}
+.tabs2 button{flex:0 0 auto;scroll-snap-align:start}
+.chips2{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.chips2 button{min-height:38px;padding:0 14px;font-size:14px}
+.tw{border:1px solid var(--line);border-radius:16px;overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+table.t th,table.t td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+table.t td.rk{font:800 16px var(--serif)}
+.msg3{padding:22px;color:var(--mut)}
+.pg{display:flex;gap:10px;align-items:center;justify-content:center;margin:12px 0}
+.pg button{min-height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 14px var(--sans);cursor:pointer}
+.pg button:disabled{opacity:.4;cursor:default}
+.rules{margin-top:22px;font-size:14px;color:var(--mut);line-height:1.6;max-width:80ch}
+.pidc{font:700 13px var(--sans);letter-spacing:.04em;opacity:.85}

@@ -1,0 +1,30 @@
+/* =============================================================================
+   ADMIN DASHBOARD STYLES  (admin.html)
+   -----------------------------------------------------------------------------
+   Layout for the six admin tabs, the sortable tables and the maintenance
+   panels. Colours come from the shared tokens in css/style.css; this file only
+   adds the dashboard frame, table rhythm and the danger zone.
+   Areas in this file:
+     - page frame and tabs
+     - table + key/value rows
+     - message bar
+     - danger zone and warnings
+   ============================================================================= */
+.adm{max-width:1100px;margin:30px auto 60px;position:relative;z-index:5}
+.adm h1{font-size:clamp(28px,5vw,40px);margin:0 0 6px}
+.adm .sub{color:var(--mut);margin:0 0 18px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.tabs button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 14px var(--sans);cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
+.panel{border:1px solid var(--line);border-radius:18px;padding:16px;overflow-x:auto}
+.panel table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.panel th,.panel td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.panel th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.row-btn{min-height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 13px var(--sans);cursor:pointer}
+.row-btn.danger{border-color:#ef7a8c;color:#ef7a8c}
+.msg{margin:12px 0;min-height:1.3em}
+.warn{border:1px solid #ef7a8c;border-radius:14px;padding:14px;margin:12px 0}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+.kv div{border:1px solid var(--line);border-radius:12px;padding:10px}
+.kv b{display:block;font-size:24px}
+.adm input[type=text],.adm select,.adm textarea{padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:15px var(--sans);max-width:100%}

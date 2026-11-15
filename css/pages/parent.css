@@ -1,0 +1,41 @@
+/* =============================================================================
+   PARENT AND EDUCATOR STYLES  (parent.html)
+   -----------------------------------------------------------------------------
+   Card grid for learner profiles, the progress bars, the credential dialog and
+   the add/delete confirmation modals. Everything here is presentation; the
+   permissions that make the page safe live in the database.
+   Areas in this file:
+     - page frame
+     - learner card grid and progress bars
+     - credential and confirm modals
+     - responsive layout
+   ============================================================================= */
+.edu{max-width:1040px;margin:30px auto 70px;position:relative;z-index:5}
+.edu h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.edu .lead{color:var(--mut);margin:0 0 18px;max-width:70ch;line-height:1.5}
+.bar2{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px}
+.count{font:700 15px var(--sans);color:var(--mut)}
+.count b{font:800 26px var(--serif);color:var(--fg);margin-right:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.lc2{border:1px solid var(--line);border-radius:18px;padding:16px}
+.lc2 h3{margin:0 0 2px;font:800 20px var(--serif)}
+.pid{display:inline-flex;gap:8px;align-items:center;margin:6px 0;padding:6px 10px;border:1px dashed var(--a);border-radius:10px;font:800 15px var(--sans);letter-spacing:.05em}
+.meta{font-size:13px;color:var(--mut);margin:2px 0 8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.chip{font:700 12px var(--sans);padding:4px 10px;border:1px solid var(--line);border-radius:999px}
+.row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row2 .btn{flex:1 1 120px}
+table.rank{width:100%;border-collapse:collapse;font-size:14px}
+table.rank th,table.rank td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.rank th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.sec2{margin-top:30px}
+.sec2 h2{margin:0 0 10px;font:800 24px var(--serif)}
+.warnbox{border:1px solid #ef7a8c;border-radius:14px;padding:12px 14px;margin:12px 0;line-height:1.5}
+.cred{border:1px solid var(--a);border-radius:14px;padding:14px;margin:12px 0}
+.cred code{font:800 20px var(--sans);letter-spacing:.05em}
+/* Credential dialog spacing, moved out of the inline attributes in parent.html. */
+.cred p{margin:6px 0}
+.cred p:first-of-type{margin:0 0 6px}
+.scroll-x{overflow-x:auto}
+.fld label{display:block;margin:12px 0 4px;font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.msg2{min-height:1.3em;margin-top:10px;font-size:14px}

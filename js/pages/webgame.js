@@ -1,289 +1,121 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>The Lost Protocol · Play</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<style>
-:root{--h:200;--bg:hsl(var(--h) 26% 8%);--fg:#f3efe8;--mut:hsl(var(--h) 12% 76%);--line:rgba(255,255,255,.14);--a:hsl(var(--h) 80% 64%);--b:hsl(calc(var(--h) + 45) 85% 72%);--ink:#0b0f14;--bad:#ef7a8c;--ok:#4fc98a;
---serif:'Fraunces',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif;--hand:'Caveat','Segoe Print',cursive;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:light){:root{--bg:hsl(var(--h) 45% 95%);--fg:#17202b;--mut:hsl(var(--h) 18% 30%);--line:rgba(20,30,45,.18);--a:hsl(var(--h) 75% 34%);--b:hsl(calc(var(--h) + 45) 70% 36%);--ink:#fff;--bad:#b8324b;--ok:#1b7a4c}}
-*{box-sizing:border-box;margin:0}
-body{min-height:100vh;background:linear-gradient(120deg,color-mix(in srgb,var(--a) 14%,var(--bg)),var(--bg) 45%,color-mix(in srgb,var(--b) 11%,var(--bg)));color:var(--fg);font:16px/1.6 var(--sans);transition:background .8s}
-h1,h2,h3{font-family:var(--serif);line-height:1.1}
-.wrap{max-width:1180px;margin:0 auto;padding:0 20px 50px}
-.top{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--line);margin-bottom:26px;gap:12px;flex-wrap:wrap}
-.logo{font:italic 800 22px var(--serif)}.hud{display:flex;gap:18px;align-items:center;font-size:14px;color:var(--mut)}.hud b{color:var(--fg);font:800 20px var(--serif)}
-.hand{font:600 20px var(--hand);color:var(--a)}
-.card{background:color-mix(in srgb,var(--bg) 74%,transparent);border:1px solid var(--line);border-radius:18px;padding:20px;backdrop-filter:blur(8px)}
-.btn{border:0;border-radius:999px;padding:12px 26px;background:var(--a);color:var(--ink);font:700 15px var(--sans);cursor:pointer;transition:transform .2s,box-shadow .2s}
-.btn:hover{transform:translateY(-2px) rotate(-.5deg);box-shadow:4px 5px 0 var(--b)}.btn.ghost{background:none;color:var(--fg);border:1px solid var(--line)}
- .btn:disabled{opacity:.4;pointer-events:none}
-.back-site{display:flex;justify-content:center;padding:0 20px 36px;margin-top:8px}
-.back-site a{display:inline-block;text-decoration:none;text-align:center;background:#8F243D;color:#F0E5E8;border:1px solid #C77A91;border-radius:999px;padding:12px 26px;font:700 15px var(--sans);transition:transform .2s,background .2s,box-shadow .2s}
-.back-site a:hover{background:#3A183B;transform:translateY(-2px);box-shadow:4px 5px 0 #C77A91}
-code{font:600 13px monospace;background:color-mix(in srgb,var(--a) 20%,transparent);padding:1px 7px;border-radius:6px}
-input,select{font:inherit;color:inherit}
-/* menu */
-.hero h1{font-size:clamp(40px,8vw,84px);font-style:italic;margin:6px 0 12px}.hero p{color:var(--mut);max-width:620px}
-.how{display:flex;gap:14px;flex-wrap:wrap;margin:26px 0}.how span{border-left:3px solid var(--a);padding:2px 14px;color:var(--mut);font-size:15px}
-.who{margin:10px 0 26px;display:flex;gap:10px;align-items:center}.who input{background:transparent;border:0;border-bottom:2px solid var(--a);padding:4px 6px;width:180px}
-.chs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
-.ch h3{font-size:28px;margin:4px 0 6px}.ch p{color:var(--mut);font-size:14px;margin-bottom:14px}.ch.lock{opacity:.55}
-.lvls{display:grid;gap:8px}.lb{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:none;color:var(--fg);font:600 15px var(--sans);cursor:pointer;transition:transform .2s,border-color .2s}
-.lb:hover:not(:disabled){transform:translateX(6px);border-color:var(--a)}.lb:disabled{opacity:.45;cursor:not-allowed}.lb small{color:var(--a);font-weight:500}
-/* game */
-.game{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
-@media(max-width:900px){.game{grid-template-columns:1fr}}
-.col{display:grid;gap:16px}
-.learn{animation:up .6s}.learn h2{font-size:28px;margin:2px 0 8px}.learn p{color:var(--mut)}.learn .mis{margin-top:12px;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--a) 14%,transparent);color:var(--fg)}
-.diff{font:700 11px var(--sans);letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);border-radius:99px;padding:2px 10px;margin-left:8px;color:var(--mut)}
-.track{--p:0;--g:3;position:relative;display:grid;grid-template-columns:repeat(9,1fr);height:104px;border-radius:14px;border:1px solid var(--line);overflow:hidden;background:linear-gradient(0deg,color-mix(in srgb,var(--a) 14%,transparent),transparent 70%)}
-.track i{border-right:1px dashed var(--line);font:11px var(--sans);color:var(--mut);display:grid;align-items:end;text-align:center;font-style:normal}
-.chip{position:absolute;bottom:8px;left:calc(var(--g)*100%/9);width:calc(100%/9);text-align:center;font:800 28px var(--serif);color:var(--b);animation:fl 2s ease-in-out infinite}
-.bot{position:absolute;bottom:8px;left:calc(var(--p)*100%/9);width:calc(100%/9);display:grid;place-items:center;transition:left .55s cubic-bezier(.3,1.3,.5,1)}
-.bd{position:relative;width:36px;height:30px;background:var(--a);border-radius:11px 11px 6px 6px;transition:background .3s}
-.bd:before{content:"";position:absolute;left:8px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--ink);box-shadow:14px 0 var(--ink);animation:bl 4s infinite}
-.bd:after{content:"";position:absolute;left:16px;top:-10px;width:3px;height:10px;background:var(--b)}
-.walk .bd{animation:wk .28s infinite}.win .bd{background:var(--b);animation:jp .7s 3}.oops .bd{animation:sk .5s}
-.bub{position:absolute;bottom:100%;margin-bottom:12px;white-space:nowrap;background:var(--fg);color:var(--bg);padding:2px 12px;border-radius:10px;font:700 13px var(--sans);animation:pop .3s}
-.mem{display:flex;gap:10px;flex-wrap:wrap;min-height:58px;align-items:center}
-.box{border:2px solid var(--a);border-radius:10px;padding:2px 14px;font:600 13px var(--sans);color:var(--mut)}.box b{display:block;font:italic 800 22px var(--serif);color:var(--a);min-height:30px}.box.pop{animation:pop .5s}
-.lab{font:700 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-bottom:8px}
-#msg{min-height:50px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);color:var(--mut)}#msg.bad{border-color:var(--bad);color:var(--fg);animation:sk .5s}#msg.hint{border-color:var(--b);color:var(--fg)}
-.bar{display:flex;gap:10px;flex-wrap:wrap}
-.work{display:grid;grid-template-columns:150px 1fr;gap:14px}@media(max-width:600px){.work{grid-template-columns:1fr}}
-#pal{border:2px dashed transparent;border-radius:12px;padding:4px}#pal.over{border-color:var(--bad)}
-.blk{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;color:#0b0f14;font:700 14px var(--sans);cursor:grab;margin:6px 0;box-shadow:0 3px 0 rgba(0,0,0,.3);animation:pop .3s;transition:transform .2s}
-.set,.change{background:hsl(calc(var(--h) + 25) 85% 68%)}.move{background:hsl(calc(var(--h) + 100) 80% 70%)}.say{background:hsl(calc(var(--h) + 170) 75% 74%)}.rep{background:hsl(calc(var(--h) + 240) 80% 72%);display:block}
-.blk.run{outline:3px solid var(--fg);transform:scale(1.04)}
-.blk select,.blk input{border:0;border-radius:6px;padding:1px 6px;background:#fff;color:#111;width:auto}.blk input{width:58px}.blk input:disabled{opacity:.4}
-.zone{min-height:150px;border:2px dashed var(--line);border-radius:14px;padding:6px 10px;transition:.2s}.zone.over{border-color:var(--a);background:color-mix(in srgb,var(--a) 12%,transparent)}
-.zone.in{min-height:46px;margin-top:6px;background:rgba(0,0,0,.14);padding:2px 8px}
-.empty{color:var(--mut);font-size:14px;padding:50px 10px;text-align:center}
-.modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(8px);padding:20px}
-.pan{width:min(460px,100%);text-align:center;border:1px solid var(--a);border-radius:22px;background:var(--bg);padding:34px;animation:pop .5s}.pan h2{font-size:34px;font-style:italic;margin-bottom:8px}.pan p{color:var(--mut);margin-bottom:18px}
-.stars{font-size:38px;color:var(--b);letter-spacing:8px;margin:6px 0}
-.spark{position:fixed;z-index:60;width:9px;height:9px;border-radius:2px;pointer-events:none}
-.track{counter-reset:c -1}.track i{position:relative}.track i:before{counter-increment:c;content:counter(c);position:absolute;top:5px;left:0;right:0;text-align:center;font:700 12px var(--sans);color:var(--mut)}
-.track i:first-child:after{content:"START";font:700 9px var(--sans);letter-spacing:.1em;padding-bottom:4px}.track i.vis{background:color-mix(in srgb,var(--b) 20%,transparent)}
-.chip small{display:block;font:700 9px var(--sans);letter-spacing:.1em;color:var(--mut)}
-.goals{list-style:none;padding:0;display:grid;gap:6px;margin:12px 0}.goals li{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;border:1px solid var(--line);font-size:14px;color:var(--fg);transition:.3s}
-.goals li:before{content:"";flex:none;width:18px;height:18px;border-radius:5px;border:2px solid var(--mut);display:grid;place-items:center;font-size:12px}.goals li.ok{border-color:var(--ok)}.goals li.ok:before{content:"✓";background:var(--ok);border-color:var(--ok);color:#fff}
-.goals li.tip{color:var(--mut);border-style:dashed}.goals li.tip:before{display:none}
-.btn.sm{padding:6px 16px;font-size:13px}
-.if{background:hsl(calc(var(--h) + 310) 75% 76%);display:block}.else{display:block;margin-top:8px}
-#boss{display:grid;gap:14px}.bh{display:flex;gap:14px;align-items:center}
-.bf{flex:none;width:54px;height:46px;border-radius:14px 14px 8px 8px;background:var(--bad);position:relative}.bf:before{content:"";position:absolute;left:12px;top:15px;width:8px;height:8px;border-radius:50%;background:var(--ink);box-shadow:20px 0 var(--ink)}
-.hpb{height:14px;border-radius:8px;border:1px solid var(--line);overflow:hidden}.hpb i{display:block;height:100%;background:var(--bad);transition:width .6s}
-.hrt{font-size:22px;letter-spacing:4px;color:var(--bad)}.hrt s{text-decoration:none;opacity:.25}
-.bm{list-style:none;padding:0;display:grid;gap:6px;font-size:14px;margin:0}.bm li{padding:6px 10px;border:1px solid var(--line);border-radius:8px;color:var(--mut)}.bm li b{color:var(--fg)}
-#boss.zap{animation:sk .5s;border-color:var(--bad)}
-.pan.big{width:min(560px,100%);max-height:92vh;overflow:auto}.learned{text-align:left;border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:18px}.learned ul{margin:8px 0 12px;padding-left:20px;color:var(--fg)}.learned li{margin:6px 0}
-.tools{display:flex;gap:9px;align-items:center}.tools small{font:600 17px var(--hand);color:var(--mut);margin-right:4px}
-.sw{width:20px;height:20px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;outline:1px solid var(--line);transition:transform .2s}.sw:hover{transform:scale(1.2)}.sw.on{border-color:var(--bg);outline:2px solid var(--fg)}
-.sw.auto{background:conic-gradient(from 90deg,#e86a6a,#e8c46a,#6ae88f,#6ac4e8,#a46ae8,#e86a6a)}.sw.auto.on{animation:swspin 3s linear infinite}
-a.logo{color:inherit;text-decoration:none;transition:color .2s}a.logo:hover{color:var(--a)}
-@keyframes swspin{to{transform:rotate(360deg)}}
-.track.maze{display:block;overflow:visible;height:calc(var(--rows)*62px)}
-.track.maze i{position:absolute;left:calc(var(--x)*100%/var(--cols));top:calc(var(--y)*100%/var(--rows));width:calc(100%/var(--cols));height:calc(100%/var(--rows));border:1px dashed var(--line);border-radius:8px;background:color-mix(in srgb,var(--a) 8%,transparent)}
-.track.maze i.vis{background:color-mix(in srgb,var(--b) 24%,transparent)}
-.track.maze .chip{bottom:auto;left:calc(var(--gx)*100%/var(--cols));top:calc(var(--gy)*100%/var(--rows));width:calc(100%/var(--cols));height:calc(100%/var(--rows));display:grid;place-items:center;align-content:center}
-.track.maze .bot{bottom:auto;left:calc(var(--px)*100%/var(--cols));top:calc(var(--py)*100%/var(--rows));width:calc(100%/var(--cols));height:calc(100%/var(--rows));transition:left .55s cubic-bezier(.3,1.3,.5,1),top .55s cubic-bezier(.3,1.3,.5,1)}
-.wall{position:absolute;left:calc(var(--x)*100%/var(--cols));top:calc(var(--y)*100%/var(--rows));width:calc(100%/var(--cols));height:calc(100%/var(--rows));border-radius:8px;background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--fg) 14%,transparent) 0 5px,transparent 5px 10px);border:1px solid var(--line);pointer-events:none}
-.bd{scale:var(--f,1) 1}
-.learned .why{list-style:none;padding:0;margin:8px 0 10px}.why{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px;text-align:left}.why li{padding:8px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;color:var(--mut)}.why li b{color:var(--fg)}
-#toast{position:fixed;top:calc(var(--hudh,0px) + 12px);left:50%;translate:-50% 0;z-index:45;width:min(680px,calc(100% - 24px));max-height:58vh;overflow:auto;padding:14px 16px 12px;border-radius:14px;border:1px solid var(--b);background:var(--bg);color:var(--fg);box-shadow:0 14px 40px rgba(0,0,0,.35);animation:tdrop .35s}
-#toast.bad{border-color:var(--bad)}#toast.ok{border-color:var(--ok)}#toast .btn{margin-top:10px}#toast ul{margin-top:8px}
-#boss{position:fixed;top:0;left:0;right:0;z-index:42;display:flex;flex-wrap:wrap;align-items:center;gap:8px 22px;padding:8px 18px;border-radius:0 0 18px 18px;border-width:0 0 1px;background:color-mix(in srgb,var(--bg) 93%,transparent);box-shadow:0 8px 30px rgba(0,0,0,.25)}
-#boss .nm{min-width:210px;flex:1 1 230px}#boss .nm b{font:italic 800 18px var(--serif)}#boss .nm small{color:var(--mut);margin-left:8px}
-#boss .tnt{font:600 17px var(--hand);color:var(--bad);min-height:22px}
-#boss .mw{flex:1 1 260px;min-width:0}.mcs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
-.mc{flex:none;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:99px;color:var(--mut)}.mc b{color:var(--bad)}
-.bb{--s:10px;font-size:var(--s);position:relative;width:7em;height:7em;flex:none;animation:bfloat 3s ease-in-out infinite}
-.bb .bh2{position:absolute;left:.5em;right:.5em;bottom:.4em;top:1.6em;background:var(--bad);border-radius:1.4em 1.4em .8em .8em;box-shadow:inset 0 -.6em 0 rgba(0,0,0,.18),0 0 1.6em color-mix(in srgb,var(--bad) 55%,transparent)}
-.bb .eye{position:absolute;top:1.5em;width:1.2em;height:1.2em;border-radius:50%;background:#fff;box-shadow:0 0 .8em #fff,0 0 1.6em var(--bad);animation:eyep 1.6s ease-in-out infinite}
-.bb .eye:nth-child(1){left:1.2em}.bb .eye:nth-child(2){right:1.2em}
-.bb .mouth{position:absolute;left:1.3em;right:1.3em;bottom:.9em;height:.9em;background:#14060a;clip-path:polygon(0 0,12% 100%,25% 0,37% 100%,50% 0,62% 100%,75% 0,87% 100%,100% 0)}
-.bb .ant{position:absolute;top:0;left:1.4em;width:.5em;height:1.8em;background:var(--bad);transform:rotate(-18deg);border-radius:.3em}.bb .ant.r{left:auto;right:1.4em;transform:rotate(18deg)}
-.bb.hurt{animation:bhurt .55s}.bb.atk{animation:batk .6s}.bb.laugh{animation:bhurt 1s infinite}
-.bb.dead{animation:none;filter:grayscale(1) brightness(.55);transform:rotate(-14deg) translateY(.6em)}
-.bb.dead .eye{background:none;box-shadow:none;animation:none}.bb.dead .eye:before{content:"✕";position:absolute;inset:0;display:grid;place-items:center;color:#c8c8c8;font:700 1.4em sans-serif}
-.bb.sil .bh2{background:#0b0b12;box-shadow:none}.bb.sil .ant{background:#0b0b12}.bb.sil .mouth{background:#000}.bb.sil .eye{background:var(--ec);box-shadow:0 0 1em var(--ec),0 0 2.4em var(--ec)}
-.h{position:relative;display:inline-block;width:1.05em;height:1em;line-height:1;margin-right:.15em;vertical-align:middle;color:var(--bad)}
-.h i{position:absolute;left:0;top:0;font-style:normal;line-height:1;letter-spacing:0}.h i:first-child{clip-path:inset(0 50% 0 0)}.h i:last-child{clip-path:inset(0 0 0 50%)}
-.h.empty{opacity:.2}.h.brk i:first-child{animation:hbl 1.1s ease-in forwards}.h.brk i:last-child{animation:hbr 1.1s ease-in forwards}
-.orb{position:fixed;z-index:80;width:18px;height:18px;border-radius:50%;pointer-events:none}.vig{position:fixed;inset:0;z-index:90;pointer-events:none}
-.dmg{position:fixed;z-index:90;font:800 28px var(--serif);color:#ff6b81;text-shadow:0 2px 0 #000;pointer-events:none}
-#cine{--fg:#f3efe8;--line:rgba(255,255,255,.28);position:fixed;inset:0;z-index:70;display:grid;place-items:center;background:#05060a;color:#e8e8f0;overflow:auto;padding:16px;animation:cfade .8s}
-#cine .stage{position:relative;width:min(900px,100%);min-height:min(560px,90vh);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
-#cine.c-intro{background:radial-gradient(circle at 50% 40%,#3a0d16,#05060a 70%)}#cine.c-lose{background:radial-gradient(circle at 50% 40%,#3a0a0a,#050205 72%)}
-#cine.c-win{background:radial-gradient(circle at 50% 60%,#3a0d16,#05060a 70%)}#cine.c-win.dark{background:#020308;transition:background 2s}
-.ctitle{font:italic 800 clamp(34px,7vw,72px)/1.05 var(--serif);margin:10px 0;color:#ffd9a0;text-shadow:0 0 30px #ff9a3c}.c-lose .ctitle{color:#ff9aa8;text-shadow:0 0 30px #ef3c50}
-.csub{max-width:560px;color:#c9cbe0;margin-bottom:14px}.cb{display:grid;place-items:center;min-height:8em}
-.intro-bot{animation:brise 1.2s ease-out}.c-win.dark .ctitle{opacity:0;transition:opacity 1s}
-.clines{min-height:96px}.clines p{margin:6px 0;font:italic 600 clamp(18px,3.4vw,28px) var(--serif);color:#c9cbe0;animation:cfade 1.2s}.clines small{display:block;margin-top:10px;letter-spacing:.3em;text-transform:uppercase;color:#7c7f99;font:600 12px var(--sans)}
-.sw1,.sw2,.sw3{position:absolute;opacity:0;transition:opacity 1.8s}.sw1{left:3%;top:6%}.sw2{right:3%;top:2%}.sw3{left:40%;top:0}.sw1.on,.sw2.on,.sw3.on{opacity:1}
-.frag{position:absolute;left:50%;top:40%;width:14px;height:14px;background:var(--bad);border-radius:3px;pointer-events:none}
-.cskip{position:absolute;top:14px;right:16px;background:none;border:1px solid #444;color:#9a9cb4;border-radius:99px;padding:4px 14px;cursor:pointer;font:600 12px var(--sans)}
-.bighearts{font-size:84px;line-height:1}.bighearts .h{margin:0 .12em}
-@keyframes tdrop{from{opacity:0;translate:-50% -20px}}
-@keyframes bfloat{50%{transform:translateY(-.5em)}}
-@keyframes eyep{50%{transform:scale(.7);opacity:.7}}
-@keyframes bhurt{0%,100%{transform:translateX(0);filter:none}20%{transform:translateX(-.6em);filter:brightness(2.5)}40%{transform:translateX(.6em)}60%{transform:translateX(-.4em);filter:brightness(2)}80%{transform:translateX(.4em)}}
-@keyframes batk{30%{transform:translateX(1.4em) scale(1.35);filter:brightness(1.8)}100%{transform:none}}
-@keyframes hbl{20%{transform:translate(-.08em,0)}to{transform:translate(-.5em,1.5em) rotate(-35deg);opacity:0}}
-@keyframes hbr{20%{transform:translate(.08em,0)}to{transform:translate(.5em,1.7em) rotate(35deg);opacity:0}}
-@keyframes cfade{from{opacity:0}}
-@keyframes brise{from{opacity:0;transform:translateY(80px) scale(.5)}}
-@media(min-width:1101px){.game{grid-template-columns:minmax(0,.95fr) minmax(0,1fr) minmax(0,1.2fr)}}
-@media(min-width:901px) and (max-width:1100px){.game{grid-template-columns:1fr 1fr}.game>.col:nth-child(3){grid-column:1/-1}}
-.wrap:has(#game:not([hidden])){max-width:1480px}
-#dim{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 50% 35%,transparent 22%,#03040f 100%);opacity:var(--dim,.5);transition:opacity 4s}
-#chs{display:block}.sec{margin:34px 0 10px}.sec h2{font-size:30px}.sec h2 .hand{font-size:24px;margin-right:8px}.sd{color:var(--mut);margin:2px 0 14px}
-.ch.bossc{border-color:var(--bad)}.ch.bossc h3{color:var(--bad)}
-.guard{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:12px 18px;border:1px solid var(--line);border-radius:16px;margin-bottom:6px;background:color-mix(in srgb,var(--bg) 70%,transparent)}
-.gd{display:grid;justify-items:center;gap:2px;color:var(--mut);font-size:11px}.gd.dead{opacity:.7}.gtxt{display:grid;margin-left:auto;text-align:right}.gtxt span{color:var(--mut);font-size:13px}
-.note{background:hsl(calc(var(--h) + 60) 20% 82%)}.ask{background:hsl(calc(var(--h) + 130) 70% 76%)}.calc{background:hsl(calc(var(--h) + 190) 75% 74%)}.join{background:hsl(calc(var(--h) + 280) 70% 78%)}.cast{background:hsl(calc(var(--h) + 330) 70% 78%)}.pick{background:hsl(calc(var(--h) + 20) 85% 76%)}.def{background:hsl(calc(var(--h) + 215) 75% 74%);display:block}.call{background:hsl(calc(var(--h) + 215) 60% 82%)}.bit{background:hsl(calc(var(--h) + 150) 75% 70%)}
-.chip.hit{animation:chiphit .9s}@keyframes chiphit{40%{transform:scale(1.5) rotate(20deg);filter:brightness(1.6)}}
-.bb.k1 .bh2,.bb.k1 .ant{background:#e8a23a}.bb.k1 .eye{box-shadow:0 0 .8em #fff,0 0 1.6em #e8a23a}
-.bb.k2 .bh2,.bb.k2 .ant{background:#9b5cf0}.bb.k2 .eye{box-shadow:0 0 .8em #fff,0 0 1.6em #9b5cf0}
-.bb.k3 .bh2,.bb.k3 .ant{background:#35c9e8}.bb.k3 .eye{box-shadow:0 0 .8em #fff,0 0 1.6em #35c9e8}
-#cine.c-win.dawn{background:radial-gradient(circle at 50% 50%,#fff3c4,#f6b94a 45%,#6b3a10 100%);transition:background 2.5s}.c-win.dawn .ctitle,.c-win.dawn .clines p{color:#3a2200;text-shadow:none}.c-win.dawn .clines small{color:#6b4a14}
-#cine.c-badge{background:radial-gradient(circle at 50% 40%,#2a2150,#05060a 72%)}
-.bwrap{position:relative;width:170px;height:170px;display:grid;place-items:center;margin-bottom:6px}.bwrap.mini{width:90px;height:90px}
-.bico{position:relative;z-index:2;width:78%;height:78%;border-radius:50%;display:grid;place-items:center;font-size:72px;background:radial-gradient(circle at 35% 30%,#fff3,#0004),var(--bg2,#3a2f6b);border:4px solid var(--bc,#ffd36a);box-shadow:0 0 30px var(--bc,#ffd36a)}.mini .bico{font-size:38px;border-width:3px}
-.rays{position:absolute;inset:-40%;border-radius:50%;background:repeating-conic-gradient(from 0deg,var(--bc,#ffd36a) 0 6deg,transparent 6deg 20deg);opacity:.25;animation:rot 12s linear infinite;-webkit-mask:radial-gradient(circle,transparent 30%,#000 32%,transparent 70%);mask:radial-gradient(circle,transparent 30%,#000 32%,transparent 70%)}
-.ring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--bc,#ffd36a);opacity:0}
-.bd1{--bc:#ff6b7f;--bg2:#5a1f33}.bd2{--bc:#6adfff;--bg2:#1d3f5c}.bd3{--bc:#b46bff;--bg2:#3a2266}.bd4{--bc:#ffd36a;--bg2:#6a4a14}
-.bd1 .bico{animation:bd1 1.5s cubic-bezier(.2,1.3,.4,1)}.bd2 .bico{animation:bd2 1.3s ease-out}.bd2 .ring{animation:shock 1.4s .5s ease-out 2}.bd3 .bico{animation:bd3 1.6s ease-out,glowp 1.6s 1.6s ease-in-out infinite}.bd4 .bico{animation:bd4 1.8s cubic-bezier(.2,1,.3,1)}.bd4 .ring{animation:shock 1.6s .8s ease-out infinite}
-.mini.bd1 .bico,.mini.bd2 .bico,.mini.bd3 .bico,.mini.bd4 .bico{animation-duration:1.2s}.mini .rays{display:none}
-@keyframes rot{to{transform:rotate(360deg)}}@keyframes shock{from{opacity:.9;transform:scale(.8)}to{opacity:0;transform:scale(2)}}@keyframes glowp{50%{box-shadow:0 0 60px var(--bc),0 0 10px #fff}}
-@keyframes bd1{from{transform:rotate(-720deg) scale(0);opacity:0}}@keyframes bd2{0%{transform:translateY(-300px);opacity:0}60%{transform:translateY(0)}75%{transform:translateY(-30px)}100%{transform:none}}@keyframes bd3{from{transform:perspective(500px) rotateY(540deg) scale(.3);opacity:0}}@keyframes bd4{from{transform:translateY(240px) scale(.2);opacity:0;filter:brightness(3)}}
-#achs{position:fixed;top:12px;right:12px;z-index:95;display:grid;gap:8px;pointer-events:none}
-.achp{display:flex;gap:12px;align-items:center;min-width:250px;max-width:330px;padding:10px 16px 10px 10px;border-radius:16px;background:var(--bg);color:var(--fg);border:1px solid var(--b);box-shadow:0 10px 36px rgba(0,0,0,.35);animation:achin .6s cubic-bezier(.2,1.2,.4,1)}.achp.out{animation:achout .5s forwards}
-.achp small{display:block;font:700 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--a)}.achp b{display:block;font:italic 800 18px var(--serif)}.achp span{color:var(--mut);font-size:13px}
-.aico{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;font-size:28px;background:color-mix(in srgb,var(--a) 22%,transparent);border:1px solid var(--line)}
-@keyframes achin{from{transform:translateX(120%);opacity:0}}@keyframes achout{to{transform:translateX(120%);opacity:0}}
-.x1{animation:x1 .9s}.x2{animation:x2 1s}.x3{animation:x3 1s}.x4{animation:x4 .9s}.x5{animation:x5 1s}.x6{animation:x6 1.2s}.x7{animation:x7 .8s}.x8{animation:x8 1s}.x9{animation:x9 1.2s}.x10{animation:x10 1s}.x11{animation:x11 1.1s}.x12{animation:x12 1.2s}
-@keyframes x1{0%{transform:scale(0)}60%{transform:scale(1.4)}100%{transform:scale(1)}}@keyframes x2{from{transform:rotate(0) scale(.2)}to{transform:rotate(720deg) scale(1)}}@keyframes x3{0%{transform:translateY(-70px);opacity:0}60%{transform:translateY(8px)}80%{transform:translateY(-6px)}100%{transform:none}}@keyframes x4{from{transform:translateX(80px);opacity:0}}@keyframes x5{from{transform:perspective(300px) rotateX(90deg)}}@keyframes x6{0%,100%{box-shadow:0 0 0 var(--a)}50%{box-shadow:0 0 28px var(--a)}}@keyframes x7{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}@keyframes x8{from{transform:scale(3);filter:blur(8px);opacity:0}}@keyframes x9{20%{transform:rotate(-40deg)}50%{transform:rotate(30deg)}80%{transform:rotate(-12deg)}}@keyframes x10{30%{transform:scale(1.25,.75)}50%{transform:scale(.8,1.2)}70%{transform:scale(1.1,.9)}}@keyframes x11{0%{transform:skew(0)}30%{transform:skew(-14deg)}60%{transform:skew(10deg)}100%{transform:none}}@keyframes x12{10%,30%{transform:scale(.9) rotate(-5deg)}20%,40%,60%,80%{transform:scale(1.2) rotate(5deg)}50%,70%{transform:scale(1.2) rotate(-5deg)}100%{transform:none}}
-#lib{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:16px;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(8px);animation:pop .3s}
-.lpan{width:min(900px,100%);max-height:90vh;overflow:auto;border:1px solid var(--a);border-radius:22px;background:var(--bg);padding:22px}.lh{display:flex;justify-content:space-between;align-items:center}.lh h2{font-size:32px;font-style:italic}
-.ltabs{display:flex;gap:8px;margin:14px 0}.ltabs button{border:1px solid var(--line);background:none;color:var(--fg);border-radius:99px;padding:6px 16px;font:700 14px var(--sans);cursor:pointer}.ltabs button.on{background:var(--a);color:var(--ink);border-color:var(--a)}
-.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}.lc{display:grid;justify-items:center;text-align:center;gap:6px;padding:16px 12px;border:1px solid var(--line);border-radius:16px;cursor:pointer}.lc b{font:italic 800 17px var(--serif)}.lc span{font-size:13px;color:var(--mut)}.lc.lk{opacity:.55;cursor:default}.lc.lk .aico{filter:grayscale(1)}
-.lc.big{padding:20px 12px}
-.bot[data-m=hop].walk .bd{animation:mhop .3s infinite}.bot[data-m=bounce].walk .bd{animation:mbounce .35s infinite}.bot[data-m=glide].walk .bd{animation:mglide .5s ease-in-out infinite}.bot[data-m=spin].walk .bd{animation:mspin .55s linear infinite}.bot[data-m=wobble].walk .bd{animation:mwob .2s infinite}
-@keyframes mhop{50%{transform:translateY(-12px)}}@keyframes mbounce{0%,100%{transform:scale(1,1)}30%{transform:scale(1.2,.8) translateY(2px)}60%{transform:scale(.85,1.2) translateY(-10px)}}@keyframes mglide{50%{transform:translateY(-3px) skewX(-8deg)}}@keyframes mspin{to{transform:rotate(360deg)}}@keyframes mwob{50%{transform:rotate(10deg)}0%,100%{transform:rotate(-10deg)}}
-.track[data-sk="1"] .wall{background:radial-gradient(circle,color-mix(in srgb,var(--fg) 22%,transparent) 2px,transparent 3px) 0 0/10px 10px}.track[data-sk="2"] .wall{background:repeating-linear-gradient(90deg,color-mix(in srgb,var(--fg) 14%,transparent) 0 4px,transparent 4px 9px)}.track[data-sk="3"] .wall{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--a) 22%,transparent) 0 6px,transparent 6px 12px)}
-body[data-sec="1"] .track{box-shadow:0 0 22px color-mix(in srgb,var(--a) 25%,transparent)}body[data-sec="2"] .track{animation:tglow 4s ease-in-out infinite}body[data-sec="3"] .track{animation:tglow 3s ease-in-out infinite;filter:hue-rotate(0deg)}body[data-sec="3"] .chip{animation:fl 1.4s ease-in-out infinite}
-@keyframes tglow{50%{box-shadow:0 0 34px color-mix(in srgb,var(--b) 50%,transparent)}}
-.dps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin:8px 0}.dp{text-align:left;border:1px solid var(--line);background:color-mix(in srgb,var(--bg) 70%,transparent);color:var(--fg);border-radius:16px;padding:14px 16px;cursor:pointer;display:grid;gap:6px;transition:transform .2s,border-color .2s}.dp:hover{transform:translateY(-3px);border-color:var(--a)}.dp.on{border-color:var(--a);box-shadow:0 0 0 2px var(--a)}.dp b{font:italic 800 20px var(--serif)}.dp span{font-size:13px;color:var(--mut)}
-#cine .dp{color:#f3efe8;background:rgba(255,255,255,.06)}#cine .dp span{color:#c9cbe0}
-#tally{margin:4px 0 18px;font-size:13px;color:var(--mut)}#tally b{color:var(--fg)}
-body.d-beg .blk{font-size:15px;padding:8px 13px;border-radius:16px}body.d-beg .card{border-radius:24px}body.d-beg .bd{width:44px;height:38px}body.d-beg .track i{border-style:solid}
-body.d-pro{font-family:'JetBrains Mono','Courier New',monospace}body.d-pro .card{border-radius:6px;border-color:var(--a);box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 28%,transparent),inset 0 0 30px rgba(0,0,0,.2)}body.d-pro .blk{border-radius:3px;box-shadow:none;border:1px solid rgba(0,0,0,.45);font-family:inherit}body.d-pro .btn,body.d-pro .dp{border-radius:4px}body.d-pro .track{border-radius:4px;background:repeating-linear-gradient(0deg,transparent 0 11px,color-mix(in srgb,var(--a) 14%,transparent) 11px 12px)}body.d-pro .track.fog i:before{opacity:0}body.d-pro h1,body.d-pro h2,body.d-pro h3{font-family:'JetBrains Mono','Courier New',monospace;font-style:normal}
-.while{display:block;background:hsl(calc(var(--h) + 240) 80% 72%)}
-#bolt{position:fixed;right:16px;bottom:16px;z-index:56}
-#bfab{position:relative;width:62px;height:62px;border-radius:50%;border:2px solid var(--a);background:var(--bg);cursor:pointer;display:grid;place-items:center;box-shadow:0 8px 28px rgba(0,0,0,.3);transition:transform .25s}#bfab:hover{transform:scale(1.1) rotate(-5deg)}#bfab.on{box-shadow:0 0 24px var(--a)}
-.bping{position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--a);animation:bping 2.4s ease-out infinite;pointer-events:none}#bfab.on .bping{display:none}@keyframes bping{from{opacity:.8;transform:scale(.9)}to{opacity:0;transform:scale(1.35)}}
-.bface{position:relative;display:block;width:36px;height:28px;border-radius:9px 9px 6px 6px;background:var(--a);--ey:#fff}.bface .eye{position:absolute;top:9px;width:7px;height:7px;border-radius:50%;background:var(--ey);box-shadow:0 0 8px var(--ey);animation:bl 4s infinite}.bface .eye:nth-of-type(1){left:8px}.bface .eye:nth-of-type(2){right:8px}.bface .ant{position:absolute;left:16px;top:-9px;width:3px;height:9px;background:var(--b)}.bface .ant:after{content:"";position:absolute;left:-2px;top:-5px;width:7px;height:7px;border-radius:50%;background:var(--b);animation:led 1.2s infinite}
-.bface[data-m=ok]{--ey:#7dffb2}.bface[data-m=bad]{--ey:#ff5d73;animation:sk .5s}.bface[data-m=warn]{--ey:#ffd36a}@keyframes led{50%{opacity:.25}}
-#bpan{position:absolute;right:0;bottom:78px;width:min(360px,92vw);height:min(470px,70vh);display:flex;flex-direction:column;border:1px solid var(--a);border-radius:18px;background:color-mix(in srgb,var(--bg) 94%,#000);box-shadow:0 18px 60px rgba(0,0,0,.45);overflow:hidden;animation:pop .35s;font-family:'Courier New',monospace}
-#bpan:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px);z-index:2}
-.bhd{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--a) 14%,transparent)}.bhd b{display:block;letter-spacing:.2em;font-size:15px}.bhd small{color:var(--mut);font-size:11px;letter-spacing:.1em}.bhd button{margin-left:auto;background:none;border:0;color:var(--fg);cursor:pointer;font-size:16px}.bhd button+button{margin-left:0}
-#blog{flex:1;overflow:auto;padding:12px;display:grid;gap:8px;align-content:start}
-.bm2{padding:8px 11px;border-radius:10px;font-size:13px;line-height:1.45;max-width:88%;word-break:break-word}.bm2.rb{background:color-mix(in srgb,var(--a) 16%,transparent);border:1px solid color-mix(in srgb,var(--a) 40%,transparent);letter-spacing:.03em}.bm2.rb.bad{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 14%,transparent);animation:sk .4s}.bm2.rb.warn{border-color:#ffd36a}.bm2.me{justify-self:end;background:var(--a);color:var(--ink)}.bm2.think{opacity:.7;animation:led .6s infinite}
-.bin{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}.bin input{flex:1;background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:13px 'Courier New',monospace;color:var(--fg)}.bin button{border:0;border-radius:8px;background:var(--a);color:var(--ink);font:700 12px 'Courier New',monospace;padding:0 14px;cursor:pointer}
-.bnote{padding:0 12px 8px;font-size:11px;color:var(--mut);letter-spacing:.05em}
-.base{background:hsl(calc(var(--h) + 75) 70% 74%)}
-.bb.k4 .bh2,.bb.k4 .ant{background:#3ddc84}.bb.k4 .eye{box-shadow:0 0 .8em #fff,0 0 1.6em #3ddc84}
-.bb.k5 .bh2,.bb.k5 .ant{background:#f2c94c}.bb.k5 .eye{box-shadow:0 0 .8em #fff,0 0 1.6em #f2c94c}
-.bd5{--bc:#3ddc84;--bg2:#12402a}.bd6{--bc:#f2c94c;--bg2:#5a4210}
-.bd5 .bico{animation:bd5 1.3s steps(9)}.bd5 .ring{animation:shock 1s .6s steps(5) 3}.bd6 .bico{animation:bd6 2s cubic-bezier(.2,1.2,.4,1)}.bd6 .ring{animation:shock 1.6s .8s ease-out infinite}
-@keyframes bd5{from{clip-path:inset(0 100% 0 0);filter:hue-rotate(90deg)}to{clip-path:inset(0 0 0 0)}}@keyframes bd6{0%{transform:scale(0) rotate(-180deg);opacity:0}60%{transform:scale(1.45) rotate(14deg)}100%{transform:none}}
-.sw4,.sw5{position:absolute;opacity:0;transition:opacity 1.8s}.sw4{left:20%;top:24%}.sw5{right:20%;top:28%}.sw4.on,.sw5.on{opacity:1}
-body.d-beg .btn{font-size:17px;padding:14px 30px}
-body.d-pro{--bg:#060b0e;--fg:#cdeedd;--mut:#7fa392;--line:rgba(120,255,180,.22);--ink:#04110a}
-.cv{margin:12px 0 0;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:#02080a;color:#6dffa8;font:12px/1.5 monospace;white-space:pre-wrap;max-height:170px;overflow:auto}
-@media(min-width:601px){.work{grid-template-columns:150px minmax(0,1fr)}}
-@media(min-width:1101px){.game{grid-template-columns:minmax(0,.88fr) minmax(0,.95fr) minmax(0,1.4fr)}}
-.blk{min-width:0;max-width:100%}.blk select,.blk input{max-width:100%;min-width:0}.zone{min-width:0}.cv{overflow-wrap:anywhere}
-.col{min-width:0;grid-template-columns:minmax(0,1fr)}.card{min-width:0}.work>div{min-width:0}
-body.d-beg{--bg:#140f33;--fg:#fff8ef;--mut:#d6cdf2;--line:rgba(255,255,255,.2);--ink:#1b1030;background:radial-gradient(circle at 15% 8%,#4a2a92,transparent 42%),radial-gradient(circle at 88% 18%,#0e6b8c,transparent 38%),radial-gradient(circle at 50% 96%,#8a2a70,transparent 44%),#140f33}
-body.d-beg .card{border-radius:30px;border:2px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);box-shadow:0 10px 36px rgba(0,0,0,.28)}
-body.d-beg .blk{border:2px solid rgba(255,255,255,.55);box-shadow:0 4px 0 rgba(0,0,0,.35);transition:transform .2s}body.d-beg .blk:hover{animation:wig .5s}
-body.d-beg .blk.set:before,body.d-beg .blk.change:before{content:'📦 '}body.d-beg .blk.move:before{content:'👣 '}body.d-beg .blk.say:before{content:'💬 '}body.d-beg .blk.rep:before,body.d-beg .blk.while:before{content:'🔁 '}body.d-beg .blk.if:before{content:'❓ '}body.d-beg .blk.note:before{content:'📝 '}body.d-beg .blk.ask:before{content:'🎤 '}body.d-beg .blk.calc:before{content:'🧮 '}body.d-beg .blk.join:before{content:'🧵 '}body.d-beg .blk.def:before,body.d-beg .blk.call:before{content:'🧩 '}body.d-beg .blk.bit:before{content:'💡 '}body.d-beg .blk.pick:before{content:'📚 '}body.d-beg .blk.cast:before,body.d-beg .blk.base:before{content:'🔄 '}
-body.d-beg .btn{border-radius:999px;font-weight:800;box-shadow:0 5px 0 rgba(0,0,0,.35)}body.d-beg .btn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
-body.d-beg h1,body.d-beg h2,body.d-beg .logo{background:linear-gradient(90deg,#ffd36a,#ff8fcf,#7ad9ff,#ffd36a);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite}
-body.d-beg .bot{animation:bobble 2.4s ease-in-out infinite}body.d-beg .bd{box-shadow:0 0 18px color-mix(in srgb,var(--b) 60%,transparent)}
-body.d-beg .blk.glow{animation:blkglow 1.4s ease-in-out infinite}body.d-beg .track{border-radius:22px}
-#bfx{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}#bfx i{position:absolute;bottom:-40px;font-style:normal;opacity:.55;animation:floatup linear infinite}
-.coach{display:flex;gap:12px;margin-top:14px;padding:12px 14px;border-radius:22px;background:color-mix(in srgb,var(--b) 16%,transparent);border:2px dashed color-mix(in srgb,var(--b) 55%,transparent);animation:pop .5s}.coach .cface{padding-top:12px}.coach .cbody{flex:1;font-size:14px}.csteps{margin:6px 0 10px;padding-left:20px;display:grid;gap:5px}.csteps li{animation:pop .4s}
-@keyframes wig{25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}@keyframes rainbow{to{background-position:300% 0}}@keyframes bobble{50%{margin-top:-4px}}@keyframes blkglow{50%{box-shadow:0 0 0 3px #ffd36a,0 0 22px #ffd36a}}@keyframes floatup{from{transform:translateY(0) rotate(0);opacity:0}10%{opacity:.6}to{transform:translateY(-115vh) rotate(360deg);opacity:0}}
-body.d-pro.glitchy .card,body.d-pro.glitchy .top{animation:pglitch .38s steps(4)}body.d-pro.glitchy h2,body.d-pro.glitchy h3,body.d-pro.glitchy .logo{text-shadow:3px 0 #ff2bd6,-3px 0 #00e5ff}
-@keyframes pglitch{0%{transform:translate(-3px,0) skewX(-1deg);filter:hue-rotate(40deg)}25%{transform:translate(4px,1px);clip-path:inset(0 0 40% 0)}50%{transform:translate(-2px,-1px);clip-path:inset(30% 0 0 0)}75%{transform:translate(3px,0);filter:saturate(2)}100%{transform:none;clip-path:none;filter:none}}
-body.d-beg,body.d-pro{--a:hsl(var(--h) 80% 66%);--b:hsl(calc(var(--h) + 45) 85% 74%);--bad:#ef7a8c;--ok:#4fc98a}
-[hidden]{display:none!important}
-@keyframes up{from{opacity:0;transform:translateY(20px)}}
-@keyframes pop{from{opacity:0;transform:scale(.85)}}
-@keyframes fl{50%{transform:translateY(-6px) rotate(8deg)}}
-@keyframes bl{0%,94%,100%{transform:scaleY(1)}97%{transform:scaleY(.1)}}
-@keyframes wk{50%{transform:translateY(-4px) rotate(-5deg)}}
-@keyframes jp{40%{transform:translateY(-34px) rotate(180deg)}80%{transform:translateY(0) rotate(360deg)}}
-@keyframes sk{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
-@media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
-</style>
-</head>
-<body>
-<div id="dim"></div><div id="achs"></div>
-<div class="wrap">
-  <div class="top"><a class="logo" href="index.html">The Lost Protocol</a><div class="tools" id="themes"><small>mood:</small></div>
-    <div class="hud"><span>Player <b id="pn">Player</b></span><span>Score <b id="sc">0</b></span><button class="btn ghost sm" id="libb">🏆 Library</button><button class="btn ghost sm" id="sndg" title="Sound on/off">🔊</button><button class="btn ghost" id="exit" hidden>Exit to menu</button></div></div>
+/* =============================================================================
+   THE LOST PROTOCOL — GAME ENGINE  (js/pages/webgame.js)
+   -----------------------------------------------------------------------------
+   Runs every part of the playable game. Read the map below before editing; the
+   file is ordered the way the code was built (content first, engine second), not
+   the way it executes.
 
-  <div id="menu">
-    <div class="hero"><span class="hand">web edition</span><h1>Restore the protocol.</h1>
-      <p>Drag blocks together to give your robot instructions. Each chapter teaches one idea, and each mission is a small puzzle only your logic can solve.</p></div>
-    <div class="how"><span>1. Read the short lesson</span><span>2. Drag blocks into your script</span><span>3. Press Run and watch the robot</span></div>
-    <div class="who"><span class="hand">Your name:</span><input id="name" maxlength="14" value="Player" aria-label="Your name"></div>
-    <div id="pick"></div><div id="tally"></div>
-<div class="chs" id="chs"></div>
-  </div>
+   1. STORY GLUE ............ connects story.js text to chapters and cutscenes.
+   2. CLOUD SYNC ........... pushes the local save to Supabase when signed in.
+   3. LEARNER CONTENT ...... all lesson data for every age group and difficulty.
+   4. CORE STATE ........... PATH/DIFF, S.prog, the save() proxy, shared helpers.
+   5. MOOD CONTROLLER ...... the colour swatches in the header.
+   6. HUD + LEVEL LOADING .. chapter menu, the level header, play(c,l).
+   7. BLOCK BUILDER ........ the palette, drag/drop, nesting and reordering.
+   8. EXECUTOR ............. interprets the block script against a fake machine.
+   9. RUN LIFECYCLE ........ run(), finish(), the result screen, next level.
+  10. BOSS MODE ............ rounds, hearts, taunts and the boss fight loop.
+  11. CURRICULUM DATA ...... the six sections, twenty-four chapters and bosses.
+  12. ACHIEVEMENTS ......... the badge queue and its popups.
+  13. BLOCK LIBRARY ........ the reference sheet opened from the HUD.
+  14. PATH + DIFFICULTY .... configuration, unlock rules and the settings modal.
+  15. TALLY + PROFILE ...... local player tally and cloud learner sync.
+  16. PRO EXTRAS ........... terminal view, glitch effect and sound hooks.
 
-  <div id="game" class="game" hidden>
-    <div class="col">
-      <div class="card learn" id="learn"></div>
-    </div>
-    <div class="col mid">
-      <div class="card"><div class="track" id="track"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><div class="chip">✦<small>GOAL</small></div><div class="bot" id="bot"><div class="bd"></div></div></div></div>
-      <div class="card"><div class="lab">Memory boxes (variables)</div><div class="mem" id="mem"></div></div>
-      <div class="card" id="boss" hidden></div>
-      <div id="msg"></div>
-    </div>
-    <div class="col"><div class="card">
-      <div class="work">
-        <div><div class="lab">Blocks</div><div id="pal"></div></div>
-        <div><div class="lab">Your script</div><div class="zone" id="area" data-z="root"></div></div>
-      </div>
-      <div class="bar" style="margin-top:16px"><button class="btn" id="run">Run ▶</button><button class="btn ghost" id="reset">Reset</button><button class="btn ghost" id="hint">Hint</button></div>
-    </div></div>
-  </div>
-</div>
-<div class="back-site"><a href="index.html">Go back to the main page</a></div>
-<div id="toast" hidden></div>
-<div class="modal" id="res" hidden><div class="pan" id="pan"></div></div>
+   Saving: everything is written to localStorage through save(); the cloud copy is
+   a mirror. If the two disagree, the local save wins until the next sync.
+   ============================================================================= */
+// --- PROGRESS ISOLATION & STORAGE PROXY (BATCH 3) ---
+let PATH = 'g710';
+try { PATH = localStorage.getItem('tlp-path') || 'g710'; } catch(e) {}
+let DIFF = 'int';
+try { DIFF = localStorage.getItem('tlp-diff') || 'int'; } catch(e) {}
+let __D = DIFF;
 
-<script>
-let __D='';try{__D=localStorage.getItem('tlp-diff')||''}catch(e){}
-const __raw=(()=>{const g=Storage.prototype.getItem,s=Storage.prototype.setItem,r=Storage.prototype.removeItem,NS=/^tlp-(prog|draft|boss\d*|ach|badges)$/,m=k=>NS.test(k)?k+'@'+(__D||'x'):k;
- Storage.prototype.getItem=function(k){return g.call(this,m(k))};Storage.prototype.setItem=function(k,v){return s.call(this,m(k),v)};Storage.prototype.removeItem=function(k){return r.call(this,m(k))};return{g,s,r}})();
-function migrate(d){try{['prog','ach','badges'].forEach(k=>{const old=__raw.g.call(localStorage,'tlp-'+k),nk='tlp-'+k+'@'+d;if(old!=null){if(__raw.g.call(localStorage,nk)==null)__raw.s.call(localStorage,nk,old);__raw.r.call(localStorage,'tlp-'+k)}})}catch(e){}}
-if(__D)migrate(__D);
+const __raw = (() => {
+  const g = Storage.prototype.getItem, s = Storage.prototype.setItem, r = Storage.prototype.removeItem;
+  const NS = /^tlp-(prog|draft|boss\d*|ach|badges)$/;
+  const m = (k) => {
+    if (!NS.test(k)) return k;
+    const itemKey = k.replace(/^tlp-/, '');
+    if (window.TLP_AUTH && typeof window.TLP_AUTH.getActiveSaveKey === 'function') {
+      return window.TLP_AUTH.getActiveSaveKey(itemKey, PATH, DIFF);
+    }
+    return `tlp-v2@guest@default@${PATH || 'g710'}@${DIFF || 'int'}@${itemKey}`;
+  };
+  Storage.prototype.getItem = function(k) { return g.call(this, m(k)); };
+  Storage.prototype.setItem = function(k, v) { return s.call(this, m(k), v); };
+  Storage.prototype.removeItem = function(k) { return r.call(this, m(k)); };
+  return { g, s, r, m };
+})();
+
+/* ---------- Story integration (text lives in story.js) ---------- */
+function storyBrief(){try{document.querySelectorAll('.coach').forEach(x=>x.remove());if(!window.TLP_STORY||S.li!==0)return;const c=S.ci,el=$('#learn');if(!el)return;let h='';const si=TLP_STORY.firstInSection(c);
+ if(si>=0){const a=TLP_STORY.act(si,PATH);if(a)h+='<b class="actt">'+a.title+'</b>'+TLP_STORY.lines(a.lines)}
+ if(lv().boss)h+=TLP_STORY.lines(TLP_STORY.bossIntro(c));
+ h+=TLP_STORY.lines(TLP_STORY.brief(c));if(!h)return;
+ const d=document.createElement('div');d.className='story';d.innerHTML=h;const m=el.querySelector('.mis');if(m)m.after(d);else el.appendChild(d)}catch(e){}}
+function storyOutcome(last){try{if(!window.TLP_STORY||!last)return;const c=S.ci;let h='';
+ if(lv().boss)h+=TLP_STORY.lines(TLP_STORY.bossOutro(c));
+ h+=TLP_STORY.lines(TLP_STORY.win(c,PATH));
+ const si=TLP_STORY.sectionOf(c);const _sx=SEC.find(x=>x.id===si);if(_sx&&_sx.boss===c)h+=TLP_STORY.lines(TLP_STORY.actEnd(si,PATH));
+ if(!h)return;const d=document.createElement('div');d.className='story';d.innerHTML=h;const p=$('#pan p');if(p)p.after(d)}catch(e){}}
+function storyFail(){try{if(!window.TLP_STORY)return'';const f=TLP_STORY.fail();return ' <i>'+TLP_STORY.WHO[f[0]].name+': '+f[1]+'</i>'}catch(e){return''}}
+function storyScenes(o,done){let i=0;const c=cine(`<div class="stage"><h2 class="ctitle">${o.title}</h2><div class="sbody" id="sc-body" aria-live="polite"></div>${o.objective?`<div class="sobj" id="sc-obj" hidden>${o.objective}</div>`:''}<div class="bar" style="justify-content:center"><button class="btn ghost sm" id="sc-listen" type="button"><i class=ic-volume></i> Listen</button><button class="btn ghost sm" id="sc-skip" type="button">Skip</button><button class="btn" id="sc-next" type="button">Next</button></div></div>`);
+ const body=c.querySelector('#sc-body'),nx=c.querySelector('#sc-next'),obj=c.querySelector('#sc-obj');
+ const show=()=>{body.innerHTML=TLP_STORY.lines(o.scenes[i]);if(i===o.scenes.length-1){if(obj)obj.hidden=false;nx.textContent=o.button}else nx.textContent='Next'};
+ const end=()=>{try{TLP.Voice.stop()}catch(e){}uncine();done()};
+ nx.onclick=()=>{snd('chime');if(i<o.scenes.length-1){i++;show()}else end()};
+ c.querySelector('#sc-skip').onclick=end;c.querySelector('#sc-listen').onclick=()=>TLP.Voice.speak(TLP_STORY.plain(o.scenes[i]));
+ show();nx.focus()}
+function storyOpening(force){if(!window.TLP_STORY||(!force&&TLP_STORY.seen('intro'))||$('#sc-body'))return;storyScenes(TLP_STORY.opening(PATH),()=>{TLP_STORY.mark('intro');play(ORDER[0],0)})}
+function storyEnding(next){if(!window.TLP_STORY)return next();storyScenes(TLP_STORY.ending(PATH),()=>{TLP_STORY.mark('ending');difficultyCelebration(next)})}
+window.storyOpening=storyOpening;
+
+/* ---------- Leaderboard window ---------- */
+async function openLeaderboard(){let m=$('#lbm');
+ if(!m){m=document.createElement('div');m.id='lbm';m.className='tlpm';m.hidden=true;m.innerHTML='<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="lbt"><button class="tlpm-x" type="button" aria-label="Close" id="lbx">✕</button><h2 id="lbt">Leaderboard</h2><p class="s" id="lbs"></p><div id="lbl" aria-live="polite"></div></div>';document.body.appendChild(m);
+  const cl=()=>{m.hidden=true};$('#lbx').onclick=cl;m.addEventListener('click',e=>{if(e.target===m)cl()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!m.hidden)cl()})}
+ m.hidden=false;const dn={beg:'Beginner',int:'Intermediate',pro:'Pro'}[DIFF||'int']||'';
+ $('#lbs').textContent=(PATHS_CFG[PATH]?PATHS_CFG[PATH].n:'')+' · '+dn+' · your score: '+score();
+ const box=$('#lbl');box.textContent='Loading...';
+ try{const rows=await TLP_AUTH.getLeaderboardEntries({path:PATH,diff:DIFF||'int',limit:20});
+  if(!rows||!rows.length){box.textContent='No scores yet. Finish a mission to be the first!';return}
+  const me=TLP.esc(S.name||'');
+  box.innerHTML='<ol style="list-style:none;margin:0;padding:0">'+rows.map((r,i)=>{const rk=rows.findIndex(x=>x.total_score===r.total_score&&x.total_stars===r.total_stars)+1;const mine=r.display_name===S.name&&r.total_score===score();
+   return '<li style="display:flex;gap:10px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--line);'+(mine?'font-weight:800;color:var(--a)':'')+'"><b style="width:2.2em">#'+rk+'</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">'+TLP.esc(r.display_name)+(mine?' (you)':'')+'</span><span>'+r.total_score+' pts</span><small style="opacity:.7">★'+r.total_stars+'</small></li>'}).join('')+'</ol>'}
+ catch(e){box.textContent='Could not load the leaderboard. Please try again later.'}}
+function lbSubmit(l){try{if(!window.TLP_AUTH||!TLP_AUTH.recordLeaderboardScore||!DIFF)return;const stars=Object.values(S.prog).reduce((a,b)=>a+b,0);
+ return TLP_AUTH.recordLeaderboardScore({learnerId:l.id,displayName:l.name||S.name,learningPath:PATH,gameDiff:DIFF,score:score(),stars,chaptersCleared:CH.filter((c,i)=>c.L&&done(i)).length})}catch(e){}}
+
+function syncCurrentToCloud() {
+  if (window.TLP_AUTH && typeof window.TLP_AUTH.saveProgressBundle === 'function') {
+    const l = window.TLP_AUTH.getActiveLearner();
+    if (l && l.id && !l.isGuest) {
+      window.TLP_AUTH.saveProgressBundle(l.id, PATH, DIFF, {
+        prog: S.prog,
+        ach: ach(),
+        badges: badges(),
+        draft: null,
+        bossState: null
+      }).then(() => lbSubmit(l)).catch(() => {});
+    }
+  }
+}
+
+// --- BATCH 2 STAGE 1: 4 LEARNING PATHS CONTENT DICTIONARY ---
+/* -----------------------------------------------------------------------------
+   3. LEARNER CONTENT (age-group dictionary)
+   PATH_CONTENT maps a chapter+level key to the wording used for each age group.
+   It is pure data: edit text here, never logic.
+   -------------------------------------------------------------------------- */
+const PATH_CONTENT = {"4-0":{"g16":{"learn":"Robots follow orders one by one, like following a treasure map or a recipe! First walk, then speak.","mis":"Walk forward 2 squares, then make R-067 say hello!","hints":["First tell the robot to move, then tell it to speak.","Use the move block for 2 steps, and the say block for hello.","Stack move 2 on top, then say word underneath."]},"g710":{"learn":"A <b>program</b> is an ordered sequence of instructions. The computer executes them sequentially from top to bottom.","mis":"Direct R-067 to walk 2 cells, then output \"hello\".","hints":["Execution order is top-to-bottom.","Use a move block followed by a say block.","Place move 2 first, then say word."]},"g1112":{"learn":"In imperative programming, statements execute deterministically in sequential order. Each statement alters the program state.","mis":"Execute a 2-unit translation on R-067, followed by a console output of the word variable.","hints":["The execution flow is strictly linear.","Sequence: translate position by 2, then invoke standard output.","Stack move 2 followed by say word."]},"adult":{"learn":"Programs are deterministic execution pipelines. The instruction pointer advances sequentially, updating state at each discrete step.","mis":"Direct R-067 to advance 2 track units, then emit the string stored in word to system telemetry.","hints":["Instruction sequence dictates state transitions.","Invoke move 2 to alter position state, then say word for telemetry.","Ensure move precedes say in the call stack."]}},"4-1":{"g16":{"learn":"Order is super important! You cannot read an empty notebook, and R-067 cannot broadcast its designation before it is written in memory!","mis":"Store \"R-067\" into the word box first, broadcast it, then walk 3 steps.","hints":["Fill the word box with R-067 before telling the robot to say it!","Saying an empty box outputs nothing. Fill it first!","Order: set word to R-067, say word, set steps to 3, move steps."]},"g710":{"learn":"Changing the order changes the result. A variable must be assigned a value <i>before</i> you read or output it.","mis":"Broadcast unit ID R-067 as a status message, then walk 3 cells.","hints":["Referencing uninitialized variables results in empty output.","Fill word first with R-067, then broadcast it.","Set word to R-067, say word, set steps to 3, move steps."]},"g1112":{"learn":"Sequential dependency: an operation that consumes a variable depends on the assignment that initializes it.","mis":"Initialize word with \"R-067\", output the identifier, then initialize steps with 3 and perform the movement.","hints":["Avoid reading unassigned memory. Initialize word prior to invocation.","Assignment -> Output -> Assignment -> Movement.","Sequence: set word to R-067, say word, set steps to 3, move steps."]},"adult":{"learn":"Temporal coupling: accessing state before initialization violates safety invariants and produces undefined or null output.","mis":"Store \"R-067\" in word, transmit the telemetry packet, then allocate 3 to steps and advance the unit.","hints":["Ensure write-before-read invariant for word.","Pipeline: write word -> transmit word -> write steps -> translate steps.","Set word to R-067, say word, set steps to 3, move steps."]}},"4-2":{"g16":{"learn":"Big journeys are made of small steps in a row! Use the three boxes a, b, and c to walk all the way to cell 6.","mis":"Walk using box a, then box b, then box c to reach the glowing chip at cell 6!","hints":["Each box has part of the distance: 1 + 2 + 3 = 6.","Use three move blocks, one for each box.","Move a, then move b, then move c."]},"g710":{"learn":"Programs chain multiple statements together to achieve a combined result. Each instruction executes from the current position.","mis":"Move by variable a, then b, then c in order to reach cell 6.","hints":["The robot accumulates displacement across all three instructions.","1 + 2 + 3 = 6 cells.","Sequence: move a, move b, move c."]},"g1112":{"learn":"Cumulative state mutation: sequential invocations of a state-altering method accumulate side effects on the environment.","mis":"Sequence three movement instructions referencing parameters a, b, and c to reach index 6.","hints":["Position accumulates: pos = pos + a + b + c.","Execute move sequentially for each discrete variable.","Order: move a -> move b -> move c."]},"adult":{"learn":"Stateful composition: consecutive function calls mutate the robot's spatial coordinate vector incrementally.","mis":"Dispatch three consecutive move operations consuming variables a (1), b (2), and c (3) to terminate at coordinate 6.","hints":["State accumulates additively across discrete dispatch cycles.","Verify total delta equals target coordinate offset (1 + 2 + 3 = 6).","Stack: move a, move b, move c."]}},"0-0":{"g16":{"learn":"A <b>variable</b> is like a labelled lunchbox or toy chest. You stick a label on it, put something inside, and use it whenever you need!","mis":"Put the number 3 into the steps box, then move R-067 to the chip.","hints":["The steps box starts at 0. Fill it up first!","Use set steps to 3, then move steps.","Set steps to 3, then move by steps."]},"g710":{"learn":"A <b>variable</b> is a named storage location in memory. <code>set steps to 3</code> assigns 3 to <b>steps</b>, which can then be passed into commands like <code>move</code>.","mis":"The chip is 3 cells away. Store 3 in steps and move R-067 to it.","hints":["The variable steps holds 0 initially.","Assign a value with set, then read it with move.","Set steps to 3, then move by steps."]},"g1112":{"learn":"Variables bind an identifier to a typed memory location. Assignment writes a value to memory; expression evaluation reads it.","mis":"Assign scalar 3 to identifier steps, then invoke move using steps as parameter.","hints":["Initialize the variable before referencing its evaluation.","Pattern: steps = 3; move(steps);","Set steps to 3, then move by steps."]},"adult":{"learn":"Memory allocation and variable assignment. An identifier acts as a symbolic reference to a mutable value stored in the runtime environment.","mis":"Mutate the runtime state by assigning 3 to steps, then supply steps as operand to move.","hints":["Environment defaults steps to 0. Write the target value first.","Evaluate steps dynamically within the displacement routine.","Set steps to 3, then move by steps."]}},"0-1":{"g16":{"learn":"<code>change steps by 3</code> adds more to what is already inside the box! It is like dropping 3 more marbles into your jar.","mis":"Steps already holds 4. Add enough to reach the chip at cell 7, then move!","hints":["You have 4 and need 7. How many more do you need?","4 + 3 = 7. Change steps by 3.","Change steps by 3, then move by steps."]},"g710":{"learn":"Incremental assignment: <code>change steps by 3</code> adds 3 to the existing value without replacing it. Useful when you know the required difference.","mis":"The chip is 7 cells away, and steps already holds 4. Increment steps and move.","hints":["Check the Memory box for steps. It already contains 4.","Calculate the delta needed: 7 - 4 = 3.","Change steps by 3, then move by steps."]},"g1112":{"learn":"Compound assignment (the <code>+=</code> operation). Modifies an existing memory cell by an arithmetic delta rather than reinitializing it.","mis":"Apply an in-place addition of 3 to steps, then execute movement using steps.","hints":["Pattern: steps += 3; move(steps);","Target is 7; initial is 4; delta is +3.","Change steps by 3, then move by steps."]},"adult":{"learn":"In-place state mutation vs re-binding. The change instruction performs an arithmetic accumulator update on the active stack variable.","mis":"Perform an accumulator mutation on steps to offset from 4 to 7, then dispatch move.","hints":["Apply relative delta (+3) rather than absolute overwrite.","State transition: steps (4) -> steps + 3 = 7.","Change steps by 3, then move by steps."]}},"0-2":{"g16":{"learn":"Boxes do not just hold numbers—they can hold words too! When R-067 sends a system broadcast, it reads the word stored in its name box.","mis":"Store the robot designation, R-067, in the name box and transmit it as a system output.","hints":["Words inside boxes are called strings.","Store R-067 in the name box first, then broadcast it.","Set name to R-067, then say name."]},"g710":{"learn":"Variables can store text strings as well as numbers. <code>say name</code> outputs a system message with whatever text is currently stored in <b>name</b>.","mis":"Store the robot designation, R-067, in the name box and transmit it as a system output.","hints":["The box called name is empty initially.","Store R-067 in the box, then output the box.","Set name to R-067, then say name."]},"g1112":{"learn":"String data types: variables are dynamically typed to store string literals. The standard output block dereferences the string variable.","mis":"Store the string literal \"R-067\" in variable name and transmit via say.","hints":["Assign the alphanumeric literal to the identifier.","Pattern: name = \"R-067\"; print(name);","Set name to R-067, then say name."]},"adult":{"learn":"String primitive storage and IO stream emission. Variables hold references to character sequences rendered by the telemetry subsystem.","mis":"Bind the string literal \"R-067\" to name and emit it to system standard output.","hints":["Assign string representation of unit ID to symbol name.","Emit telemetry via standard output block.","Set name to R-067, then say name."]}},"0-3":{"g16":{"learn":"You can use one box for two different jobs! Put 5 in steps, walk 5 squares, then have R-067 announce how far it walked.","mis":"The chip is 5 cells away. Move there, then say how many steps you moved.","hints":["Fill steps with 5 once.","Use steps to move, then use steps to say.","Set steps to 5, move by steps, say steps."]},"g710":{"learn":"Reusability: once a variable is assigned, it can be passed into multiple operations without needing to be re-declared.","mis":"The chip is 5 cells away. Move there, then say how many steps you moved.","hints":["One variable can serve as an argument for both move and say.","Assign once, consume twice.","Set steps to 5, move by steps, say steps."]},"g1112":{"learn":"Variable reuse and single source of truth. Referencing a single variable across multiple statements prevents duplication and synchronization bugs.","mis":"Set steps to 5, pass it to move, and log it to standard output.","hints":["Maintain DRY principle using steps.","Sequence: steps = 5 -> move(steps) -> print(steps).","Set steps to 5, move by steps, say steps."]},"adult":{"learn":"Parametric reuse and immutable state consumption across multiple downstream consumers.","mis":"Initialize steps to 5 and supply it as the operand to both translation and telemetry routines.","hints":["Write steps once, read sequentially by translation and logging engines.","Eliminate magic numbers by referencing the variable identifier.","Set steps to 5, move by steps, say steps."]}},"0-4":{"g16":{"learn":"You can have lots of boxes, each with its own special sticker! Use the first box for part of the walk, and the second box for the rest.","mis":"The chip is 7 cells away. Walk 4 cells using the first box, then 3 using the second box.","hints":["Two boxes for two parts: 4 + 3 = 7.","Fill first with 4, and second with 3.","Set first to 4, set second to 3, move by first, move by second."]},"g710":{"learn":"Multiple variables: programs manage distinct variables for different roles, keeping data organized and independent.","mis":"The chip is 7 cells away. Walk 4 cells using the first box, then 3 using the second box.","hints":["Two walks, so two boxes. 7 is 4 plus 3.","Fill both boxes, then walk with each.","Set first to 4, set second to 3, move by first, move by second."]},"g1112":{"learn":"Managing multi-variable state spaces. Each distinct identifier holds an independent memory cell that must be initialized before evaluation.","mis":"Allocate 4 to first and 3 to second, sequencing translations to achieve composite displacement 7.","hints":["Two independent variables: first = 4, second = 3.","Execute composite movement: move(first); move(second);","Set first to 4, set second to 3, move by first, move by second."]},"adult":{"learn":"Multi-register state allocation and sequential aggregation of independent parameters.","mis":"Allocate and assign values 4 and 3 to distinct symbols first and second, dispatching incremental movements to target offset 7.","hints":["Maintain clean separation of concerns between coordinate deltas.","Total vector magnitude = first + second = 7.","Set first to 4, set second to 3, move by first, move by second."]}},"0-5":{"g16":{"learn":"A box only remembers what is inside right now. When you change it, the old number is replaced! Order matters!","mis":"The chip is at cell 5 and steps holds 3. Walk 3, change the box so it holds 2, walk again. Finish by saying what the box holds.","hints":["Walk first while steps is 3!","Take away 1 by changing steps by -1.","Move by steps, change steps by -1, move by steps, say steps."]},"g710":{"learn":"State over time: variable values change during program execution. The order in which you read and modify a variable dictates your program's behavior.","mis":"The chip is at cell 5 and steps holds 3. Walk 3, change the box so it holds 2, walk again. Finish by saying what the box holds.","hints":["Walk first with the 3, then change the box.","Changing by a negative number takes away.","Move by steps, change steps by -1, move by steps, say steps."]},"g1112":{"learn":"Temporal state mutation and trace tables. Tracking variable evaluation at each step of the execution lifecycle.","mis":"Traverse by current steps (3), decrement by 1, execute second traversal, and output final state.","hints":["Trace steps: 3 -> move(3) -> steps += -1 (now 2) -> move(2) -> print(2).","Negative change acts as arithmetic subtraction.","Move by steps, change steps by -1, move by steps, say steps."]},"adult":{"learn":"Mutable state transitions and step-wise trace analysis. Understanding how sequential imperative operations modify state over time.","mis":"Execute translation against initial state (3), apply decrement mutation (-1), translate remaining delta, and log final state.","hints":["Account for temporal state progression in execution trace.","Mutate state in-place between translation dispatches.","Move by steps, change steps by -1, move by steps, say steps."]}},"1-0":{"g16":{"learn":"A <b>loop</b> repeats your instructions over and over, like singing a song chorus! Put your walk block inside the repeat block.","mis":"The chip is 4 cells away. Walk one cell at a time using a loop.","hints":["Four identical steps is a job for a loop!","Put a move 1 block inside the repeat block.","Repeat 4 times: move 1."]},"g710":{"learn":"A <b>loop</b> repeats the blocks inside it. <code>repeat 4</code> with <code>move 1</code> inside executes 4 times, keeping your script short and tidy.","mis":"The chip is 4 cells away. Walk one cell at a time using a loop.","hints":["Four identical steps is a job for a loop.","Put a move block inside the repeat block.","Repeat 4 times: move 1."]},"g1112":{"learn":"Definite iteration: fixed-count loops execute a code block an exact number of times. Loop constructs prevent code duplication.","mis":"Implement a bounded loop of 4 iterations to translate 1 unit per iteration.","hints":["Use iteration to satisfy DRY principle.","Loop invariant: step displacement = 1; iterations = 4.","Repeat 4 times: move 1."]},"adult":{"learn":"Loop unrolling vs iteration abstraction. Fixed-counter loops encapsulate repeated block execution, maintaining constant cyclomatic complexity.","mis":"Constrain code size to par by encapsulating unit translation within a 4-cycle loop construct.","hints":["Avoid statement repetition; encapsulate in loop body.","Total displacement = loop count × step size = 4 × 1.","Repeat 4 times: move 1."]}},"1-1":{"g16":{"learn":"Loops and boxes make a great team! Store the step size in a box once, then loop that step to walk far.","mis":"The chip is 8 cells away. Use a variable for the step size and a loop to repeat it.","hints":["8 is 4 steps of 2, or 2 steps of 4. Pick one!","Put the step size in steps, then loop move steps.","Set steps to 2, repeat 4 times: move by steps."]},"g710":{"learn":"Loops and variables work well together. Store the size of a step once in a variable, then repeat movement using that variable.","mis":"The chip is 8 cells away. Use a variable for the step size and a loop to repeat it.","hints":["8 is 4 steps of 2, or 2 steps of 4. Pick one.","Put the step size in the box, then loop a move that uses the box.","Set steps to 2, repeat 4 times: move by steps."]},"g1112":{"learn":"Parameterized iteration. Combining state parameters with loop constructs allows modular scaling of execution effects.","mis":"Parameterize step stride via steps variable and iterate to achieve total translation 8.","hints":["Decompose 8 into factor pairs: 4 × 2 or 2 × 4.","Initialize parameter steps, then iterate movement.","Set steps to 2, repeat 4 times: move by steps."]},"adult":{"learn":"Parametric loop execution. Decoupling stride magnitude from iteration control allows dynamic calibration of algorithm throughput.","mis":"Store stride coefficient in steps and dispatch bounded loop to traverse 8 grid units.","hints":["Factorization: Stride × Iterations = 8.","Define steps as stride operand within the loop body.","Set steps to 2, repeat 4 times: move by steps."]}},"1-2":{"g16":{"learn":"A loop can count for you! Every time the robot takes a lap, add 1 to your count box.","mis":"Reach the chip at cell 6. Each lap, add 1 to count. Finish by saying count.","hints":["6 cells in 3 laps of 2!","Put move 2 and change count by 1 inside the loop.","Repeat 3: move 2, change count by 1. Then say count."]},"g710":{"learn":"A loop can update a variable every time round. That is how programs count items, track scores, or accumulate values.","mis":"Reach the chip at cell 6. Each lap, add 1 to count. Finish by saying count.","hints":["6 cells in 3 laps of 2.","Put the change block inside the loop with the move.","Repeat 3: move 2, change count by 1. Then say count."]},"g1112":{"learn":"Loop counters: incrementing an accumulator variable within the loop body to track iteration progress or event frequency.","mis":"Reach target coordinate 6 in 3 iterations, incrementing counter count per cycle, then log count.","hints":["Place accumulator update inside the loop scope.","Post-loop evaluation of count must equal 3.","Repeat 3: move 2, change count by 1. Then say count."]},"adult":{"learn":"Iteration telemetry and accumulator state patterns. Incremental counter updates across loop cycles provide runtime audit trails.","mis":"Traverse 6 track units across 3 discrete loop cycles, instrumenting counter count at each iteration, then emit telemetry.","hints":["Increment count within loop body: count = count + 1.","Output count outside loop termination boundary.","Repeat 3: move 2, change count by 1. Then say count."]}},"1-3":{"g16":{"learn":"Loops can count backwards like a rocket launch: 3, 2, 1, BLASTOFF! Use negative numbers to count down.","mis":"fuel starts at 4. Each lap, move 1 and use 1 fuel. When fuel reaches 0, say fuel.","hints":["4 laps of 1 cell uses all 4 fuel.","Change fuel by -1 each lap.","Repeat 4: move 1, change fuel by -1. Then say fuel."]},"g710":{"learn":"Counting down: change a variable by a negative number inside a loop. This models decreasing resources like fuel, health, or time.","mis":"fuel starts at 4. Each lap, move 1 and use 1 fuel. When fuel reaches 0, say fuel.","hints":["4 laps of 1 cell will consume all 4 fuel.","Inside the loop: move 1, change fuel by -1.","Repeat 4: move 1, change fuel by -1. Then say fuel."]},"g1112":{"learn":"Decrementing accumulators. Decreasing a state variable across iterations models resource depletion and countdown timers.","mis":"Iterate 4 cycles: translate 1 unit, decrement fuel by 1, and output terminal state of fuel.","hints":["Use change by -1 to simulate decrement (fuel--).","State transitions: 4 -> 3 -> 2 -> 1 -> 0.","Repeat 4: move 1, change fuel by -1. Then say fuel."]},"adult":{"learn":"Resource depletion modeling via negative accumulator deltas. Tracking state decay to a terminal zero condition across iterations.","mis":"Model fuel consumption across 4 translation cycles by applying delta -1 per iteration, emitting final state.","hints":["In-loop mutation: fuel += -1.","Ensure say block is placed post-termination, outside loop block.","Repeat 4: move 1, change fuel by -1. Then say fuel."]}},"1-4":{"g16":{"learn":"Loops can make things grow faster and faster! Add to your step size inside the loop to speed up.","mis":"steps starts at 1. Each lap, move by steps, then add 1 to steps. Reach cell 6.","hints":["First lap moves 1, second moves 2, third moves 3: 1 + 2 + 3 = 6!","Three laps will do it.","Repeat 3: move by steps, change steps by 1."]},"g710":{"learn":"Accelerating loops: modifying the step size variable inside the loop changes how far each lap moves.","mis":"steps starts at 1. Each lap, move by steps, then add 1 to steps. Reach cell 6.","hints":["1 + 2 + 3 = 6. You need 3 laps.","Change steps after moving so lap 1 starts at 1.","Repeat 3: move by steps, change steps by 1."]},"g1112":{"learn":"Non-linear step series: mutating the loop step variable inside the body produces arithmetic progression in cumulative displacement.","mis":"Execute 3 iterations where displacement steps increases by 1 each cycle, reaching coordinate 6.","hints":["Sequence sum: S = 1 + 2 + 3 = 6.","Order within loop: move(steps) before steps += 1.","Repeat 3: move by steps, change steps by 1."]},"adult":{"learn":"Dynamic step modulation and arithmetic sequence generation within iteration kernels.","mis":"Simulate uniform acceleration over 3 cycles by incrementing stride operand steps by 1 each iteration to reach position 6.","hints":["Displacement vector increases monotonically: delta = [1, 2, 3].","Execute move using current state prior to incrementing.","Repeat 3: move by steps, change steps by 1."]}},"1-5":{"g16":{"learn":"You can skip numbers when you count: 2, 4, 6, 8! Change your number box by 2 every turn.","mis":"pos starts at 0. Walk 2 cells three times, and keep pos matching your cell number. Finish by saying pos.","hints":["Three hops of 2 brings you to cell 6.","Change pos by 2 on each hop.","Repeat 3: move 2, change pos by 2. Then say pos."]},"g710":{"learn":"Stepping by values other than 1. Changing by 2 tracks even numbers or coordinate hops.","mis":"pos starts at 0. Walk 2 cells three times, and keep pos matching your cell number. Finish by saying pos.","hints":["Three laps of 2 cells reaches 6.","Update pos by 2 inside the loop.","Repeat 3: move 2, change pos by 2. Then say pos."]},"g1112":{"learn":"Step-stride accumulators: incrementing an accumulator by step size k > 1 to track coordinate offsets or sample intervals.","mis":"Traverse 6 units in 3 cycles of 2, updating pos accumulator by 2 each cycle, emitting final pos.","hints":["State invariant: pos equals current grid coordinate after each iteration.","pos increments: 0 -> 2 -> 4 -> 6.","Repeat 3: move 2, change pos by 2. Then say pos."]},"adult":{"learn":"Stride synchronization: maintaining parity between physical simulation coordinates and logical position registers.","mis":"Instrument 3 iterations of 2-unit movements with equivalent register mutations (pos += 2), emitting final telemetry.","hints":["Synchronize coordinate state: pos = pos + 2 per iteration.","Emit pos to telemetry post loop exit.","Repeat 3: move 2, change pos by 2. Then say pos."]}},"1-6":{"g16":{"learn":"Saying something inside a loop repeats the speech on EVERY lap! Saying it outside only speaks once at the end.","mis":"Reach cell 6 with a loop, but say the word ONLY ONCE after the walk is finished.","hints":["Move goes INSIDE the repeat loop.","Say goes OUTSIDE underneath the loop.","Repeat 3: move 2. Say word."]},"g710":{"learn":"Scope of repetition: blocks inside the loop run every lap; blocks outside after the loop run only once after it finishes.","mis":"Reach cell 6 with a loop, but say the word ONLY ONCE after the walk is finished.","hints":["Put the move block inside the repeat block.","Place the say block below the loop, not inside it.","Repeat 3: move 2. Say word."]},"g1112":{"learn":"Loop boundary and post-loop execution. Distinguishing between statements within iteration scope and sequential statements following termination.","mis":"Execute 3 movement iterations to reach index 6, then execute single output of word post-termination.","hints":["Statements inside the curly braces repeat; statements outside execute once.","Structure: loop { move(2) }; print(word);","Repeat 3: move 2. Say word."]},"adult":{"learn":"Control flow boundaries: separating the iterative kernel from post-loop consolidation and telemetry.","mis":"Confine spatial translation to loop scope, ensuring telemetry emission executes strictly once post-loop.","hints":["Prevent redundant IO operations inside iterative kernel.","Displacement in loop; emission outside loop.","Repeat 3: move 2. Say word."]}},"1-7":{"g16":{"learn":"An <b>accumulator</b> is a savings jar where you keep adding coins. Total grows with every lap!","mis":"total starts at 0. Loop 3 times: walk 2 cells and add 2 to total. Then walk 1 more cell outside the loop and say total.","hints":["Inside loop: move 2, change total by 2.","Outside loop: move 1, say total.","Repeat 3: move 2, change total by 2. Outside: move 1, say total."]},"g710":{"learn":"The <b>accumulator</b> pattern: maintaining a running sum across multiple loop iterations, then utilizing the total afterwards.","mis":"total starts at 0. Loop 3 times: walk 2 cells and add 2 to total. Then walk 1 more cell outside the loop and say total.","hints":["Accumulate 2 in total during each of the 3 laps (giving 6).","Outside the loop, take the final 1 step and report total.","Repeat 3: move 2, change total 2. Move 1, say total."]},"g1112":{"learn":"The accumulator design pattern: initializing a sum register to 0, updating it within loop scope, and consuming it in post-loop logic.","mis":"Iterate 3 times: move 2 and accumulate 2 to total; follow with single 1-unit translation and output total.","hints":["Accumulator invariant: total = sum(delta_i) for i in 1..3 = 6.","Total grid displacement = 3 × 2 + 1 = 7.","Repeat 3: move 2, change total 2. Move 1, say total."]},"adult":{"learn":"The canonical accumulator pattern. Aggregating partial sums over bounded iterations with subsequent post-processing.","mis":"Implement loop accumulator totaling 6 over 3 iterations, execute terminal unit offset, and emit total register.","hints":["total tracks iterative displacement sum (6).","Execute move 1 outside loop without updating total.","Repeat 3: move 2, change total 2. Move 1, say total."]}},"2-0":{"g16":{"learn":"An <b>if block</b> is like a fork in the road! If the door is open, walk through. If not, take the other path.","mis":"If power is more than 3, go to cell 6. Otherwise go to cell 2. Pass both tests!","hints":["The robot checks power automatically in each test.","Put move 6 under then, and move 2 under else.","If power is more than 3: move 6, else: move 2."]},"g710":{"learn":"An <b>if / else block</b> evaluates a boolean condition. If true, the top branch runs; if false, the else branch runs.","mis":"If power is more than 3, go to cell 6. Otherwise go to cell 2. Pass both tests!","hints":["Check the condition: power > 3.","Put move 6 in the then branch, move 2 in the else branch.","If power is more than 3: move 6, else: move 2."]},"g1112":{"learn":"Binary conditional branching (if/else). Evaluates a boolean relational predicate to select one of two mutually exclusive execution branches.","mis":"Branch based on relational predicate (power > 3): dispatch move 6 if true, move 2 if false.","hints":["Both test cases must pass without modifying script.","Pattern: if (power > 3) move(6); else move(2);","If power is more than 3: move 6, else: move 2."]},"adult":{"learn":"Deterministic conditional branching. Relational operators evaluate environment state to direct the instruction pointer to alternate basic blocks.","mis":"Evaluate condition power > 3 to route execution between coordinate targets 6 (then) and 2 (else).","hints":["Condition determines branch selection per test vector.","Branch A: displacement = 6; Branch B: displacement = 2.","If power is more than 3: move 6, else: move 2."]}},"2-1":{"g16":{"learn":"Branches can set words too! If it is hot, put \"hot\" in your box. If it is cold, put \"cold\" in your box.","mis":"If temp is more than 20 say hot. Otherwise say cold. Pass both tests!","hints":["Set word to hot in the first branch, and cold in the else branch.","Put say word AFTER the if block so it always speaks.","If temp > 20: set word hot, else: set word cold. Say word."]},"g710":{"learn":"Branches can assign variables. Set a different word in each branch, then output word after the decision is complete.","mis":"If temp is more than 20 the robot says hot. Otherwise it says cold.","hints":["Assign word differently depending on the condition.","Say word after the if/else block finishes.","If temp > 20: set word hot, else: set word cold. Say word."]},"g1112":{"learn":"Variable assignment within conditional branches followed by unified standard output.","mis":"Conditionally assign string literal (\"hot\" vs \"cold\") to word based on temp > 20, then output word.","hints":["De-duplicate output: execute say word once following branch convergence.","Structure: if (temp > 20) word = \"hot\" else word = \"cold\"; print(word);","If temp > 20: set word hot, else: set word cold. Say word."]},"adult":{"learn":"Branch-dependent register assignment with convergent telemetry emission.","mis":"Evaluate temp > 20 to bind appropriate status string to word, emitting via say at branch join point.","hints":["Convergent flow: assign symbol in branches, emit once downstream.","Test case 1: temp 30 -> \"hot\"; Test case 2: temp 5 -> \"cold\".","If temp > 20: set word hot, else: set word cold. Say word."]}},"2-2":{"g16":{"learn":"Branches do not have to do the same kind of job! One branch can shout a warning, while the other walks.","mis":"If fuel is under 4, stay put and say low. Otherwise walk as far as fuel allows.","hints":["Under 4: set word to low and say it.","Otherwise: move by fuel.","If fuel is less than 4: set word to low, say word. Else: move by fuel."]},"g710":{"learn":"Heterogeneous branches: each branch can execute completely different instruction types (e.g. movement vs telemetry).","mis":"If fuel is under 4 the robot stays put and says low. Otherwise it walks as far as fuel allows.","hints":["The low-fuel branch needs a word assignment and say block.","The else branch moves by variable fuel.","If fuel is less than 4: set word to low, say word. Else: move by fuel."]},"g1112":{"learn":"Divergent branch behavior and dynamic variable evaluation. Handling fallback error states vs standard execution pathways.","mis":"Implement guard condition (fuel < 4): emit warning telemetry and halt; otherwise translate position by fuel.","hints":["Guard pattern: handle low resource exception first.","Else branch invokes move(fuel).","If fuel is less than 4: set word to low, say word. Else: move by fuel."]},"adult":{"learn":"Guard clauses and heterogeneous branch execution. Directing flow to warning telemetry or state translation based on resource threshold.","mis":"Evaluate fuel < 4: trigger warning notification if true; execute variable translation move(fuel) if false.","hints":["Condition: fuel < 4.","Branch A: write \"low\" -> transmit; Branch B: translate(fuel).","If fuel is less than 4: set word to low, say word. Else: move by fuel."]}},"2-3":{"g16":{"learn":"What if you have three choices? Nest an if inside the else! It is like choosing between Door 1, Door 2, or Door 3.","mis":"Code 1 goes to cell 2. Code 2 goes to cell 5. Any other code goes to cell 8.","hints":["Two questions split three choices!","First ask: is code 1? In else, ask: is code 2?","If code = 1: move 2, else: if code = 2: move 5, else: move 8."]},"g710":{"learn":"Multi-way selection: nesting an if inside an else branch allows choosing between three or more distinct outcomes.","mis":"Code 1 opens the near door (cell 2). Code 2 opens the middle door (cell 5). Any other code opens the far door (cell 8).","hints":["Two questions are required to resolve three branches.","Place the second if inside the else of the first.","If code is exactly 1: move 2, else: if code is exactly 2: move 5, else: move 8."]},"g1112":{"learn":"Multi-branch conditionals (if / else if / else chain). Partitioning state space across discrete equivalence classes.","mis":"Construct nested conditional chain matching code values {1 -> 2, 2 -> 5, default -> 8}.","hints":["Equivalent to switch/match or if-elif-else construct.","Nest second if block in first else block.","If code is exactly 1: move 2, else: if code is exactly 2: move 5, else: move 8."]},"adult":{"learn":"Multi-case decision trees and cascading conditional dispatch. Partitioning input signals across distinct targets.","mis":"Implement conditional cascade evaluating code: route 1 to cell 2, 2 to cell 5, and remaining inputs to cell 8.","hints":["Verify all 3 test vectors pass through matching branch paths.","Cascade depth = 2 decisions.","If code is exactly 1: move 2, else: if code is exactly 2: move 5, else: move 8."]}},"2-4":{"g16":{"learn":"Loops and ifs together are super powerful! On every single lap, the robot asks a question before moving.","mis":"Low power (under 5): walk 1 cell, 3 times. Full power: walk 2 cells, 3 times.","hints":["Put the if block INSIDE the repeat loop.","Inside loop: if power > 4: move 2, else: move 1.","Repeat 3: if power is more than 4: move 2, else: move 1."]},"g710":{"learn":"Combining loops and conditions: placing an if block inside a loop causes the decision to be re-evaluated on every iteration.","mis":"Low power (under 5): walk 1 cell, three times. Full power: walk 2 cells, three times.","hints":["The decision lives inside the repeat loop.","Check power > 4 to distinguish low from full power.","Repeat 3: if power is more than 4: move 2, else: move 1."]},"g1112":{"learn":"Conditional evaluation within iteration kernels. Dynamically adapting loop step behavior based on runtime environment variables.","mis":"Nest conditional inside 3-iteration loop: if power > 4 move 2, else move 1.","hints":["Loop wraps conditional statement.","Case 1 (power 1): 3 × 1 = 3; Case 2 (power 9): 3 × 2 = 6.","Repeat 3: if power is more than 4: move 2, else: move 1."]},"adult":{"learn":"Iterative conditional execution. Evaluating invariant or variant predicates per loop cycle to determine stride parameters.","mis":"Encapsulate conditional stride selection within a 3-cycle loop kernel to satisfy both power levels.","hints":["Predicate: power > 4 selects between stride 2 and stride 1.","Both test cases evaluate correctly within single loop block.","Repeat 3: if power is more than 4: move 2, else: move 1."]}},"2-5":{"g16":{"learn":"<b>AND</b> means BOTH locks must open! The robot only moves if power is high AND shield is strong.","mis":"Go to cell 6 only if power > 4 AND shield > 1. Otherwise go to cell 2. Pass all 3 tests!","hints":["Both things must be true at once!","Use the + button on the if block and choose AND.","If power > 4 AND shield > 1: move 6, else: move 2."]},"g710":{"learn":"Logical <b>AND</b>: compound conditions where both expressions must evaluate to true for the branch to run.","mis":"Go to cell 6 only if power is more than 4 AND shield is more than 1. Otherwise go to cell 2. Pass all three tests.","hints":["Select AND in the + condition menu on the if block.","Both sub-conditions must be satisfied.","If power > 4 AND shield > 1: move 6, else move 2."]},"g1112":{"learn":"Logical conjunction (AND operator, <code>&&</code>). Evaluates compound boolean predicates; true only if both operands are true.","mis":"Apply logical conjunction (power > 4 AND shield > 1): translate 6 on true, 2 on false across all test vectors.","hints":["Truth table: T AND T -> T; T AND F -> F; F AND T -> F.","Configure compound if block with AND joiner.","If power > 4 AND shield > 1: move 6, else move 2."]},"adult":{"learn":"Boolean algebraic conjunction (AND). Short-circuit logic requiring both state variables to exceed respective threshold limits.","mis":"Formulate compound predicate (power > 4 && shield > 1) directing flow to cell 6 (conjunction met) or cell 2 (fallback).","hints":["Verify predicate against all 3 test configurations.","Operands: power > 4; shield > 1; joiner: and.","If power > 4 AND shield > 1: move 6, else move 2."]}},"2-6":{"g16":{"learn":"<b>OR</b> means either key works! If the first is true, OR the second is true, the robot gets to go!","mis":"Go to cell 5 if power is 9 OR shield is more than 5. Otherwise go to cell 1. Pass all 3 tests!","hints":["Just one true condition is enough for OR!","Use the + button on the if block and choose OR.","If power = 9 OR shield > 5: move 5, else: move 1."]},"g710":{"learn":"Logical <b>OR</b>: compound conditions where the branch runs if <i>at least one</i> expression is true.","mis":"Go to cell 5 if power is exactly 9 OR shield is more than 5. Otherwise go to cell 1. Pass all three tests.","hints":["Select OR in the + condition menu.","If either condition matches, the then branch executes.","If power = 9 OR shield > 5: move 5, else move 1."]},"g1112":{"learn":"Logical disjunction (OR operator, <code>||</code>). Evaluates compound boolean expressions; true if at least one operand evaluates to true.","mis":"Construct compound conditional using logical OR (power == 9 OR shield > 5) routing to target 5 vs 1.","hints":["Truth table: F OR F -> F; all other permutations -> T.","Configure compound if block with OR joiner.","If power = 9 OR shield > 5: move 5, else move 1."]},"adult":{"learn":"Boolean algebraic disjunction (OR). Evaluates alternative preconditions, allowing either criterion to authorize primary branch traversal.","mis":"Implement disjunction (power == 9 || shield > 5) directing unit to coordinate 5 on match, 1 on complete failure.","hints":["At least one operand must satisfy threshold.","Sub-predicates: power = 9, shield > 5; joiner: or.","If power = 9 OR shield > 5: move 5, else move 1."]}},"2-7":{"g16":{"learn":"You can test if a number is inside a safe zone: bigger than the bottom limit AND smaller than the top limit!","mis":"Go to cell 3 only if power is more than 2 AND less than 8. Otherwise stay at cell 0. Pass all 3 tests!","hints":["Both limits test the same power box!","Power must be > 2 AND power < 8.","If power > 2 AND power < 8: move 3."]},"g710":{"learn":"Range checking: compare the same variable twice using AND to verify it falls within an acceptable numeric range.","mis":"Go to cell 3 only if power is more than 2 AND less than 8. Otherwise stay at the start. Pass all three tests.","hints":["Check both lower bound (> 2) and upper bound (< 8).","Use the same variable power in both parts of the condition.","If power > 2 AND power < 8: move 3."]},"g1112":{"learn":"Range validation predicates: implementing numeric interval boundary checks <code>(min < x && x < max)</code>.","mis":"Verify power satisfies open interval (2, 8) using compound conjunction; advance 3 units on pass.","hints":["Compound predicate: power > 2 AND power < 8.","Leave else branch empty to satisfy \"stay at start\" requirement.","If power > 2 AND power < 8: move 3."]},"adult":{"learn":"Interval boundary verification and range clamping logic using compound relational conjunctions.","mis":"Assert state invariant: 2 < power < 8 via compound predicate (power > 2 && power < 8) to trigger 3-unit translation.","hints":["Ensure both lower and upper bounds reference symbol power.","No else branch required; false evaluates to zero displacement.","If power > 2 AND power < 8: move 3."]}},"8-0":{"g16":{"learn":"A <b>string</b> is just letters or words! The <b>join</b> block glues two words together like putting train cars together.","mis":"Combine the stored pieces into a system broadcast: UNIT R-067 (with the space).","hints":["Glue three pieces in two steps: a, sp, and b.","First join a and sp into out.","Join a and sp into out, join out and b into out, say out."]},"g710":{"learn":"A <b>string</b> is text. <b>Joining</b> strings concatenates them end to end. Joining \"UNIT\", a space, and \"R-067\" gives \"UNIT R-067\".","mis":"Combine the stored pieces into a system broadcast: UNIT R-067 (with the space).","hints":["You need three pieces: a, the space sp, and b.","Join in two steps, storing into out.","Join a and sp into out, join out and b into out, say out."]},"g1112":{"learn":"String concatenation operations. Joining discrete character sequences into an aggregated string buffer.","mis":"Concatenate identifiers a, sp, and b into buffer out and emit to standard output.","hints":["Binary concatenation requires two sequential operations.","out = a + sp; out = out + b; print(out);","Join a and sp into out, join out and b into out, say out."]},"adult":{"learn":"String concatenation and buffer accumulation. Composing formatted telemetry payloads from discrete memory tokens.","mis":"Compose formatted system identifier \"UNIT R-067\" by sequentially concatenating tokens a, sp, and b into out.","hints":["Buffer mutation: out = concat(a, sp) -> concat(out, b).","Verify delimiter whitespace is included.","Join a and sp into out, join out and b into out, say out."]}},"8-1":{"g16":{"learn":"Loops can build words too! Join a word to your box inside a loop to make it longer and longer.","mis":"Make the robot broadcast hahaha.","hints":["hahaha is ha repeated 3 times!","Inside loop: join out and s into out.","Repeat 3: join out and s into out. Then say out."]},"g710":{"learn":"Loops and string concatenation: repeatedly joining text inside a loop constructs repetitive or growing text patterns.","mis":"Make the robot say hahaha.","hints":["hahaha is the token ha repeated three times.","Join out and s into out on each lap.","Repeat 3: join out and s into out. Then say out."]},"g1112":{"learn":"Iterative string accumulation. Appending substring tokens to an accumulator buffer across bounded iterations.","mis":"Accumulate token s (\"ha\") across 3 iterations into string buffer out, outputting \"hahaha\".","hints":["Buffer pattern: out = out + s inside loop body.","Place say out after loop termination.","Repeat 3: join out and s into out. Then say out."]},"adult":{"learn":"Iterative string concatenation and memory buffer growth within bounded loops.","mis":"Execute 3 string append operations of token s into accumulator buffer out, emitting the final payload.","hints":["Accumulator starts empty (\"\"). Each iteration appends s.","Verify termination condition yields exact string \"hahaha\".","Repeat 3: join out and s into out. Then say out."]}},"8-2":{"g16":{"learn":"You can build complicated patterns by gluing pieces one by one! Store each piece into out before adding the next.","mis":"Build and broadcast the pattern <-> from pieces a, c, and b.","hints":["Order of pieces: a (<), c (-), c (-), and b (>).","Join step by step into out.","Join a and c into out, join out and c into out, join out and b into out, say out."]},"g710":{"learn":"Multi-step string composition: chaining multiple joins together to build structured text formats.","mis":"Say <-> built from the pieces a, c and b.","hints":["Four pieces in order: a, c, c, b.","Join step by step into out.","Join a and c into out, join out and c into out, join out and b into out, say out."]},"g1112":{"learn":"Sequential string assembly. Constructing structured token sequences through step-wise concatenation.","mis":"Sequence concatenation operations using components a, c, c, b to generate \"<->\", then emit.","hints":["Accumulate in out across 3 sequential join instructions.","Pattern: a + c -> + c -> + b.","Join a and c into out, join out and c into out, join out and b into out, say out."]},"adult":{"learn":"Structured string payload construction through linear concatenation pipeline.","mis":"Assemble structured token sequence \"<->\" by piping components a, c, and b through accumulator out.","hints":["Component c is referenced twice in sequence.","Emit composite payload to telemetry.","Join a and c into out, join out and c into out, join out and b into out, say out."]}},"8-3":{"g16":{"t":"Echo builder (bonus)","df":"Bonus","learn":"Bonus challenge! R-067 wants to broadcast a double signal beacon. Use a loop to join \"beep\" two times, then broadcast the signal.","mis":"Build the beacon message \"beepbeep\" using a repeat loop, then say it.","hints":["Start with an empty out box.","Repeat 2 times: join out and s into out.","After the loop finishes, say out."],"vars":{"s":"beep","out":""},"allow":["join","rep","say"],"cases":[{"vars":{},"say":"beepbeep"}],"par":3,"path":"stairs"},"g710":{"learn":"Bonus mission. Combine casting, loops and joining: a word that is a number, a word that is text, and a loop to build both results.","mis":"n holds the word 2 and s holds go. Walk 2 cells twice, and say gogo. Convert first!","hints":["n is text, so convert it.","Each lap does two things.","Cast n. Repeat 2: join out and s into out, move n. Say out."]},"g1112":{"learn":"Composite bonus challenge: explicit type coercion, string accumulation, and spatial translation executed within a single loop kernel.","mis":"Cast string n to numeric type, iterate twice to translate by n and concatenate s into out, then emit out.","hints":["Coerce n from string to integer before passing to move.","Inside loop: out += s; move(n);","Cast n. Repeat 2: join out and s into out, move n. Say out."]},"adult":{"learn":"Advanced bonus challenge: type casting primitives, accumulator concatenation, and state translation within concurrent iteration loops.","mis":"Perform explicit type coercion on symbol n, execute 2-cycle loop multiplexing translation and string concatenation, emitting out.","hints":["Enforce type safety: convert n to numeric primitive prior to evaluation.","Loop body couples spatial translation and buffer append.","Cast n. Repeat 2: join out and s into out, move n. Say out."]}},"15-0":{"g16":{"learn":"A <b>function</b> is like giving a recipe a name! You write down the recipe once, and whenever you say its name, R-067 cooks it up!","mis":"Define the recipe hop to move 2 cells. Call hop three times to reach cell 6!","hints":["Define hop first, then call it later!","Put move 2 inside define hop.","Define hop: move 2. Repeat 3: call hop."]},"g710":{"learn":"A <b>function</b> is a named group of blocks. Define it once, then <b>call</b> it whenever you need that action performed.","mis":"Define hop as moving 2 cells. Call hop three times to reach cell 6.","hints":["Define first, call afterwards.","Hop does one thing: move 2.","Define hop with move 2 inside. Then repeat 3: call hop."]},"g1112":{"learn":"Function abstraction and procedural modularity. Defining reusable subroutines to encapsulate logic and prevent code duplication.","mis":"Encapsulate 2-unit translation in procedure hop; invoke 3 times to achieve displacement 6.","hints":["Declaration: define hop { move(2) }","Invocation: repeat 3 { call hop }","Define hop with move 2 inside. Then repeat 3: call hop."]},"adult":{"learn":"Subroutine declaration and call stack invocation. Encapsulating discrete operations into named procedures for reusability.","mis":"Declare procedure hop encapsulating move 2, dispatching 3 invocations to traverse 6 units.","hints":["Subroutine declaration does not execute until invoked.","Combine loop construct with procedure call.","Define hop: move 2. Repeat 3: call hop."]}},"15-1":{"g16":{"learn":"A recipe can use whatever ingredients are on the table! When you change the steps box, your hop recipe takes bigger or smaller steps.","mis":"Define hop to move by steps. Call it with steps at 3, then with steps at 4 to reach cell 7.","hints":["Define hop: move by steps.","Set steps to 3, call hop, change steps to 4, call hop.","Define hop (move steps). Set steps 3, call hop, change steps by 1, call hop."]},"g710":{"learn":"Parametric behavior: a function can read global variables, allowing the same procedure to produce different outputs when state changes.","mis":"Define hop to move by steps. Call it with steps 3, then with steps 4 to reach cell 7.","hints":["Hop moves by whatever steps holds.","Change steps between the two calls.","Define hop (move steps). Set steps 3, call hop, change steps by 1, call hop."]},"g1112":{"learn":"Procedures accessing ambient variable state. Mutating state between successive procedure invocations.","mis":"Define procedure hop reading steps; invoke with steps = 3, then mutate steps to 4 and invoke again.","hints":["Procedure body: move(steps).","Sequence: steps = 3 -> hop() -> steps = 4 -> hop().","Define hop (move steps). Set steps 3, call hop, change steps by 1, call hop."]},"adult":{"learn":"State-dependent procedure execution. Procedures referencing shared mutable environment state dynamically reflect runtime state changes.","mis":"Declare procedure hop dependent on variable steps; mutate steps between invocations to yield 3 + 4 = 7 displacement.","hints":["Avoid hardcoded literals in procedure body; reference steps.","State transition between calls: steps (3) -> steps (4).","Define hop (move steps). Set steps 3, call hop, change steps by 1, call hop."]}},"15-2":{"g16":{"learn":"Programs can have lots of different recipes! One recipe for short hops, and one recipe for long jumps.","mis":"Define short (move 2) and long (move 3). Call long once and short twice to reach cell 7.","hints":["Define both recipes first!","3 + 2 + 2 = 7.","Define short and long, then call long, short, short."]},"g710":{"learn":"Multiple procedures: declaring multiple distinct functions, each tailored for a specific task, and composing them to solve problems.","mis":"Define short (move 2) and long (move 3). Call long once and short twice to reach cell 7.","hints":["Define both functions at the start of your script.","3 + 2 + 2 = 7.","Define short and long, then call long, short, short."]},"g1112":{"learn":"Composition of multiple procedures. Decomposing complex tasks into multiple specialized functional primitives.","mis":"Declare procedures short (stride 2) and long (stride 3); sequence invocations to achieve target displacement 7.","hints":["Composite call sequence: long() + short() + short() = 3 + 2 + 2 = 7.","Define both procedures prior to invocation.","Define short and long, then call long, short, short."]},"adult":{"learn":"Modular procedural composition and functional decomposition into discrete primitives.","mis":"Declare distinct procedures short (move 2) and long (move 3), composing calls to synthesize exact displacement 7.","hints":["Ensure procedure names are bound correctly in symbol table.","Invocation sequence: long, short, short.","Define short and long, then call long, short, short."]}},"25-0":{"g16":{"learn":"A <b>bug</b> is a mistake hiding in your code! <b>Debugging</b> is like being a detective finding what is missing.","mis":"The robot should reach cell 6, but it stops at cell 3. Find the missing step and fix it!","hints":["Press Run and watch what happens.","It only takes one walk of 3 steps.","Add a second move steps block!"]},"g710":{"learn":"A <b>bug</b> is an error in code, and <b>debugging</b> is finding and correcting it. Here, a necessary instruction is missing.","mis":"The script should reach cell 6, but it stops at cell 3. Fix it.","hints":["Run the program and observe where R-067 halts.","It only moves once by steps (3).","Add a second move steps."]},"g1112":{"learn":"Software debugging and defect identification: diagnosing incomplete algorithms where a required state mutation is omitted.","mis":"Trace execution failure (halts at index 3 instead of target 6) and supply missing operational instruction.","hints":["Static analysis: current script performs 1 translation of 3 units.","Delta required: 6 - 3 = 3 units.","Add a second move steps."]},"adult":{"learn":"Algorithmic defect triage: identifying missing operations in linear execution pipelines through runtime trace analysis.","mis":"Diagnose coordinate deficit (pos = 3 vs target = 6) and patch execution pipeline with requisite translation.","hints":["Observe discrepancy between actual and expected terminal state.","Add additional move steps to fulfill postcondition.","Add a second move steps."]}},"25-1":{"g16":{"learn":"Bugs are often just a wrong number! Read the instructions carefully and change the numbers so R-067 stops right on the chip.","mis":"The robot walks too far and overshoots cell 5! Fix the numbers in the script.","hints":["3 laps of 2 steps walks 6 squares—that is 1 too many!","Change the repeat to 5 and the step to 1.","Repeat 5 times and move 1."]},"g710":{"learn":"Off-by-one and boundary bugs: errors often stem from incorrect loop counts or step parameters. Adjust the values to match the goal.","mis":"The script should reach cell 5, but it walks too far. Fix it.","hints":["3 laps of 2 equals 6 (overshoot).","Adjust loop count and step size to total exactly 5.","Repeat 5 times and move 1."]},"g1112":{"learn":"Parameter tuning and loop boundary errors. Correcting arithmetic divergence between loop specification and target invariants.","mis":"Resolve overshoot defect (displacement 6 vs target 5) by recalibrating loop parameters.","hints":["Current: 3 × 2 = 6. Target: 5.","Recalibrate: 5 iterations of 1 unit.","Repeat 5 times and move 1."]},"adult":{"learn":"Boundary condition calibration and arithmetic defect resolution. Refactoring loop coefficients to eliminate overshoot.","mis":"Mitigate coordinate overshoot defect by re-parameterizing loop counter and step operand to terminate at coordinate 5.","hints":["Identify parameter defect in repeat construct.","Factorization target = 5. Set repeat 5, move 1.","Repeat 5 times and move 1."]}},"25-2":{"g16":{"learn":"Order matters! If you try to speak an empty box before putting words inside, nothing comes out! Put things in the right order.","mis":"The robot should output its designation R-067, but the readout is empty. Fix the order!","hints":["Look at what is inside word when say happens.","Put the set block ABOVE the say block.","Set word to R-067 first, then say word."]},"g710":{"learn":"Sequence errors: reading or outputting a variable before it is initialized yields empty or unexpected results. Re-order the blocks.","mis":"The robot should output its designation R-067, but the readout is empty. Fix the order.","hints":["What is stored in word at the moment say executes?","Drag the set block above the say block.","Set word to R-067 first, then say word."]},"g1112":{"learn":"Temporal ordering defects: resolving uninitialized read errors by reordering statements into proper definition-use chains.","mis":"Rectify sequence defect causing null output by ensuring assignment precedes dereference.","hints":["Definition-use anomaly: use occurs before definition.","Invert block order: assignment first, emission second.","Set word to R-067 first, then say word."]},"adult":{"learn":"Temporal anti-pattern: uninitialized memory access. Refactoring pipeline order to re-establish the write-before-read invariant.","mis":"Reorder execution sequence to eliminate null read defect, ensuring unit designation R-067 is bound prior to emission.","hints":["Identify premature read of uninitialized register word.","Reorder: set word to R-067 -> say word.","Set word to R-067 first, then say word."]}}};
 const CH=[
 {n:'Chapter 1',t:'Variables',d:'Labelled boxes that remember things.',L:[
  {t:'A labelled box',df:'Easy',learn:'A <b>variable</b> is a labelled box that remembers a value. <code>set steps to 3</code> puts 3 in the box called <b>steps</b>. Then <code>move steps</code> uses whatever is inside it.',mis:'The chip is 3 cells away. Get the robot to it.',vars:{steps:0},allow:['set','move'],goal:3,par:2,hints:['The robot only goes as far as the number you give it.','The steps box is empty (0). Fill it before moving.','Set steps to 3, then move by steps.']},
  {t:'Change the box',df:'Easy',learn:'<code>change steps by 3</code> adds 3 to what is already in the box instead of replacing it. Handy when you know how much <i>more</i> you need.',mis:'The chip is 7 cells away, and steps already holds 4.',vars:{steps:4},allow:['change','move'],goal:7,par:2,hints:['Check the Memory boxes. What is in steps right now?','You need 7 and have 4. How much is missing?','Change steps by 3, then move by steps.']},
- {t:'Boxes hold words too',df:'Medium',learn:'A variable can hold text as well as numbers. <code>say name</code> makes the robot speak whatever is in the box called <b>name</b>.',mis:'Teach the robot its name, Nova, then make it say it out loud.',vars:{name:''},allow:['set','say'],goal:null,say:'Nova',par:2,hints:['The box called name is empty. The robot cannot say what it does not know.','Put the word in the box, then say the box.','Set name to Nova (capital N), then say name.']},
+ // Puzzle 1 (Chapter 1, Mission 3): Frames output as R-067's system designation instead of a human spoken name.
+ {t:'Boxes hold words too',df:'Medium',learn:'A variable can hold text as well as numbers. <code>say name</code> outputs a system message with whatever text is stored in the box called <b>name</b>.',mis:'Store the robot designation, R-067, in the name box and transmit it as a system output.',vars:{name:''},allow:['set','say'],goal:null,say:'R-067',par:2,hints:['The box called name is empty. The robot cannot output what is not in memory.','Store R-067 in the box, then output the box.','Set name to R-067, then say name.']},
  {t:'Put it together',df:'Medium',learn:'Real programs mix these ideas: store a value, use it, then report it. One box can do several jobs.',mis:'The chip is 5 cells away. Move there, then say how many steps you moved.',vars:{steps:0},allow:['set','change','move','say'],goal:5,say:'5',par:3,hints:['You need to move 5 and then say that same number.','Use one box for both jobs: move by it, then say it.','Set steps to 5, move by steps, say steps.']},
  {t:'Two boxes',df:'Medium',learn:'You can have many variables, each with its own label. Use the right box for the right job.',mis:'The chip is 7 cells away. Walk 4 cells using the first box, then 3 using the second box.',vars:{first:0,second:0},allow:['set','move'],goal:7,par:4,hints:['Two walks, so two boxes. 7 is 4 plus 3.','Fill both boxes, then walk with each.','Set first to 4, set second to 3, move by first, move by second.']},
  {t:'The box changes over time',df:'Hard',learn:'A box only holds its <i>current</i> value. When you change it, the old value is gone, so order matters.',mis:'The chip is at cell 5 and steps holds 3. Walk 3, change the box so it holds 2, walk again. Finish by saying what the box holds.',vars:{steps:3},allow:['change','move','say'],goal:5,say:'2',par:4,hints:['Walk first with the 3, then change the box.','Changing by a negative number takes away.','Move by steps, change steps by -1, move by steps, say steps.']}]},
@@ -301,15 +133,28 @@ const CH=[
  {t:'Two doors',df:'Hard',learn:'Put an if inside the else of another if to choose between three outcomes.',mis:'Code 1 opens the near door (cell 2). Code 2 opens the middle door (cell 5). Any other code opens the far door (cell 8).',vars:{code:0},allow:['if','move'],par:5,cases:[{vars:{code:1},goal:2},{vars:{code:2},goal:5},{vars:{code:3},goal:8}],hints:['Two questions are needed to split three outcomes.','The second question lives inside the else of the first.','If code is exactly 1: move 2, else: if code is exactly 2: move 5, else: move 8.']},
  {t:'Loops and decisions',df:'Hard',learn:'Loops and ifs combine. A decision inside a loop is made again every lap.',mis:'Low power (under 5): walk 1 cell, three times. Full power: walk 2 cells, three times.',vars:{power:0},allow:['rep','if','move'],par:4,needs:1,cases:[{vars:{power:1},goal:3},{vars:{power:9},goal:6}],hints:['The only difference between the cases is the size of each step.','Put the decision inside the loop so it is asked every lap.','Repeat 3: if power is more than 4: move 2, else: move 1.']}]}];
 CH.push({n:'Chapter 4',t:'Boss: The Glitch',d:'A boss that remembers every attack. Use variables, loops and logic together, and never repeat yourself.',L:[{t:'The Glitch',df:'Boss',learn:'',mis:'',vars:{steps:0,power:0,count:0},allow:['set','change','move','say','rep','if'],boss:1,par:99,hints:[]}]});
+/* -----------------------------------------------------------------------------
+   4. CORE STATE AND SHARED HELPERS
+   S is the whole game state (chapter, level, script, progress). save() is the
+   only writer to localStorage; key()/score() derive stable IDs and totals.
+   -------------------------------------------------------------------------- */
 const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const NAMES={set:'set',change:'change',move:'move',say:'say',rep:'repeat',if:'if / else',note:'note',ask:'ask player',calc:'calculate',join:'join words',cast:'turn into',pick:'item of list',while:'repeat while',base:'convert base',def:'define function',call:'call function',bit:'switch on bit'};
 const NARRATION={};
 let S={ci:0,li:0,script:[],hint:0,run:false,id:0,prog:{},name:'Player'};
 try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}');S.name=localStorage.getItem('tlp-name')||'Player'}catch(e){}
-const save=()=>{try{localStorage.setItem('tlp-prog',JSON.stringify(S.prog));localStorage.setItem('tlp-name',S.name)}catch(e){}};
-const lv=()=>CH[S.ci].L[S.li],key=(c,l)=>c+'-'+l,score=()=>Object.values(S.prog).reduce((a,b)=>a+b*100,0);
-const done=c=>CH[c].L.every((_,l)=>S.prog[key(c,l)]);
-const MOODS=[["Ocean",200],["Dusk",265],["Rose",340],["Amber",32],["Moss",145]],still=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const save=()=>{try{localStorage.setItem('tlp-prog',JSON.stringify(S.prog));localStorage.setItem('tlp-name',S.name)}catch(e){}try{syncCurrentToCloud()}catch(e){}};
+const key=(c,l)=>c+'-'+l,score=()=>Object.values(S.prog).reduce((a,b)=>a+b*100,0);
+const rawLv=()=>CH[S.ci].L[S.li];
+const lv=()=>{const base=rawLv();if(!base||base.boss)return base;const k=key(S.ci,S.li),adapt=(PATH_CONTENT[k]&&PATH_CONTENT[k][PATH])||null;return adapt?Object.assign({},base,adapt):base};
+const isBonus=l=>!!(l&&(l.bonus||(l.t&&l.t.toLowerCase().includes('bonus'))));
+const done=c=>{const req=CH[c].L.filter(l=>!isBonus(l));return req.length?req.every(l=>S.prog[key(c,CH[c].L.indexOf(l))]):CH[c].L.every((_,l)=>S.prog[key(c,l)])};
+/* -----------------------------------------------------------------------------
+   5. MOOD CONTROLLER
+   The header swatches change the --h hue variable. "auto" slowly cycles hues;
+   a manual pick stops the cycle and is remembered in localStorage.
+   -------------------------------------------------------------------------- */
+const MOODS=[["Ocean",200],["Dusk",265],["Rose",340],["Amber",32],["Moss",145]];let still=matchMedia('(prefers-reduced-motion:reduce)').matches||(window.TLP?TLP.FX.get():false);window.addEventListener('tlp-fx-change',e=>{still=e.detail.on||matchMedia('(prefers-reduced-motion:reduce)').matches});
 let hue=200,auto=true,tw,tweening=false,saved=null;
 try{saved=localStorage.getItem('tlp-mood')}catch(e){}
 if(saved&&saved!=='auto'){auto=false;hue=+saved}
@@ -321,10 +166,15 @@ document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>{const v=s.dataset.v;a
 setHue(hue);mark();
 setInterval(()=>{if(auto&&!still&&!tweening)setHue((hue+.6)%360)},50);
 
+/* -----------------------------------------------------------------------------
+   6. HUD, CHAPTER MENU AND LEVEL LOADING
+   menu() draws the chapter grid, hud() refreshes the header, play(c,l) switches
+   to a chapter/level, and render() redraws the script area after every edit.
+   -------------------------------------------------------------------------- */
 function hud(){$('#pn').textContent=S.name;$('#sc').textContent=score();setLight()}
-function play(c,l,k){S.ci=c;S.li=l;S.script=[];S.hint=0;if(lv().boss)bossRound(k);try{const d=JSON.parse(localStorage.getItem('tlp-draft')||'null');if(!k&&d&&d.k===c+'-'+l&&Array.isArray(d.s)){S.script=d.s;S.id=Math.max(S.id,...(function m(a){return a.flatMap(b=>[b.id,...m(b.c),...m(b.e||[])])})(d.s),0)}}catch(e){}if(!S.script.length&&lv().start)S.script=lv().start();$('#menu').hidden=true;$('#game').hidden=false;document.body.dataset.sec=Math.max(0,SEC.findIndex(s=>s.ch.includes(c)||s.boss===c));track.dataset.sk=Math.random()*4|0;if(DIFF==='beg'&&!lv().boss)setTimeout(coachInit,0);$('#exit').hidden=false;$('#res').hidden=true;
+function play(c,l,k){S.ci=c;S.li=l;S.script=[];S.hint=0;if(lv().boss)bossRound(k);try{const d=JSON.parse(localStorage.getItem('tlp-draft')||'null');if(!k&&d&&d.k===c+'-'+l&&Array.isArray(d.s)){S.script=d.s;S.id=Math.max(S.id,...(function m(a){return a.flatMap(b=>[b.id,...m(b.c),...m(b.e||[])])})(d.s),0)}}catch(e){}if(!S.script.length&&lv().start)S.script=lv().start();$('#menu').hidden=true;$('#game').hidden=false;document.body.dataset.sec=Math.max(0,SEC.findIndex(s=>s.ch.includes(c)||s.boss===c));track.dataset.sk=Math.random()*4|0;if(DIFF==='beg'&&(PATH==='g16'||PATH==='g710')&&!lv().boss)setTimeout(coachInit,0);$('#exit').hidden=false;$('#res').hidden=true;
  const L=lv();$('#learn').innerHTML=`<span class="hand">${CH[c].n} · ${CH[c].t}</span><span class="diff">${L.df}</span><h2>${L.t}</h2><p>${L.learn}</p><div class="mis"><b>Mission:</b> ${L.mis}</div><ul class="goals" id="goals"></ul><button class="btn ghost sm" id="nar">Narrate lesson</button>`;$('#nar').onclick=narrate;
- $('#learn').style.animation='none';void $('#learn').offsetWidth;$('#learn').style.animation='';
+ $('#learn').style.animation='none';void $('#learn').offsetWidth;$('#learn').style.animation='';storyBrief();
  layout();track.classList.toggle('fog',DIFF==='pro'&&!!mazeP);tp('--g',L.goal==null?-5:L.goal);
  $('#pal').innerHTML=L.allow.map(t=>`<div class="blk pal ${t}" draggable="true" data-new="${t}">${NAMES[t]}</div>`).join('');
  reset();render();bossUI()}
@@ -356,6 +206,12 @@ function find(id,arr=S.script){for(let i=0;i<arr.length;i++){if(arr[i].id===id)r
 const kids=b=>b.c.concat(b.e||[]),count=a=>a.reduce((n,b)=>n+1+count(kids(b)),0),has=(a,t)=>a.some(b=>b.t===t||has(kids(b),t));
 const holds=(b,id)=>kids(b).some(x=>x.id===id||holds(x,id));
 const dt=e=>e.dataTransfer;
+/* -----------------------------------------------------------------------------
+   7. BLOCK BUILDER (drag and drop)
+   A block lives in a plain array (arr) and may contain children (c) or else
+   branches (e). Dragging never trusts dataTransfer: the dragged id is re-read
+   with dt(), then find() locates the block and the array it belongs to.
+   -------------------------------------------------------------------------- */
 document.addEventListener('dragstart',e=>{const b=e.target.closest&&e.target.closest('.blk');if(!b)return;dt(e).setData('text/plain',b.dataset.new?'n:'+b.dataset.new:'m:'+b.dataset.id)});
 document.addEventListener('dragover',e=>{const z=e.target.closest('.zone,#pal');if(!z)return;e.preventDefault();$$('.over').forEach(x=>x.classList.remove('over'));z.classList.add('over')});
 const $$=s=>[...document.querySelectorAll(s)];
@@ -372,13 +228,19 @@ document.addEventListener('drop',e=>{$$('.over').forEach(x=>x.classList.remove('
 function edit(e){const t=e.target;if(!t.dataset.k)return;const f=find(+t.dataset.id);if(!f)return;f.b[t.dataset.k]=t.value;if(e.type==='change'&&(t.dataset.k==='src'||t.dataset.k==='idx'||t.dataset.k==='j'||t.dataset.k==='rv'||t.dataset.k==='rv2'))render()}
 $('#area').addEventListener('input',edit);$('#area').addEventListener('change',edit);
 
+/* -----------------------------------------------------------------------------
+   8. EXECUTOR (the virtual machine)
+   exec() walks the script one block at a time. env holds the variables, pos is
+   the robot position on the track, said stores the last spoken value. Loops and
+   functions are expanded by recursion, so a run always ends or hits a guard.
+   -------------------------------------------------------------------------- */
 let env={},pos=0,said=null;
 const bot=$('#bot'),track=$('#track');
-function mem(pop){$('#mem').innerHTML=Object.entries(env).length?Object.entries(env).map(([k,v])=>`<div class="box ${k===pop?'pop':''}">${k}${isC(k)?' 🔒':''}<b>${fmt(v)}</b></div>`).join(''):'<span style="color:var(--mut);font-size:14px">No variables in this mission.</span>'}
+function mem(pop){$('#mem').innerHTML=Object.entries(env).length?Object.entries(env).map(([k,v])=>`<div class="box ${k===pop?'pop':''}">${k}${isC(k)?' <i class=ic-lock></i>':''}<b>${fmt(v)}</b></div>`).join(''):'<span style="color:var(--mut);font-size:14px">No variables in this mission.</span>'}
 function reset(){S.run=false;useCase(0);bot.className='bot';$$('.bub').forEach(x=>x.remove());$$('.blk.run').forEach(x=>x.classList.remove('run'));mem();msg('Drag blocks into your script, then press Run.')}
 const val=v=>v.trim()===''||isNaN(+v)?v:+v;
 async function exec(list){for(const b of list){if(!S.run)return;const el=$('.blk[data-id="'+b.id+'"]');el&&el.classList.add('run');await sleep(500);
- if((b.t==='set'||b.t==='change')&&isC(b.v)){fail('🔒 '+b.v+' is a constant. A constant is set once and can never change, so '+b.t+' is not allowed on it.');el&&el.classList.remove('run');return}
+ if((b.t==='set'||b.t==='change')&&isC(b.v)){fail(b.v+' is a constant. A constant is set once and can never change, so '+b.t+' is not allowed on it.');el&&el.classList.remove('run');return}
  if(b.t==='move'&&b.src!=='#'&&lv().strict&&typeof env[b.src]!=='number'){fail('The box "'+b.src+'" holds '+(typeof env[b.src]==='string'?'the word "'+env[b.src]+'"':'something that is not a number')+', but move needs a number. Check the type, or convert it first.');el&&el.classList.remove('run');return}
  if(b.t==='set'){env[b.v]=val(String(b.val));mem(b.v)}
  if(b.t==='change'){env[b.v]=(+env[b.v]||0)+(+b.n||0);mem(b.v)}
@@ -416,18 +278,28 @@ async function run(){if(S.run)return;reset();S.err=null;bot.dataset.m=['hop','bo
  
  if(L.needs&&!has(S.script,'rep'))miss.push('This mission wants a loop. Try using a repeat block.');
  if(L.rule&&!L.rule.f(S.script))miss.push('Round rule not met: '+L.rule.txt+'.');
- if(miss.length){bot.classList.add('oops');snd('err');msg(miss.join(' ')+' Check your blocks and try again, or ask for a hint.'+(DIFF==='beg'?' You are doing great! The Coach steps on the left can help.':''),'bad');return}
+ if(miss.length){bot.classList.add('oops');snd('err');msg(miss.join(' ')+' Check your blocks and try again, or ask for a hint.'+(DIFF==='beg'?' You are doing great!'+((PATH==='g16'||PATH==='g710')?' The Coach steps can help.':''):'')+storyFail(),'bad');return}
  if(L.boss)return bossHit();
  bot.classList.add('win');sparks();const n=count(S.script),st=n<=L.par+PB()?3:n<=L.par+PB()+1?2:1,k=key(S.ci,S.li);S.prog[k]=Math.max(S.prog[k]||0,st);save();hud();checkAch();snd('win');if(DIFF==='beg')cheer();
  msg('<b>Correct! Protocol restored.</b> Here is what each block in your code did:'+whyList());await sleep(2600);finish(st,n)}
+/* -----------------------------------------------------------------------------
+   9. RUN LIFECYCLE AND RESULT SCREEN
+   run() resets, executes and checks the goals. finish() decides pass/fail, saves
+   stars, advances the chapter and offers the next level.
+   -------------------------------------------------------------------------- */
 function sparks(){const r=bot.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;for(let i=0;i<30;i++){const s=document.createElement('span');s.className='spark';s.style.cssText=`left:${x}px;top:${y}px;background:${i%2?'var(--a)':'var(--b)'}`;document.body.appendChild(s);const a=Math.random()*6.28,d=80+Math.random()*180;s.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+50}px) rotate(${Math.random()*500}deg)`,opacity:0}],{duration:1100,easing:'ease-out'}).onfinish=()=>s.remove()}}
 function finish(st,n){hideToast();try{localStorage.removeItem('tlp-draft')}catch(e){}const L=CH[S.ci].L,last=S.li===L.length-1,all=CH.every(c=>!c.L||done(CH.indexOf(c)));
  let title='Mission complete',txt=`You used ${n} block${n>1?'s':''}. ${st===3?'Perfect, that is the tidiest solution.':'Can you solve it with fewer blocks for three stars?'}`,go='Next mission',nx=()=>play(S.ci,S.li+1);
+ const curBonus=isBonus(lv()),nextIsBonus=!last&&isBonus(L[S.li+1]);
  if(last&&lv().boss){const kd=SEC.filter(s=>done(s.boss)).length;title='Guardian defeated';txt='You beat '+nice(bi().name)+' with '+st+' heart'+(st>1?'s':'')+' left. '+(kd<SEC.length?(SEC.length-kd)+' guardian'+(SEC.length-kd>1?'s remain':' remains')+' in the dark, but the light is growing.':'All the guardians are gone. The protocol is restored and the light is back.')+' Score: '+score()+'.';go=kd<SEC.length?'Next section':'Back to menu';nx=()=>{const nc=nextOf(S.ci);nc!=null?play(nc,0):menu()}}
+ else if(curBonus){const nc=nextOf(S.ci);title='Bonus complete';txt='You solved the bonus challenge! '+txt+(nc!=null?' Next: '+CH[nc].t+'.':'');go=nc!=null?(CH[nc].L[0].boss?'Face the boss':'Next chapter'):'Back to menu';nx=nc!=null?()=>play(nc,0):menu}
  else if(last){const nc=nextOf(S.ci);title='Chapter complete';txt+=' You finished '+CH[S.ci].t+'.'+(nc!=null?' Next: '+CH[nc].t+'.':'');go=nc!=null?(CH[nc].L[0].boss?'Face the boss':'Next chapter'):'Back to menu';nx=nc!=null?()=>play(nc,0):menu}
- $('#pan').innerHTML=`<span class="hand">${lv().boss?'Boss defeated':n+' blocks'} · +${st*100} points</span><h2>${title}</h2><div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><p>${txt}</p>${whyHTML()}${last?learnedHTML(S.ci):''}<div class="bar" style="justify-content:center"><button class="btn" id="nx">${go}</button><button class="btn ghost" id="rt">Play again</button></div>`;
- $('#pan').classList.toggle('big',true);$('#res').hidden=false;$('#nx').onclick=()=>{stopSay();$('#res').hidden=true;nx()};$('#rt').onclick=()=>{stopSay();$('#res').hidden=true;reset()}
- if(last){confetti();$('#lis').onclick=()=>sayLearned(S.ci);sayLearned(S.ci)}}
+ else if(nextIsBonus){const nc=nextOf(S.ci);title='Chapter core complete';txt+=' You finished the core missions of '+CH[S.ci].t+'! Next chapter is unlocked, or try the optional bonus mission.';go='Bonus mission';nx=()=>play(S.ci,S.li+1)}
+ if(S.ci===29&&last&&lv().boss){const _n=nx;nx=()=>storyEnding(_n)}
+ const showLearned=last||nextIsBonus||curBonus;
+ $('#pan').innerHTML=`<span class="hand">${lv().boss?'Boss defeated':n+' blocks'} · +${st*100} points</span><h2>${title}</h2><div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><p>${txt}</p>${whyHTML()}${showLearned?learnedHTML(S.ci):''}<div class="bar" style="justify-content:center"><button class="btn" id="nx">${go}</button><button class="btn ghost" id="rt">Play again</button></div>`;
+ $('#pan').classList.toggle('big',true);storyOutcome(last);$('#res').hidden=false;$('#nx').onclick=()=>{stopSay();$('#res').hidden=true;nx()};$('#rt').onclick=()=>{stopSay();$('#res').hidden=true;reset()}
+ if(showLearned){confetti();$('#lis').onclick=()=>sayLearned(S.ci);sayLearned(S.ci)}}
 let cc=0;
 const cases=()=>{const c=lv().cases||[{vars:{},goal:lv().goal,say:lv().say}];return DIFF==='beg'&&!lv().boss?c.slice(0,1):c};
 function useCase(i){cc=i;const X=cases()[i];INP=X.input;onBits=new Set();FN={};fdepth=0;env={...lv().vars,...X.vars};pos=0;said=null;tp('--p',0);tp('--g',X.goal==null?-5:X.goal);$$('.track i').forEach(c=>c.classList.remove('vis'));$$('.bub').forEach(x=>x.remove());goals();mem()}
@@ -443,9 +315,9 @@ function chk(){const X=cases()[cc],on=(k,v)=>{const e=$('#goals [data-g="'+k+'"]
 let au;
 function narrate(){if(speechSynthesis.speaking||(au&&!au.paused)){speechSynthesis.cancel();au&&au.pause();return}
  const k=key(S.ci,S.li);if(NARRATION[k]){au=new Audio(NARRATION[k]);au.play();return}
- const L=lv(),u=new SpeechSynthesisUtterance(L.learn.replace(/<[^>]+>/g,'')+' Your mission: '+L.mis);u.rate=.95;speechSynthesis.speak(u)}
-$('#run').onclick=run;$('#reset').onclick=reset;$('#exit').onclick=()=>{S.run=false;menu()};
-$('#hint').onclick=()=>{const h=lv().hints,mx=DIFF==='pro'?Math.min(1,h.length):h.length;if(S.hint<mx)S.hint++;msg(`<b>Hint ${S.hint}/${mx}:</b> ${h[S.hint-1]}`,'hint')};
+ const L=lv();TLP.Voice.speak(L.learn.replace(/<[^>]+>/g,'')+' Your mission: '+L.mis)}
+$('#run').onclick=run;$('#reset').onclick=reset;$('#adminPrev').onclick=openAdminPreview;$('#bugOpen').onclick=()=>TLP.openBugReport('Game');$('#exit').onclick=()=>{S.run=false;menu()};
+$('#hint').onclick=()=>{const h=lv().hints,mx=Math.max(1,Math.min(DIFF==='pro'?1:h.length,{g16:99,g710:99,g1112:2,adult:1}[PATH]||99,h.length));if(S.hint<mx)S.hint++;msg(`<b>Hint ${S.hint}/${mx}:</b> ${h[S.hint-1]}`,'hint')};
 $('#chs').onclick=e=>{const b=e.target.closest('.lb');if(b&&!b.disabled)play(+b.dataset.c,+b.dataset.l)};
 $('#name').oninput=e=>{S.name=e.target.value.trim()||'Player';save();hud()};
 const any=(a,f)=>a.some(b=>f(b)||any(kids(b),f));
@@ -457,9 +329,15 @@ const LEARN=[
 const learnedHTML=c=>`<div class="learned"><b>What you learned in ${CH[c].t.replace('Boss: ','')}</b><ul>${LEARN[c].map(x=>'<li>'+x+'</li>').join('')}</ul><button class="btn ghost sm" id="lis">Listen again</button></div>`;
 function stopSay(){try{speechSynthesis.cancel();au&&au.pause()}catch(e){}}
 function sayLearned(c){stopSay();try{if(NARRATION['ch'+c]){au=new Audio(NARRATION['ch'+c]);au.play().catch(()=>{});return}
- const u=new SpeechSynthesisUtterance('Congratulations '+S.name+'! You finished '+CH[c].n+', '+CH[c].t.replace('Boss: ','')+'. Here is what you learned. '+LEARN[c].join(' '));u.rate=.95;speechSynthesis.speak(u)}catch(e){}}
+ TLP.Voice.speak('Congratulations '+S.name+'! You finished '+CH[c].n+', '+CH[c].t.replace('Boss: ','')+'. Here is what you learned. '+LEARN[c].join(' '))}catch(e){}}
 function confetti(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;for(let i=0;i<140;i++){const e=document.createElement('span');e.className='spark';e.style.cssText=`left:${Math.random()*innerWidth}px;top:-14px;width:${6+Math.random()*7}px;height:${10+Math.random()*8}px;background:hsl(${Math.random()*360} 85% 62%)`;document.body.appendChild(e);e.animate([{transform:'translate(0,0) rotate(0)'},{transform:`translate(${(Math.random()-.5)*240}px,${innerHeight+40}px) rotate(${Math.random()*900}deg)`}],{duration:2200+Math.random()*2200,delay:Math.random()*900,easing:'cubic-bezier(.2,.6,.4,1)',fill:'backwards'}).onfinish=()=>e.remove()}}
 
+/* -----------------------------------------------------------------------------
+  10. BOSS MODE
+   B holds the current boss fight (round, hp, player hearts, memory of scripts).
+   bossRound() starts or resumes a fight, bossHit() applies a correct script, and
+   the scenes below handle defeat, victory and the chapter badge.
+   -------------------------------------------------------------------------- */
 let B={r:0,hp:100,me:3,mem:[]};
 const BR=[
  {t:'The Glitch · Round 1: Variable strike',learn:'The Glitch is a bug that eats code. It has <b>100 HP</b> and you have a limited number of <b>hearts</b>. Every attack that lands takes 25 HP, but The Glitch <b>memorises it</b>. Repeat an attack and it blocks you and hits back, costing a heart. Round 1: it is at cell 6. Strike with a <b>variable</b>.',mis:'Reach The Glitch at cell 6 by storing the distance in a box and moving by the box.',cases:[{vars:{},goal:6}],par:2,rule:{txt:'set or change a box, then move by that box.',f:s=>(has(s,'set')||has(s,'change'))&&any(s,b=>b.t==='move'&&b.src!=='#')},hints:['You need 6 steps. Where could the 6 live?','Put 6 in a box, then move by the box.','Set steps to 6, then move by steps.']},
@@ -510,6 +388,12 @@ async function bossAttack(old){try{
  if(B.me<=0){defeatScene();return}
  msg(`<b>The Glitch remembers!</b> You already used this exact attack in Round ${old.r}. It blocked you and hit back: −1 heart (${B.me} left). Build a brand-new attack.`,'bad')}finally{bossWait=false}}
 
+/* -----------------------------------------------------------------------------
+  11. CURRICULUM DATA
+   SEC describes the six sections and which chapters belong to each. CH is built
+   from chapter objects, then extra levels are appended by the L1/RD helpers.
+   Content only: no browser APIs are touched in this area.
+   -------------------------------------------------------------------------- */
 const SEC=[
  {t:'The Basics',d:'How programs think: steps, boxes, repeats and decisions.',ch:[4,0,1,2],boss:3},
  {t:'Data',d:'What information is, and how to handle it safely.',ch:[5,6,7,8],boss:9},
@@ -522,9 +406,10 @@ const L1=(t,df,learn,mis,o)=>Object.assign({t,df,learn,mis,vars:{},allow:[],par:
 CH.push(
 {n:'',t:'Programming',d:'A program is a list of instructions run in order.',L:[
  L1('Step by step','Easy','A <b>program</b> is a list of instructions. The computer follows them one at a time, from the top to the bottom.','Walk 2 cells, then make the robot say hello.',{vars:{word:'hello'},allow:['move','say'],goal:2,say:'hello',par:2,hints:['Two instructions: one walks, one speaks.','Use move for walking and say for the word.','Move 2, then say word.']}),
- L1('Order matters','Easy','Changing the <b>order</b> changes the result. A box must be filled <i>before</i> you read it.','Say the name Nova, then walk 3 cells.',{vars:{word:'',steps:0},allow:['set','say','move'],goal:3,say:'Nova',par:4,path:'hook',hints:['If you say the box while it is empty, nothing comes out.','Fill word first, then say it.','Set word to Nova, say word, set steps to 3, move steps.']})]},
+ // Puzzle 2 (Section 1 / Chapter 4, Mission 2): Broadcasts unit ID R-067 as a status message instead of speaking a name.
+ L1('Order matters','Easy','Changing the <b>order</b> changes the result. A box must be filled <i>before</i> you read it.','Broadcast unit ID R-067 as a status message, then walk 3 cells.',{vars:{word:'',steps:0},allow:['set','say','move'],goal:3,say:'R-067',par:4,path:'hook',hints:['If you output the box while it is empty, nothing comes out.','Fill word first with R-067, then broadcast it.','Set word to R-067, say word, set steps to 3, move steps.']})]},
 {n:'',t:'Constants',d:'Boxes that are locked and never change.',L:[
- L1('A locked box','Easy','A <b>constant</b> is a box whose value is fixed. Once it is set, nothing can change it. A lock 🔒 appears on it.','lap is a constant holding 2. Reach the chip at cell 4 using lap. Do not try to change it.',{vars:{lap:2},consts:['lap'],allow:['change','move','rep'],goal:4,par:2,path:'snake',hints:['You may only read a constant, never change it.','Moving by lap twice gives 4.','Repeat 2 times: move lap. Or move lap twice.']}),
+ L1('A locked box','Easy','A <b>constant</b> is a box whose value is fixed. Once it is set, nothing can change it. A lock <i class=ic-lock></i> appears on it.','lap is a constant holding 2. Reach the chip at cell 4 using lap. Do not try to change it.',{vars:{lap:2},consts:['lap'],allow:['change','move','rep'],goal:4,par:2,path:'snake',hints:['You may only read a constant, never change it.','Moving by lap twice gives 4.','Repeat 2 times: move lap. Or move lap twice.']}),
  L1('Safe settings','Medium','Constants protect important settings, like speed or gravity, so no other part of the program can break them.','speed is a constant holding 3. Reach cell 9? The track ends at 8, so reach the chip at cell 6 using speed.',{vars:{speed:3},consts:['speed'],allow:['change','move','rep'],goal:6,par:2,path:'s',hints:['6 is two lots of speed.','A repeat block saves typing.','Repeat 2: move speed.']})]},
 {n:'',t:'Data Types',d:'Numbers, words and why they are different.',L:[
  L1('Numbers and words','Easy','Every value has a <b>type</b>. A number like 4 can be used for maths and moving. A word like "four" is text. Moving needs a number.','count is a number and label is a word. Reach cell 4, then say the word.',{strict:true,vars:{count:4,label:'four'},allow:['move','say'],goal:4,say:'four',par:2,path:'maze',hints:['One box is a number and one is a word.','Move needs the number box. Say can speak the word box.','Move count, then say label.']}),
@@ -533,7 +418,8 @@ CH.push(
  L1('Word to number','Easy','<b>Type casting</b> converts a value from one type to another. The word "3" looks like a number but is still text until you convert it.','s holds the word "3". Turn it into a number and reach cell 3.',{strict:true,vars:{s:'3'},allow:['cast','move'],goal:3,par:2,path:'hook',hints:['Moving with a word causes an error.','Convert s to a number first.','Turn s into number, then move s.']}),
  L1('Two words','Medium','You can cast several boxes. Convert each one before you use it for maths or movement.','a holds "2" and b holds "4", both words. Reach cell 6.',{strict:true,vars:{a:'2',b:'4'},allow:['cast','move'],goal:6,par:4,path:'snake',hints:['Both boxes are words.','Convert each one separately.','Turn a into number, turn b into number, move a, move b.']})]},
 {n:'',t:'Strings',d:'Working with pieces of text.',L:[
- L1('Glue words together','Easy','A <b>string</b> is text. <b>Joining</b> strings glues them end to end. Joining "Hello" and "Nova" gives "HelloNova".','Make the robot say Hello Nova (with the space).',{vars:{a:'Hello',sp:' ',b:'Nova',out:''},allow:['join','say'],say:'Hello Nova',par:3,path:'s',hints:['You need three pieces: a, the space, and b.','Join in two steps, storing into out.','Join a and sp into out, join out and b into out, say out.']}),
+ // Puzzle 3 (Section 2 / Chapter 8, Mission 1): Combines stored pieces into system broadcast UNIT R-067.
+ L1('Glue words together','Easy','A <b>string</b> is text. <b>Joining</b> strings glues them end to end. Joining "UNIT", a space, and "R-067" gives "UNIT R-067".','Combine the stored pieces into a system broadcast: UNIT R-067 (with the space).',{vars:{a:'UNIT',sp:' ',b:'R-067',out:''},allow:['join','say'],say:'UNIT R-067',par:3,path:'s',hints:['You need three pieces: a, the space, and b.','Join in two steps, storing into out.','Join a and sp into out, join out and b into out, say out.']}),
  L1('Repeat a word','Medium','Loops and strings work well together. Joining inside a loop builds longer text one piece at a time.','Make the robot say hahaha.',{vars:{s:'ha',out:''},allow:['join','rep','say'],say:'hahaha',par:3,path:'maze',hints:['hahaha is ha three times.','Join out and s into out, three times.','Repeat 3: join out and s into out. Then say out.']})]},
 {n:'',t:'The Hoarder',d:'The first guardian of Data. It hoards everything you do.',L:[{t:'The Hoarder',df:'Boss',learn:'',mis:'',vars:{},allow:['set','change','move','say','rep','if','cast','join'],boss:1,par:99,hints:[]}]},
 {n:'',t:'Operators',d:'Maths and comparisons inside your code.',L:[
@@ -584,7 +470,8 @@ CH.push(
 {n:'',t:'Debugging',d:'Find the mistake in a script that is almost right.',L:[
  L1('The missing step','Easy','A <b>bug</b> is a mistake in code. Debugging means finding it and fixing it. This script has one.','The script should reach cell 6, but it stops at cell 3. Fix it.',{vars:{steps:3},allow:['move','say'],goal:6,par:2,start:()=>[BK('move',{src:'steps'})],hints:['Run it and watch where the robot stops.','It only walks once.','Add a second move steps.']}),
  L1('Too far','Medium','Bugs are often a wrong number. Read the script slowly and work out what it does.','The script should reach cell 5, but it walks too far. Fix it.',{vars:{},allow:['rep','move'],goal:5,par:2,path:'snake',start:()=>[BK('rep',{n:3},[BK('move',{n:2})])],hints:['3 laps of 2 is 6.','Change the numbers.','Repeat 5 times and move 1.']}),
- L1('Wrong order','Medium','Order matters. A box must be filled before you read it, so the order of blocks can be the bug.','The robot should say Nova, but it says nothing. Fix the order.',{vars:{word:''},allow:['set','say'],cases:[{vars:{},say:'Nova'}],par:2,path:'maze',start:()=>[BK('say',{src:'word'}),BK('set',{v:'word',val:'Nova'})],hints:['What is in word when it is said?','Drag the set block above the say block.','Set word to Nova first, then say word.']})]},
+ // Puzzle 4 (Section 6 / Chapter 25, Mission 3): Pre-populates starter block with R-067 and checks for designation output.
+ L1('Wrong order','Medium','Order matters. A box must be filled before you read it, so the order of blocks can be the bug.','The robot should output its designation R-067, but the readout is empty. Fix the order.',{vars:{word:''},allow:['set','say'],cases:[{vars:{},say:'R-067'}],par:2,path:'maze',start:()=>[BK('say',{src:'word'}),BK('set',{v:'word',val:'R-067'})],hints:['What is in word when the robot attempts to output it?','Drag the set block above the say block.','Set word to R-067 first, then say word.']})]},
 {n:'',t:'Searching',d:'Walk through a list to find what you need.',L:[
  L1('Find the 8','Hard','A <b>search</b> looks at each item in turn until it finds a match. The item number is the answer.','Walk to the position of the number 8 in the list. Pass all three tests.',{vars:{list:[3,8,5],i:0,x:0},allow:['rep','change','pick','if','move'],cases:[{vars:{list:[3,8,5]},goal:2},{vars:{list:[8,1,1]},goal:1},{vars:{list:[2,2,8]},goal:3}],par:5,path:'stairs',hints:['Look at each item and compare it.','i is the position. Move by i when x is 8.','Repeat 3: change i by 1, pick x item i, if x = 8 then move i.']}),
  L1('Is it there?','Hard','A search can also answer yes or no. Start with a guess of no and change it when you find the item.','Say yes if the list holds a 6, otherwise say no. Pass both tests.',{vars:{list:[2,6,4],i:0,x:0,found:'no'},allow:['rep','change','pick','if','set','say'],cases:[{vars:{list:[2,6,4]},say:'yes'},{vars:{list:[1,1,1]},say:'no'}],par:6,hints:['found starts as no.','Set found to yes only when you spot the 6.','Repeat 3: change i, pick x, if x = 6 then set found to yes. Say found.']})]},
@@ -621,8 +508,13 @@ LEARN[29]=['Every idea you learned can combine into bigger programs.','You searc
 
 SEC.forEach((s,si)=>{s.ch.forEach((c,i)=>CH[c].n='Section '+(si+1)+' · Chapter '+(i+1));CH[s.boss].n='Section '+(si+1)+' · Boss'});
 const ORDER=SEC.flatMap(s=>[...s.ch,s.boss]),nextOf=c=>ORDER[ORDER.indexOf(c)+1];
+const SEC0=SEC.map((s,i)=>({...s,id:i,ch:s.ch.slice()}));
+function applyHidden(){const hid=(window.TLP&&TLP.HIDDEN&&TLP.HIDDEN[PATH])||[];SEC.length=0;
+ SEC0.forEach(x=>{const ch=x.ch.filter(c=>!hid.includes(c));if(!ch.length&&hid.includes(x.boss))return;SEC.push({...x,ch})});
+ ORDER.length=0;SEC.forEach(x=>{x.ch.forEach(c=>ORDER.push(c));if(!hid.includes(x.boss))ORDER.push(x.boss)})}
+
 const anyProg=c=>CH[c].L.some((_,l)=>S.prog[key(c,l)]);
-const isOpen=c=>{const i=ORDER.indexOf(c);return i<1||done(ORDER[i-1])||ORDER.slice(i).some(anyProg)};
+const isOpen=c=>{if(window.__adminPreview)return true;const i=ORDER.indexOf(c);return i<1||done(ORDER[i-1])||ORDER.slice(i).some(anyProg)};
 LEARN[4]=['A program is a list of instructions that run in order, top to bottom.','Changing the order can change the result: fill a box before you read it.','Blocks are simple instructions you can combine into bigger ideas.'];
 LEARN[5]=['A constant is a box whose value never changes after it is set.','Constants protect important settings, like speed or gravity, from accidental changes.','You can read a constant as often as you like, but not change it.'];
 LEARN[6]=['Every value has a type, such as a number or a word.','Numbers can be used for maths and moving. Words are text.','Using the wrong type causes an error, so check what a box holds.'];
@@ -661,7 +553,7 @@ const BOSSES={
  9:{k:1,name:'THE HOARDER',rounds:B2,taunts:['Everything you own is mine.','Locked. Typed. Glued. Ha.','You cannot cast me away.','Hoard it all!'],intro:'It hoards every scrap of data.'},
  14:{k:2,name:'THE CIPHER',rounds:B3,taunts:['Solve me, if you can.','Lists, sums, secrets...','Ask me anything. I will not answer.','Decode this!'],intro:'It hides behind numbers and secrets.'},
  19:{k:3,name:'THE ECHO',rounds:B4,taunts:['Echo... echo... echo...','I call myself. Can you?','Scope cannot save you.','The last switch is mine.'],intro:'It repeats everything you do.'}};
-const BAD=[{t:'Glitch Slayer',ico:'🛡️',cls:'bd1'},{t:'Data Keeper',ico:'💎',cls:'bd2'},{t:'Cipher Cracker',ico:'🗝️',cls:'bd3'},{t:'Light Bringer',ico:'☀️',cls:'bd4'}];
+const BAD=[{t:'Glitch Slayer',ico:'<i class=ic-shield></i>',cls:'bd1'},{t:'Data Keeper',ico:'<i class=ic-gem></i>',cls:'bd2'},{t:'Cipher Cracker',ico:'<i class=ic-key></i>',cls:'bd3'},{t:'Light Bringer',ico:'<i class=ic-sun></i>',cls:'bd4'}];
 const nice=n=>n.toLowerCase().replace(/(^|\s)\w/g,c=>c.toUpperCase());
 const cnt=(a,t)=>a.reduce((n,b)=>n+(b.t===t?1:0)+cnt(kids(b),t),0);
 let INP,onBits=new Set(),FN={},fdepth=0;
@@ -681,14 +573,14 @@ function snd(k){if(mute)return;try{AC=AC||new(window.AudioContext||window.webkit
   tick:()=>tone(520,.06,'triangle',.05),step:()=>tone(240,.05,'triangle',.04),chime:()=>{tone(784,.18,'sine',.07);tone(1175,.3,'sine',.06,.09)},err:()=>tone(150,.22,'sawtooth',.07,0,90),ach:()=>[784,988,1319].forEach((f,i)=>tone(f,.22,'sine',.07,i*.1)),
   b1:()=>{tone(300,.5,'sawtooth',.09,0,1200);[523,659,784,1047].forEach((f,i)=>tone(f,.35,'square',.07,.45+i*.1))},b2:()=>[1319,1568,2093,1568,2637].forEach((f,i)=>tone(f,.45,'sine',.08,i*.12)),b3:()=>{[0,.08,.16].forEach(s=>tone(120,.05,'square',.09,s));[392,494,587,784].forEach(f=>tone(f,.9,'triangle',.06,.35))},b4:()=>{[262,330,392,523].forEach(f=>tone(f,1.4,'sawtooth',.05,0));[523,659,784,1047,1319].forEach((f,i)=>tone(f,.5,'square',.06,.5+i*.14))}};
  SF[k]&&SF[k]()}catch(e){}}
-function toggleMute(){mute=!mute;try{localStorage.setItem('tlp-mute',mute?'1':'0')}catch(e){}const g=$('#sndg');if(g)g.textContent=mute?'🔇':'🔊';const s=$('#snd');if(s)s.textContent='Sound: '+(mute?'off':'on')}
+function toggleMute(){mute=!mute;try{localStorage.setItem('tlp-mute',mute?'1':'0')}catch(e){}const g=$('#sndg');if(g)g.innerHTML=mute?'<i class=ic-mute></i>':'<i class=ic-volume></i>';const s=$('#snd');if(s)s.textContent='Sound: '+(mute?'off':'on')}
 function puff(x,y,n){if(still)return;for(let i=0;i<(n||6);i++){const s=document.createElement('span');s.className='spark';s.style.cssText=`left:${x}px;top:${y}px;width:5px;height:5px;background:${i%2?'var(--a)':'var(--b)'}`;document.body.appendChild(s);const a=Math.random()*6.28,d=14+Math.random()*26;s.animate([{transform:'translate(0,0)',opacity:.9},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`,opacity:0}],{duration:520,easing:'ease-out'}).onfinish=()=>s.remove()}}
 function goalFx(){const c=track.querySelector('.chip');if(!c)return;const r=c.getBoundingClientRect();puff(r.left+r.width/2,r.top+r.height/2,10);c.classList.add('hit');setTimeout(()=>c.classList.remove('hit'),900)}
 function setLight(){try{const k=SEC.filter(s=>done(s.boss)).length;document.documentElement.style.setProperty('--dim',[.5,.42,.34,.26,.18,.09,0][k])}catch(e){}}
 function chCard(ci){const c=CH[ci],open=isOpen(ci);return `<div class="card ch ${c.L[0].boss?'bossc ':''}${open?'':'lock'}"><span class="hand">${c.n}${open?'':' · locked'}</span><h3>${c.t}</h3><p>${c.d}</p><div class="lvls">${c.L.map((l,li)=>`<button class="lb" data-c="${ci}" data-l="${li}" ${open&&(li===0||S.prog[key(ci,li-1)])?'':'disabled'}>${li+1}. ${l.t}<small>${'★'.repeat(S.prog[key(ci,li)]||0)||l.df}</small></button>`).join('')}</div></div>`}
-function menu(){$('#menu').hidden=false;$('#game').hidden=true;hudFit();$('#exit').hidden=true;$('#name').value=S.name;delete document.body.dataset.sec;hud();renderPick();renderTally();
+function menu(){document.querySelectorAll('.coach').forEach(x=>x.remove());$('#menu').hidden=false;$('#game').hidden=true;hudFit();$('#exit').hidden=true;$('#name').value=S.name;delete document.body.dataset.sec;hud();renderPick();renderTally();
  const kd=SEC.filter(s=>done(s.boss)).length;
- $('#chs').innerHTML=`<div class="guard">${SEC.map((_,i)=>`<div class="gd ${i<kd?'dead':''}">${bossBot(i<kd?'dead k'+i:'sil','--s:5px;--ec:'+BC[i])}<small>${i<kd?'defeated':'watching'}</small></div>`).join('')}<div class="gtxt"><b>${SEC.length-kd} of ${SEC.length} guardians alive</b><span>Light restored: ${kd} of ${SEC.length}</span></div></div>`+SEC.map((s,si)=>`<section class="sec"><h2><span class="hand">Section ${si+1}</span> ${s.t}</h2><p class="sd">${s.d}</p><div class="chs">${[...s.ch,s.boss].map(chCard).join('')}</div></section>`).join('')}
+ $('#chs').innerHTML=`<div class="guard">${SEC.map((_,i)=>`<div class="gd ${i<kd?'dead':''}">${bossBot(i<kd?'dead k'+SEC[i].id:'sil','--s:5px;--ec:'+BC[SEC[i].id])}<small>${i<kd?'defeated':'watching'}</small></div>`).join('')}<div class="gtxt"><b>${SEC.length-kd} of ${SEC.length} guardians alive</b><span>Light restored: ${kd} of ${SEC.length}</span></div></div>`+SEC.map((s,si)=>`<section class="sec"><h2><span class="hand">Section ${si+1}</span> ${s.t}</h2><p class="sd">${s.d}</p><div class="chs">${[...s.ch,s.boss].map(chCard).join('')}</div></section>`).join('')}
 const bi=()=>BOSSES[S.ci],bkey=()=>S.ci===3?'tlp-boss':'tlp-boss'+S.ci;
 function bossRound(k){if(!k){let o=null;try{o=JSON.parse(localStorage.getItem(bkey())||'null')}catch(e){}B=o&&o.hp>0&&o.me>0?o:(introPending=true,{r:0,hp:100,me:DH(),max:DH(),mem:[]})}Object.assign(lv(),bi().rounds[B.r])}
 function bossDraw(brk,pre){try{if(B.hp<=0||B.me<=0)localStorage.removeItem(bkey());else localStorage.setItem(bkey(),JSON.stringify(B))}catch(e){}
@@ -707,7 +599,7 @@ function defeatScene(){snd('lose');vig();cine(`<div class="stage"><div class="bi
  $('#cagain').onclick=()=>{try{localStorage.removeItem(bkey())}catch(e){}uncine();play(S.ci,0)};$('#cmenu').onclick=()=>{uncine();menu()}}
 function winScene(k){let skip=false;return new Promise(res=>{const end=()=>{skip=true;uncine();setLight();res()};
  const others=SEC.map((_,i)=>i).filter(i=>i!==k),sz=[9,13,8,10,11];
- const small=others.map((j,n)=>`<div class="sw${n+1}">${bossBot(j<k?'dead k'+j:'sil','--s:'+sz[n]+'px;--ec:'+BC[j])}</div>`).join('');
+ const small=others.map((j,n)=>`<div class="sw${n+1}">${bossBot(j<k?'dead k'+SEC[j].id:'sil','--s:'+sz[n]+'px;--ec:'+BC[SEC[j].id])}</div>`).join('');
  const c=cine(`<button class="cskip" id="cskip">Skip</button><div class="stage">${small}<div style="height:90px"></div><div id="cb" class="cb">${bossBot('hurt k'+k,'--s:15px')}</div><h2 id="ct" class="ctitle"></h2><div id="cl" class="clines"></div><button class="btn" id="cgo" hidden>Continue</button></div>`,'c-win');
  $('#cskip').onclick=end;$('#cgo').onclick=end;
  const Z=async ms=>{await sleep(ms);if(skip)throw 0};
@@ -722,29 +614,70 @@ function winScene(k){let skip=false;return new Promise(res=>{const end=()=>{skip
   if(k<SEC.length-1)L.insertAdjacentHTML('beforeend','<small>the light grows a little brighter</small>');else{c.classList.remove('dark');c.classList.add('dawn')}
   setLight();$('#cgo').hidden=false}catch(e){}})()})}
 function badgeScene(k){return new Promise(res=>{let b=[];try{b=JSON.parse(localStorage.getItem('tlp-badges')||'[]')}catch(e){}if(!b.includes(k)){b.push(k);try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}
- const x=BAD[k];snd('b'+(k+1));cine(`<div class="stage"><div class="bwrap ${x.cls}"><i class="rays"></i><i class="ring"></i><i class="ring r2"></i><div class="bico">${x.ico}</div></div><h2 class="ctitle">Badge earned!</h2><p class="csub"><b>${x.t}</b><br>${nice(bi().name)} defeated</p><button class="btn" id="cgo">Awesome!</button></div>`,'c-badge');
+ const x=BAD[SEC[k]?SEC[k].id:k];snd('b'+((SEC[k]?SEC[k].id:k)+1));cine(`<div class="stage"><div class="bwrap ${x.cls}"><i class="rays"></i><i class="ring"></i><i class="ring r2"></i><div class="bico bhead">${bossBot('k'+BOSSES[(SEC[k]||SEC0[k]).boss].k,'--s:8px')}</div></div><h2 class="ctitle">Badge earned!</h2><p class="csub"><b>${x.t}</b><br>${nice(bi().name)} defeated</p><button class="btn" id="cgo">Awesome!</button></div>`,'c-badge');
  $('#cgo').onclick=()=>{uncine();res()};for(let i=0;i<24;i++)setTimeout(()=>puff(innerWidth/2+(Math.random()-.5)*160,innerHeight/2-60+(Math.random()-.5)*120,2),i*60)})}
+/* -----------------------------------------------------------------------------
+  12. ACHIEVEMENTS
+   ACH lists every badge and its test. checkAch() queues new ones and runQ()/
+   popAch() show them one at a time so popups never overlap a boss fight.
+   -------------------------------------------------------------------------- */
 const ACH=[
- {t:'Boot Sequence',ico:'⚡',need:100,an:'x1'},{t:'Warming Up',ico:'🔥',need:300,an:'x2'},{t:'Bit by Bit',ico:'🧩',need:600,an:'x3'},{t:'Circuit Runner',ico:'🏃',need:1000,an:'x4'},{t:'Logic Spark',ico:'💡',need:1500,an:'x5'},{t:'Code Weaver',ico:'🧵',need:2500,an:'x6'},{t:'Debugger',ico:'🐞',need:4000,an:'x7'},{t:'Protocol Hacker',ico:'🕶️',need:6000,an:'x8'},{t:'System Architect',ico:'🏛️',need:9000,an:'x9'},
- {t:'Perfectionist',ico:'🌟',d:'Get 3 stars on 10 missions',f:()=>Object.values(S.prog).filter(v=>v>=3).length>=10,an:'x10'},
- {t:'Chapter Closer',ico:'📘',d:'Finish 5 chapters',f:()=>ORDER.filter(c=>CH[c].L.every((_,l)=>S.prog[key(c,l)])).length>=5,an:'x11'},
- {t:'Guardian Hunter',ico:'🎯',d:'Defeat 2 guardians',f:()=>SEC.filter(s=>done(s.boss)).length>=2,an:'x12'}];
+ {t:'Boot Sequence',ico:'<i class=ic-bolt></i>',need:100,an:'x1'},{t:'Warming Up',ico:'<i class=ic-flame></i>',need:300,an:'x2'},{t:'Bit by Bit',ico:'<i class=ic-puzzle></i>',need:600,an:'x3'},{t:'Circuit Runner',ico:'<i class=ic-bolt></i>',need:1000,an:'x4'},{t:'Logic Spark',ico:'<i class=ic-bulb></i>',need:1500,an:'x5'},{t:'Code Weaver',ico:'<i class=ic-puzzle></i>',need:2500,an:'x6'},{t:'Debugger',ico:'<i class=ic-bug></i>',need:4000,an:'x7'},{t:'Protocol Hacker',ico:'<i class=ic-shield></i>',need:6000,an:'x8'},{t:'System Architect',ico:'<i class=ic-shield></i>',need:9000,an:'x9'},
+ {t:'Perfectionist',ico:'<i class=ic-star></i>',d:'Get 3 stars on 10 missions',f:()=>Object.values(S.prog).filter(v=>v>=3).length>=10,an:'x10'},
+ {t:'Chapter Closer',ico:'<i class=ic-book></i>',d:'Finish 5 chapters',f:()=>ORDER.filter(c=>CH[c].L.every((_,l)=>S.prog[key(c,l)])).length>=5,an:'x11'},
+ {t:'Guardian Hunter',ico:'<i class=ic-target></i>',d:'Defeat 2 guardians',f:()=>SEC.filter(s=>done(s.boss)).length>=2,an:'x12'}];
 ACH.forEach(a=>{if(a.need){a.d='Reach '+a.need+' score';a.f=()=>score()>=a.need;a.req='Requires '+a.need+' score'}else a.req='Requires: '+a.d});
 const ach=()=>{try{return JSON.parse(localStorage.getItem('tlp-ach')||'[]')}catch(e){return[]}},badges=()=>{try{return JSON.parse(localStorage.getItem('tlp-badges')||'[]')}catch(e){return[]}};
 let achQ=[],achBusy=false;
 function checkAch(silent){const have=ach(),got=ACH.filter(a=>!have.includes(a.t)&&a.f());if(!got.length)return;try{localStorage.setItem('tlp-ach',JSON.stringify(have.concat(got.map(a=>a.t))))}catch(e){}if(!silent){got.forEach(a=>achQ.push(a));runQ()}}
 function runQ(){if(achBusy||!achQ.length)return;achBusy=true;popAch(achQ.shift());setTimeout(()=>{achBusy=false;runQ()},4300)}
 function popAch(a){snd('ach');const e=document.createElement('div');e.className='achp';e.innerHTML=`<div class="aico ${a.an}">${a.ico}</div><div><small>Achievement unlocked</small><b>${a.t}</b><span>${a.d}</span></div>`;$('#achs').appendChild(e);setTimeout(()=>e.classList.add('out'),3700);setTimeout(()=>e.remove(),4300)}
-function openLib(tab){tab=tab||'ach';const have=ach(),bg=badges();
- const cards=tab==='ach'?ACH.map(a=>{const u=have.includes(a.t);return `<div class="lc ${u?'':'lk'}"><div class="aico ${u?a.an:''}">${u?a.ico:'🔒'}</div><b>${u?a.t:'Locked'}</b><span>${u?a.d:a.req}</span></div>`}).join(''):BAD.map((b,i)=>{const u=bg.includes(i),nm=BOSSES[SEC[i].boss].name;return `<div class="lc big ${u?'':'lk'}"><div class="bwrap mini ${u?b.cls:''}"><div class="bico">${u?b.ico:'🔒'}</div></div><b>${u?b.t:'Locked'}</b><span>${u?'Earned by defeating '+nm:'Requires: defeat '+nm}</span></div>`}).join('');
- let l=$('#lib');if(!l){l=document.createElement('div');l.id='lib';document.body.appendChild(l)}
- l.innerHTML=`<div class="lpan"><div class="lh"><h2>Library</h2><button class="btn ghost sm" id="lx">Close</button></div><div class="ltabs"><button class="${tab==='ach'?'on':''}" data-t="ach">Achievements ${have.length}/${ACH.length}</button><button class="${tab==='bd'?'on':''}" data-t="bd">Badges ${bg.length}/${BAD.length}</button></div><div class="lgrid">${cards}</div></div>`;
- l.querySelectorAll('.ltabs button').forEach(b=>b.onclick=()=>openLib(b.dataset.t));$('#lx').onclick=()=>l.remove();
- l.querySelectorAll('.lc:not(.lk)').forEach(c=>c.onclick=()=>{const i=c.querySelector('.aico,.bwrap'),cl=i&&[...i.classList].find(x=>/^(x\d+|bd\d)$/.test(x));if(cl){i.classList.remove(cl);void i.offsetWidth;i.classList.add(cl)}})}
-$('#libb').onclick=()=>openLib();$('#sndg').onclick=toggleMute;$('#sndg').textContent=mute?'🔇':'🔊';
+/* -----------------------------------------------------------------------------
+  13. BLOCK LIBRARY
+   The reference sheet explains every block type, grouped by tab. It reads the
+   same metadata the palette uses, so a new block appears in both places.
+   -------------------------------------------------------------------------- */
+function openLib(tab){
+  tab=tab||'ach';const have=ach(),bg=badges();
+  let content = '';
+  if (tab==='ach') {
+    content = `<div class="lgrid">${ACH.map(a=>{const u=have.includes(a.t);return `<div class="lc ${u?'':'lk'}"><div class="aico ${u?a.an:''}">${u?a.ico:'<i class=ic-lock></i>'}</div><b>${u?a.t:'Locked'}</b><span>${u?a.d:a.req}</span></div>`}).join('')}</div>`;
+  } else if (tab==='bd') {
+    content = `<div class="lgrid">${SEC.map(sx=>{const i=sx.id,b=BAD[i],u=bg.includes(i),nm=BOSSES[sx.boss].name;return `<div class="lc big ${u?'':'lk'}"><div class="bwrap mini ${u?b.cls:''}"><div class="bico ${u?'bhead':''}">${u?bossBot('k'+BOSSES[sx.boss].k,'--s:4px'):'<i class=ic-lock></i>'}</div></div><b>${u?b.t:'Locked'}</b><span>${u?'Earned by defeating '+nm:'Requires: defeat '+nm}</span></div>`}).join('')}</div>`;
+  } else if (tab==='legacy') {
+    const archive = window.TLP_AUTH ? window.TLP_AUTH.getLegacyArchive() : null;
+    const count = archive && archive.data ? Object.keys(archive.data).length : 0;
+    content = `<div style="text-align:left;padding:16px;background:rgba(0,0,0,0.25);border-radius:14px;border:1px solid var(--line);">
+      <h3 style="font-size:20px;margin-bottom:8px;"><i class=ic-box></i> Legacy Browser Save Recovery</h3>
+      <p style="color:var(--mut);font-size:14px;margin-bottom:12px;">The Lost Protocol preserves all previous browser progress in a safe archive. If you have legacy progress from earlier versions before multi-learner accounts, you can restore it here into your active profile (<b>${PATHS_CFG[PATH].n} · ${DIFFS[DIFF].n}</b>).</p>
+      <div style="font-size:13px;margin-bottom:14px;">Status: <b>${count > 0 ? `${count} archived legacy keys available` : 'No unmigrated legacy saves found'}</b></div>
+      ${count > 0 ? `<button class="btn sm" id="btnRestoreLegacy">Restore Legacy Progress to This Profile</button>` : ''}
+    </div>`;
+  }
+  let l=$('#lib');if(!l){l=document.createElement('div');l.id='lib';document.body.appendChild(l)}
+  l.innerHTML=`<div class="lpan"><div class="lh"><h2>Library</h2><button class="btn ghost sm" id="lx">Close</button></div><div class="ltabs"><button class="${tab==='ach'?'on':''}" data-t="ach">Achievements ${have.length}/${ACH.length}</button><button class="${tab==='bd'?'on':''}" data-t="bd">Badges ${bg.length}/${BAD.length}</button><button class="${tab==='legacy'?'on':''}" data-t="legacy">Legacy Saves</button></div>${content}</div>`;
+  l.querySelectorAll('.ltabs button').forEach(b=>b.onclick=()=>openLib(b.dataset.t));$('#lx').onclick=()=>l.remove();
+  const resBtn = l.querySelector('#btnRestoreLegacy');
+  if (resBtn) {
+    resBtn.onclick = () => {
+      try {
+        const res = window.TLP_AUTH.restoreLegacyProgressToProfile(null, PATH, DIFF);
+        S.prog = JSON.parse(localStorage.getItem('tlp-prog') || '{}');
+        save();
+        alert(`Successfully restored legacy progress (${Object.keys(res.prog).length} missions)!`);
+        openLib('legacy');
+        menu();
+      } catch(err) {
+        alert('Restore error: ' + err.message);
+      }
+    };
+  }
+  l.querySelectorAll('.lc:not(.lk)').forEach(c=>c.onclick=()=>{const i=c.querySelector('.aico,.bwrap'),cl=i&&[...i.classList].find(x=>/^(x\d+|bd\d)$/.test(x));if(cl){i.classList.remove(cl);void i.offsetWidth;i.classList.add(cl)}});
+}
+$('#libb').onclick=()=>openLib();$('#sndg').onclick=toggleMute;$('#sndg').innerHTML=mute?'<i class=ic-mute></i>':'<i class=ic-volume></i>';
 $('#run').addEventListener('click',()=>snd('tick'));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const l=$('#lib');if(l)l.remove()}});
-checkAch(true);{const b=badges();SEC.forEach((s,i)=>{if(done(s.boss)&&!b.includes(i))b.push(i)});try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}
+checkAch(true);{const b=badges();SEC.forEach(s=>{if(done(s.boss)&&!b.includes(s.id))b.push(s.id)});try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}
 
 const ev=(v,op,n,rv)=>{const x=+env[v],m=rv&&rv!=='#'?+env[rv]:+n;return op==='>'?x>m:op==='<'?x<m:x===m};
 const cond=b=>{const a=ev(b.v,b.op,b.n,b.rv);return !b.j||b.j==='none'?a:b.j==='and'?a&&ev(b.v2,b.op2,b.n2,b.rv2):a||ev(b.v2,b.op2,b.n2,b.rv2)};
@@ -760,11 +693,71 @@ CH[2].L.push(
 CH[8].L.push(L1('Word builder (bonus)','Hard','Bonus mission. Combine casting, loops and joining: a word that is a number, a word that is text, and a loop to build both results.','n holds the word 2 and s holds go. Walk 2 cells twice, and say gogo. Convert first!',{strict:true,vars:{n:'2',s:'go',out:''},allow:['cast','join','rep','move','say'],cases:[{vars:{},goal:4,say:'gogo'}],par:5,path:'stairs',hints:['n is text, so convert it.','Each lap does two things.','Cast n. Repeat 2: join out and s into out, move n. Say out.']}));
 CH[13].L.push(L1('Documented loop (bonus)','Hard','Bonus mission. Walk through a list with a loop, and explain your work with a note.','list holds 1, 2, 2. Walk every item to reach cell 5, and leave a note.',{vars:{list:[1,2,2],i:0,x:0},allow:['pick','change','rep','move','note'],goal:5,par:5,path:'snake',rule:{txt:'use pick, a repeat and a note with text.',f:s=>has(s,'pick')&&has(s,'rep')&&any(s,b=>b.t==='note'&&b.val.trim().length>2)},hints:['Three items, three laps.','i is the item number.','Repeat 3: change i by 1, pick x item i of list, move x. Add a note.']}));
 CH[18].L.push(L1('Lights function (bonus)','Hard','Bonus mission. Put three bit switches inside one function, call it, then read the result in binary.','Define lights to switch on bits 4, 2 and 1. Call it, walk to total, and say bin.',{vars:{total:0,bin:'0'},fns:['lights'],allow:['bit','def','call','move','say'],cases:[{vars:{},goal:7,say:'111'}],par:7,path:'maze',rule:{txt:'define and call a function and switch on three bits.',f:s=>has(s,'def')&&has(s,'call')&&cnt(s,'bit')>=3},hints:['Bits 4 + 2 + 1 = 7.','The function holds the three bits.','Define lights: bit 4, bit 2, bit 1. Call lights. Move total. Say bin.']}));
+/* -----------------------------------------------------------------------------
+  14. PATH AND DIFFICULTY
+   PATHS_CFG defines the four age groups, DIFFS the three difficulties. Both are
+   chosen on the account page and only read here; setPath()/setDiff() persist the
+   choice and re-apply the per-path visuals.
+   -------------------------------------------------------------------------- */
+const PATHS_CFG={
+ g16:{n:'Grades 1–6',age:'Ages 6–12',d:'Visual analogies, gentle step-by-step guidance, and playful exploration.'},
+ g710:{n:'Grades 7–10',age:'Ages 12–16',d:'Structured logic, computational problem-solving, and clear code flow.'},
+ g1112:{n:'Grades 11–12',age:'Ages 16–18',d:'Computer science principles, syntax parallels, and state analysis.'},
+ adult:{n:'College & Adult',age:'Higher Ed & Self-Taught',d:'Software engineering depth, memory mental models, and technical precision.'}
+};
+try{PATH=localStorage.getItem('tlp-path')||'g710'}catch(e){}
+if(!PATHS_CFG[PATH])PATH='g710';
+function setPath(p){try{PATH=p}catch(e){}applyHidden();
+ if(!PATHS_CFG[p] || p === PATH) return;
+ try{save()}catch(e){}
+ PATH=p;
+ try{localStorage.setItem('tlp-path',p)}catch(e){}
+ try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}')}catch(e){S.prog={}}
+ applyPathVisuals();
+ checkAch(true);
+ {const b=badges();SEC.forEach(s=>{if(done(s.boss)&&!b.includes(s.id))b.push(s.id)});try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}
+ renderPick();
+ updateHudLearner();
+ if(!$('#game').hidden&&!lv().boss){
+  const L=lv(),c=S.ci;
+  $('#learn').innerHTML=`<span class="hand">${CH[c].n} · ${CH[c].t}</span><span class="diff">${L.df}</span><h2>${L.t}</h2><p>${L.learn}</p><div class="mis"><b>Mission:</b> ${L.mis}</div><ul class="goals" id="goals"></ul><button class="btn ghost sm" id="nar">Narrate lesson</button>`;
+  $('#nar').onclick=narrate;goals();
+ }
+ syncCurrentToCloud();
+}
 const DIFFS={beg:{n:'Beginner',d:'New to coding. A friendly look, a tip on every mission, extra room for stars and 5 hearts in boss fights.'},int:{n:'Intermediate',d:'Some experience. The standard game: balanced hints, stars and 3 hearts in boss fights.'},pro:{n:'Professional',d:'Experienced. A terminal look, hidden cell numbers, a block limit, one hint per mission and only 2 hearts in boss fights.'}};
-let DIFF='';try{DIFF=localStorage.getItem('tlp-diff')||''}catch(e){}
-const DH=()=>DIFF==='beg'?5:DIFF==='pro'?2:3,PB=()=>DIFF==='beg'?2:0;
+try{DIFF=localStorage.getItem('tlp-diff')||'int'}catch(e){}
+const DH=()=>(DIFF==='beg'?5:DIFF==='pro'?2:3)+({g16:2,g710:1}[PATH]||0),PB=()=>(DIFF==='beg'?2:0)+({g16:2,g710:1}[PATH]||0);
+/* -----------------------------------------------------------------------------
+  15. PLAYER TALLY AND CLOUD PROFILE
+   regPlayer() keeps a local list of names for the home tally. When a learner is
+   signed in, bonusState()/updateHudLearner() mirror the active profile into the
+   HUD. TALLY_URL is empty by default; fill it to pull a remote total.
+   -------------------------------------------------------------------------- */
 const TALLY_URL='';
-function applyDiff(){document.body.classList.remove('d-beg','d-int','d-pro');if(DIFF)document.body.classList.add('d-'+DIFF);try{cvUpdate()}catch(e){}try{bfxUpdate()}catch(e){}}
+function applyPathVisuals(){
+ document.body.classList.remove('path-g16','path-g710','path-g1112','path-adult');
+ const p=PATH||'g710';
+ document.body.classList.add('path-'+p);
+ bfxUpdate();
+}
+function applyDiff(){document.body.classList.remove('d-beg','d-int','d-pro');if(DIFF)document.body.classList.add('d-'+DIFF);try{cvUpdate()}catch(e){}}
+function bonusState(){try{const l=TLP_AUTH.getActiveLearner();const ok=!!((l&&(l.completed_diffs||[]).length)||(SEC.length&&SEC.every(x=>done(x.boss))));const b=$('#bonusLink');if(b){if(!b._h){b._h=1;b.addEventListener('click',e=>{if(b.classList.contains('lockedx')){e.preventDefault();msg('The Bonus sections unlock after you finish the whole game.','bad')}})}b.classList.toggle('lockedx',!ok);b.title=ok?'Open the Bonus sections':'Unlocks after you finish the whole game';b.setAttribute('aria-disabled',!ok);}}catch(e){}}
+function updateHudLearner(){try{bonusState()}catch(e){}
+ const pn=$('#pn');if(pn)pn.textContent=S.name||'Player';
+ const badge=$('#pathBadge');if(badge&&PATHS_CFG[PATH]){badge.textContent=PATHS_CFG[PATH].n;badge.title=PATHS_CFG[PATH].age+' · '+PATHS_CFG[PATH].d}
+ const acc=$('#accountLink');
+ if(acc&&window.TLP_AUTH){
+  const user=window.TLP_AUTH.getCurrentUser();
+  if(user){
+   acc.textContent=user.role==='parent'?'Parent Area':user.displayName;
+   acc.href=user.role==='parent'?'parent.html':'auth.html';
+  }else{
+   acc.textContent='Account';
+   acc.href='auth.html';
+  }
+ }
+}
 const players=()=>{try{return JSON.parse(localStorage.getItem('tlp-players')||'{}')}catch(e){return{}}};
 let lastReg=null,remoteT=null;
 function regPlayer(){if(!DIFF)return;const P=players();if(lastReg&&lastReg!==S.name)delete P[lastReg];P[S.name]=DIFF;lastReg=S.name;try{localStorage.setItem('tlp-players',JSON.stringify(P))}catch(e){}renderTally();
@@ -773,68 +766,51 @@ const pid=()=>{let p='';try{p=localStorage.getItem('tlp-pid')||'';if(!p){p=Math.
 function loadRemote(){if(TALLY_URL)fetch(TALLY_URL).then(r=>r.json()).then(t=>{if(t&&typeof t.beg==='number'){remoteT=t;renderTally()}}).catch(()=>{})}
 function renderTally(){const el=$('#tally');if(!el)return;const c=remoteT||Object.values(players()).reduce((a,v)=>(a[v]=(a[v]||0)+1,a),{beg:0,int:0,pro:0});
  el.innerHTML=`Players so far: <b>${c.beg||0}</b> beginner${c.beg===1?'':'s'} · <b>${c.int||0}</b> intermediate · <b>${c.pro||0}</b> professional${c.pro===1?'':'s'}`}
-function pickCards(){return Object.entries(DIFFS).map(([k,v])=>`<button class="dp ${DIFF===k?'on':''}" data-d="${k}"><b>${v.n}</b><span>${v.d}</span></button>`).join('')}
-function renderPick(){const el=$('#pick');if(!el)return;el.innerHTML=`<div class="lab">Your level</div><div class="dps">${pickCards()}</div>`;el.querySelectorAll('.dp').forEach(b=>b.onclick=()=>{setDiff(b.dataset.d);snd('chime')})}
-function pickModal(){cine(`<div class="stage"><h2 class="ctitle">Choose your level</h2><p class="csub">The missions are the same, but the look, the help and the rules change. You can switch any time from the menu.</p><div class="dps">${pickCards()}</div></div>`,'c-intro');
- document.querySelectorAll('#cine .dp').forEach(b=>b.onclick=()=>{setDiff(b.dataset.d);snd('win');uncine()})}
+function pathCards(){return Object.entries(PATHS_CFG).map(([k,v])=>`<button class="dp ${PATH===k?'on':''}" data-path="${k}"><b>${v.n}</b><span>${v.age} · ${v.d}</span></button>`).join('')}
+function diffCards(){return Object.entries(DIFFS).map(([k,v])=>`<button class="dp ${DIFF===k?'on':''}" data-d="${k}"><b>${v.n}</b><span>${v.d}</span></button>`).join('')}
+
+function openAdminPreview(){let m=$('#apm');
+ if(!m){m=document.createElement('div');m.id='apm';m.className='tlpm';m.hidden=true;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)m.hidden=true});document.addEventListener('keydown',e=>{if(e.key==='Escape')m.hidden=true})}
+ m.innerHTML=`<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="apt"><button class="tlpm-x" type="button" id="apx" aria-label="Close"><i class=ic-close></i></button><h2 id="apt">Admin preview</h2><p class="s">Open any chapter or level directly to inspect the lesson and test right and wrong answers. Nothing here is saved to any learner. Path shown: ${PATHS_CFG[PATH].n}, ${DIFFS[DIFF].n}.</p><div style="max-height:52vh;overflow:auto">${ORDER.map(c=>`<div style="margin:8px 0"><b>${CH[c].n||''} ${CH[c].t}</b><div class="tlpm-row" style="justify-content:flex-start;margin-top:6px">${CH[c].L.map((_,li)=>`<button class="tlpm-btn" data-c="${c}" data-l="${li}" type="button">Level ${li+1}</button>`).join('')}</div></div>`).join('')}</div><div class="tlpm-row" style="justify-content:flex-start">${SEC.map(x=>`<button class="tlpm-btn" data-badge="${x.id}" type="button">Badge ${x.id+1}</button>`).join('')}</div></div>`;
+ m.hidden=false;$('#apx').onclick=()=>{m.hidden=true};
+ m.querySelectorAll('button[data-c]').forEach(b=>b.onclick=()=>{m.hidden=true;play(+b.dataset.c,+b.dataset.l)});
+ m.querySelectorAll('button[data-badge]').forEach(b=>b.onclick=()=>{m.hidden=true;try{badgeScene(+b.dataset.badge)}catch(e){}})}
+function renderPick(){const el=$('#pick');if(!el)return;
+ const pc=PATHS_CFG[PATH]||{n:'',age:'',d:''};
+ el.innerHTML=`<div class="lab">Your learning path</div><div class="psum"><b>${pc.n}</b><span>${pc.age} · ${pc.d}</span></div><div class="lab" style="margin-top:14px">Your difficulty</div><div class="psum"><b>${DIFFS[DIFF].n}</b><span>${DIFFS[DIFF].d}</span><button class="btn ghost sm" id="chDiff" type="button">Difficulty settings</button></div>`;
+ const b=$('#chDiff');if(b)b.onclick=openDiffSettings}
+const ladderOk=l=>{const dn=(l&&l.completed_diffs)||[],st=(l&&(l.start_diff))||DIFF;return d=>d===st||dn.includes(d)||(d==='int'&&dn.includes('beg'))||(d==='pro'&&dn.includes('int'))||dn.includes('pro')};
+function openDiffSettings(){let m=$('#dsm');
+ if(!m){m=document.createElement('div');m.id='dsm';m.className='tlpm';m.hidden=true;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)m.hidden=true});document.addEventListener('keydown',e=>{if(e.key==='Escape')m.hidden=true})}
+ const l=window.TLP_AUTH&&TLP_AUTH.getActiveLearner();const ok=ladderOk(l);let pend=null;
+ m.innerHTML=`<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="dst"><button class="tlpm-x" type="button" id="dsx" aria-label="Close"><i class=ic-close></i></button><h2 id="dst">Difficulty settings</h2><p class="s">Finishing one difficulty unlocks the next. A difficulty that is still locked can be chosen, but doing so restarts this learner's progress.</p>${['beg','int','pro'].map(d=>`<button class="dsopt" data-d="${d}" type="button"><b>${DIFFS[d].n}</b><span>${DIFFS[d].d}</span><em>${d===DIFF?'Current':ok(d)?'Available. Your progress is kept.':'Locked. Switching restarts your progress.'}</em></button>`).join('')}<div id="dsconf" hidden><div class="warnx">Warning: switching to <b id="dsname"></b> permanently resets this learner's progress, stars and leaderboard entries, because it is a different difficulty. Type <b>RESET MY PROGRESS</b> to continue.</div><input id="dstxt" autocomplete="off" aria-label="Confirmation sentence"><div class="tlpm-row"><button class="tlpm-btn" id="dscancel" type="button">Cancel</button><button class="tlpm-btn pri" id="dsgo" type="button" disabled>Reset and switch</button></div></div><p class="tlpm-note" id="dsmsg" role="status" aria-live="polite"></p></div>`;
+ m.hidden=false;const msg=t=>{$('#dsmsg').textContent=t};
+ $('#dsx').onclick=()=>{m.hidden=true};
+ m.querySelectorAll('.dsopt').forEach(b=>b.onclick=async()=>{const d=b.dataset.d;if(d===DIFF)return;msg('');
+  if(!l||l.isGuest||!TLP_AUTH.isCloudConfigured()){setDiff(d);m.hidden=true;return}
+  if(ok(d)){try{msg('Switching...');await TLP_AUTH.switchDifficulty(l.id,d);location.reload()}catch(e){msg(e.message)}}
+  else{pend=d;$('#dsname').textContent=DIFFS[d].n;$('#dsconf').hidden=false;$('#dstxt').value='';$('#dsgo').disabled=true;$('#dstxt').focus()}});
+ $('#dstxt').oninput=()=>{$('#dsgo').disabled=$('#dstxt').value!=='RESET MY PROGRESS'};
+ $('#dscancel').onclick=()=>{$('#dsconf').hidden=true;pend=null};
+ $('#dsgo').onclick=async()=>{try{msg('Resetting...');await TLP_AUTH.switchDifficulty(l.id,pend,'RESET MY PROGRESS');
+   try{Object.keys(localStorage).filter(k=>k.indexOf(l.id)>=0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}catch(e){msg(e.message)}}}
+async function difficultyCelebration(next){
+ try{const l=TLP_AUTH.getActiveLearner();if(l&&!l.isGuest){const r=await TLP_AUTH.markDifficultyCompleted(l.id,DIFF);l.completed_diffs=r}}catch(e){}
+ const t=(DIFF==='beg'?'You finished the game on Beginner. Intermediate is now unlocked.':DIFF==='int'?'You finished the game on Intermediate. Professional is now unlocked.':'Congratulations, you finished the game as a Professional. If you want to go back and try Beginner and Intermediate, you can do that from the difficulty settings.')+' The Bonus sections are now unlocked from the top bar.';
+ const c=cine(`<div class="stage"><h2 class="ctitle">Difficulty complete</h2><p class="csub">${t}</p><div class="bar" style="justify-content:center"><button class="btn" id="dc-ok" type="button">Continue</button></div></div>`);
+ c.querySelector('#dc-ok').onclick=()=>{uncine();next()}}
+function pickModal(){
+ cine(`<div class="stage"><h2 class="ctitle">Welcome to The Lost Protocol</h2><p class="csub">Choose your learning path and gameplay difficulty. Both can be switched anytime from the menu without resetting progress.</p><div class="lab">1. Choose your learning path</div><div class="dps" id="m-paths">${pathCards()}</div><div class="lab" style="margin-top:14px">2. Choose your difficulty</div><div class="dps" id="m-diffs">${diffCards()}</div><div style="margin-top:16px;text-align:right"><button class="btn" id="m-start">Confirm & Begin</button></div></div>`,'c-intro');
+ document.querySelectorAll('#m-paths .dp').forEach(b=>b.onclick=()=>{setPath(b.dataset.path);document.querySelectorAll('#m-paths .dp').forEach(x=>x.classList.toggle('on',x===b));snd('chime')});
+ document.querySelectorAll('#m-diffs .dp').forEach(b=>b.onclick=()=>{setDiff(b.dataset.d);document.querySelectorAll('#m-diffs .dp').forEach(x=>x.classList.toggle('on',x===b));snd('chime')});
+ const b=$('#m-start');if(b)b.onclick=()=>{if(!DIFF)setDiff('int');snd('win');uncine();storyOpening()}}
 $('#name').addEventListener('change',regPlayer);
-const KB={
- prog:{kw:['program','instruction','algorithm','code','coding'],t:['A program is a list of instructions that the computer follows in order, one at a time.','Order matters. Reading a box before you fill it gives an empty result.','Look at the mission. Which instruction must come first, and why?']},
- var:{kw:['variable','box','memory box','store','set block','change block'],t:['A variable is a labelled box that remembers a value.','SET puts a value in. CHANGE adds to the value already inside, and a negative number takes away.','Which box does your mission use? What should be inside it before you read it?']},
- const:{kw:['constant','lock','locked','never change'],t:['A constant is a box that is set once and can never change. The lock icon marks it.','You may read a constant as often as you like. Trying to change it causes an error.','Which boxes in your mission are locked? Which blocks only read them?']},
- if:{kw:['if','else','condition','and or','logic','decision','compare','boolean'],t:['An if block asks a yes or no question. Yes runs the blocks under then. No runs the else blocks.','AND needs both conditions true. OR needs at least one. Use the + condition menu to add a second condition.','Say your rule out loud in plain words. Which parts are joined by AND, and which by OR?']},
- arr:{kw:['array','list','item','index'],t:['An array is a list stored in one box. Items are numbered from 1.','The pick block reads one item by its number. A counter box can supply that number inside a loop.','How many items are there? What should the counter do each lap?']},
- loop:{kw:['loop','repeat','while','again','lap','iterate'],t:['A loop runs blocks again and again so you write the step once. Repeat uses a fixed count. While uses a condition.','A while loop needs something inside that changes its condition, or it never stops.','What do you want to happen every lap? What changes from lap to lap?']},
- fn:{kw:['function','define','call','recipe','reuse'],t:['A function is a named group of blocks. Defining it stores it. Calling it runs it.','Define first, then call. A function can read the boxes around it.','What small job do you repeat? What name would you give it?']},
- rec:{kw:['recursion','recursive','itself','base case'],t:['Recursion means a function calls itself. Each call solves a smaller piece.','Every recursive function needs a base case, a rule that tells it to stop.','What is the smallest case where nothing more is needed? What shrinks each call?']},
- scope:{kw:['scope','local','global'],t:['Scope is where a variable lives. Changes made inside a function stay inside it.','The box outside is global. A function works on its own copy.','After the function ends, what does the outside box still hold?']},
- str:{kw:['string','text','join','glue','word '],t:['A string is text. Joining glues two strings end to end.','Join stores its result in a box, so you can join the result again.','Which pieces do you need? In what order should they be glued?']},
- type:{kw:['type','number or word','data type','strict'],t:['Every value has a type, such as a number or a word. Moving needs a number.','The wrong type causes an error. Check what a box holds before you use it.','Which of your boxes hold numbers, and which hold words?']},
- cast:{kw:['cast','convert','turn into'],t:['Type casting converts a value from one type to another, like a word into a number.','The word 3 looks like a number but is still text until you convert it.','Which box is text but needs to act like a number?']},
- op:{kw:['operator','calculate','maths','math','remainder','multiply','divide','plus','minus'],t:['Operators calculate new values: plus, minus, times, divide and remainder.','The calculate block reads one box, applies the operator with a number, and stores the result in a box.','What do you start with, and what do you need to end with? Which operator connects them?']},
- cmt:{kw:['comment','note'],t:['A comment is a note for humans. The computer ignores it.','Good comments explain why, not only what.','If a stranger read your blocks, which part would confuse them?']},
- io:{kw:['input','output','ask','say block','player types'],t:['Input is information that comes into a program. Output is what the program says or shows.','Your script must work for every input, not just one. Watch the test numbers.','What does the player type, and what should happen with it?']},
- bit:{kw:['bit','byte','binary'],t:['A bit is an on/off switch with a value: 1, 2, 4, 8 and so on. 8 bits make a byte.','Add the values of the switches that are on. Binary writes a number using only 0 and 1.','Which switch values add up to your target number?']},
- boss:{kw:['boss','guardian','heart','remember','glitch','hoarder','cipher','echo'],t:['A guardian remembers every attack that lands. Repeating it costs you a heart.','Each round asks for a different idea. Read the round rule on the left.','Compare your idea to the memory list at the top. What have you not tried yet?']},
- game:{kw:['star','score','hint','level','badge','achievement','library','robot','track','cell'],t:['Stars come from using few blocks. Hints appear in order and never give the full solution.','Achievements unlock with score. Badges come from defeating guardians.','What are you trying to find out? Tell me and I can point you in the right direction.']}};
-const CT={'Programming':'prog','Variables':'var','Constants':'const','Loops':'loop','If Statements':'if','Data Types':'type','Type Casting':'cast','Strings':'str','Operators':'op','Arrays':'arr','Input and Output':'io','Comments':'cmt','Functions':'fn','Scope':'scope','Recursion':'rec','Bits and Binary':'bit'};
-const BOLT={asked:[],tier:{},last:null,voice:false,open:false};
-const norm=s=>s.toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(),rpick=a=>a[Math.random()*a.length|0];
-const sim=(a,b)=>{const A=new Set(a.split(' ')),B2=new Set(b.split(' '));let i=0;A.forEach(x=>{if(B2.has(x))i++});return i/Math.max(A.size,B2.size,1)};
-function curTopic(){try{const c=CH[S.ci];return c&&!$('#game').hidden?CT[c.t]||(c.L[0].boss?'boss':null):null}catch(e){return null}}
-const stem=w=>w.replace(/s$/,'');
-function detect(n){const T=' '+n.split(' ').map(stem).join(' ')+' ';let best=null,sc=0;for(const [id,k] of Object.entries(KB)){let s=0;k.kw.forEach(w=>{const p=w.trim().split(' ').map(stem).join(' ');if(T.includes(' '+p+' ')||(p.length>=6&&T.includes(p)))s+=p.length>3?2:1});if(s>sc){sc=s;best=id}}return sc?best:null}
-function boltReply(q){const n=norm(q);if(!n)return['BEEP. EMPTY TRANSMISSION. SEND A QUERY.','warn'];
- if(BOLT.asked.some(a=>sim(a,n)>=.8))return[rpick(['DUPLICATE QUERY DETECTED. I WILL NOT REPEAT MYSELF. ASK ME TO EXPLAIN A DIFFERENT PART, OR TEST YOUR IDEA IN THE PUZZLE AND TELL ME WHAT HAPPENED.','QUERY ALREADY PROCESSED. REPEATING IT WILL NOT HELP, HUMAN. TRY SOMETHING NEW.']),'bad'];
- BOLT.asked.push(n);
- if(/^(hi|hello|hey|yo|greetings|good (morning|evening|afternoon))\b/.test(n))return['GREETINGS, HUMAN. I AM BOLT-9, A CLUE UNIT. I EXPLAIN PROGRAMMING IDEAS. I NEVER GIVE ANSWERS. ASK ME ABOUT A CONCEPT.','ok'];
- if(/\b(thanks|thank you|thx)\b/.test(n))return['YOU ARE WELCOME. GRATITUDE LOGGED. NOW GO SOLVE SOMETHING.','ok'];
- if(/\b(who are you|what are you|your name)\b/.test(n))return['I AM BOLT-9, A HINT UNIT BUILT TO EXPLAIN IDEAS, NEVER TO SOLVE THEM. MY MEMORY CONTAINS ONLY THIS GAME.','ok'];
- const direct=/(the answer|solution|solve (it|this)|give me the (code|answer)|tell me the (code|answer)|which blocks|what blocks|what (should|do) i (put|use|drag|do)|just tell|do it for me|show me how to (win|finish|pass)|cheat|complete (it|this) for me)/.test(n);
- let id=detect(n);const follow=/(explain|more|further|why|how come|dont understand|confus|example|elaborate|deeper|stuck|help)/.test(n);
- if(!id&&(follow||direct))id=BOLT.last||curTopic();
- if(direct){const t=id||curTopic();return['REQUEST DENIED. I DO NOT GIVE ANSWERS DIRECTLY. '+(t?'THE IDEA YOU NEED IS: '+KB[t].t[0].toUpperCase()+' THINK ABOUT IT, THEN ASK ME TO EXPLAIN FURTHER.':'TELL ME WHICH IDEA YOU ARE STUCK ON AND I WILL EXPLAIN IT.'),'bad']}
- if(!id)return[rpick(['ERROR: TOPIC NOT FOUND. I AM NOT BUILT TO ANSWER THAT. I ONLY DISCUSS PROGRAMMING IDEAS FROM THIS GAME: VARIABLES, LOOPS, LOGIC, FUNCTIONS AND MORE.','OUT OF RANGE. MY MEMORY CONTAINS ONLY THE TOPICS OF THIS GAME. I CANNOT HELP WITH THAT.']),'bad'];
- BOLT.last=id;const t=Math.min((BOLT.tier[id]??-1)+1,3);BOLT.tier[id]=t;
- if(t>2)return['I HAVE NO DEEPER EXPLANATION FOR THIS TOPIC. THE NEXT STEP IS YOURS: TRY IT IN THE PUZZLE AND TELL ME WHAT HAPPENED.','warn'];
- return[(t===0?'QUERY ACCEPTED. ':t===1?'EXPANDING EXPLANATION. ':'FINAL CLUE. ')+KB[id].t[t],'ok']}
-let bT=0;
-function blip(){if(mute||!AC)return;try{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.type='square';o.frequency.value=380+Math.random()*180;g.gain.setValueAtTime(.018,t);g.gain.exponentialRampToValueAtTime(.001,t+.03);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+.03)}catch(e){}}
-function boltSay(txt,mood){const log=$('#blog'),m=document.createElement('div');m.className='bm2 rb '+(mood||'');log.appendChild(m);const face=$('#bpan .bface');if(face){face.dataset.m=mood||'ok';clearTimeout(bT);bT=setTimeout(()=>face.dataset.m='',2200)}
- if(mood==='bad')snd('err');let i=0;const iv=setInterval(()=>{m.textContent='▮ '+txt.slice(0,++i);if(i%3===0)blip();log.scrollTop=log.scrollHeight;if(i>=txt.length){clearInterval(iv);if(BOLT.voice&&window.speechSynthesis){try{const u=new SpeechSynthesisUtterance(txt.toLowerCase());u.pitch=.1;u.rate=.85;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}}},mood==='bad'?14:20)}
-function boltSend(){const inp=$('#bq'),q=inp.value.trim();if(!q)return;inp.value='';const log=$('#blog'),u=document.createElement('div');u.className='bm2 me';u.textContent=q;log.appendChild(u);log.scrollTop=log.scrollHeight;
- const th=document.createElement('div');th.className='bm2 rb think';th.textContent='▮ PROCESSING...';log.appendChild(th);log.scrollTop=log.scrollHeight;
- setTimeout(()=>{th.remove();const [t,m]=boltReply(q);boltSay(t,m)},550+Math.random()*350)}
-function boltUI(){const w=document.createElement('div');w.id='bolt';w.innerHTML=`<button id="bfab" aria-label="Open BOLT-9 hint robot"><span class="bface" data-m=""><i class="ant"></i><i class="eye"></i><i class="eye"></i></span><span class="bping"></span></button><div id="bpan" hidden><div class="bhd"><span class="bface" data-m=""><i class="ant"></i><i class="eye"></i><i class="eye"></i></span><div><b>BOLT-9</b><small id="bst">HINT UNIT · ONLINE</small></div><button id="bvoice" title="Robot voice on/off">🔈</button><button id="bx" aria-label="Close">✕</button></div><div id="blog"></div><div class="bin"><input id="bq" placeholder="TRANSMIT QUERY..." maxlength="140" autocomplete="off"><button id="bsend">SEND</button></div><div class="bnote">Clues only. I never give answers.</div></div>`;document.body.appendChild(w);
- $('#bfab').onclick=()=>{const p=$('#bpan');p.hidden=!p.hidden;$('#bfab').classList.toggle('on',!p.hidden);if(!p.hidden){snd('chime');if(!BOLT.open){BOLT.open=true;boltSay('BOOT SEQUENCE COMPLETE. I AM BOLT-9. I EXPLAIN IDEAS BUT I NEVER GIVE ANSWERS. ASK ME ABOUT A CONCEPT FROM THE GAME.','ok')}$('#bq').focus()}};
- $('#bx').onclick=()=>{$('#bpan').hidden=true;$('#bfab').classList.remove('on')};$('#bsend').onclick=boltSend;$('#bq').onkeydown=e=>{if(e.key==='Enter')boltSend()};
- $('#bvoice').onclick=()=>{BOLT.voice=!BOLT.voice;$('#bvoice').textContent=BOLT.voice?'🔊':'🔈';if(!BOLT.voice&&window.speechSynthesis)speechSynthesis.cancel()}}
-boltUI();applyDiff();renderTally();loadRemote();
+applyHidden();applyDiff();renderTally();loadRemote();
 {const P=players();if(P[S.name])lastReg=S.name}
-if(!DIFF)setTimeout(pickModal,300);
+/* path and difficulty come from the signed-in learner, so no picker is shown here */
 
 const BK=(t,p,c,e)=>Object.assign(mk(t),p||{},{c:c||[],e:e||[]});
-BAD.push({t:'Vault Breaker',ico:'🔐',cls:'bd5'},{t:'Origin Slayer',ico:'👑',cls:'bd6'});
+BAD.push({t:'Vault Breaker',ico:'<i class=ic-lock></i>',cls:'bd5'},{t:'Origin Slayer',ico:'<i class=ic-crown></i>',cls:'bd6'});
 const B5=[
  RD('The Byte · Round 1: Switch strike','The Byte lives in the vault of ones and zeros. It has <b>100 HP</b> and <b>remembers every attack that lands</b>. Round 1: switch bits to make 6, walk there and say its binary form.','Make 6 with bit switches, walk to cell 6 and say bin.',[{vars:{},goal:6,say:'110'}],4,{txt:'switch on at least two bits.',f:s=>cnt(s,'bit')>=2},['4 + 2 = 6.','bin shows the binary form.','Bit 4, bit 2, move total, say bin.'],'maze',{vars:{total:0,bin:'0'}}),
  RD('The Byte · Round 2: Conversion strike','<b>Round 2.</b> The Byte speaks both languages. Convert there and back.','n holds 5. Convert it to binary and say it, then convert it back and walk it.',[{vars:{},goal:5,say:'101'}],5,{txt:'convert at least twice.',f:s=>cnt(s,'base')>=2},['One conversion each way.','The word goes in b, the number comes back in m.','Convert n to binary into b, say b, convert b from binary into m, move m.'],'stairs',{vars:{n:5,b:'',m:0}}),
@@ -850,25 +826,133 @@ BOSSES[29]={k:5,name:'THE ORIGIN',rounds:B6,taunts:['I was the first bug.','Sear
 const _snd=snd;snd=function(k){if(k!=='b5'&&k!=='b6')return _snd(k);if(mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime,T=(f,d,w,v,s)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=w;o.frequency.setValueAtTime(f,t+s);g.gain.setValueAtTime(v,t+s);g.gain.exponentialRampToValueAtTime(.001,t+s+d);o.connect(g);g.connect(AC.destination);o.start(t+s);o.stop(t+s+d)};
  if(k==='b5')[262,330,392,523,659,784,1047].forEach((f,i)=>T(f,.18,'square',.07,i*.07));else{[196,247,294,392].forEach(f=>T(f,2,'sawtooth',.05,0));[523,659,784,1047,1319,1568].forEach((f,i)=>T(f,.7,'triangle',.08,.4+i*.12))}}catch(e){}};
 const _render=render;render=function(){_render.apply(this,arguments);cvUpdate()};
+/* -----------------------------------------------------------------------------
+  16. PROFESSIONAL MODE EXTRAS
+   Only active when DIFF is "pro": a terminal-style code view (cvUpdate), extra
+   glitch effects and the quieter sound hooks added at the end of the file.
+   -------------------------------------------------------------------------- */
 function cvUpdate(){let el=$('#cv');if(DIFF!=='pro'){if(el)el.hidden=true;return}if(!el){const w=$('#area')&&$('#area').closest('.card');if(!w)return;el=document.createElement('pre');el.id='cv';el.className='cv';w.appendChild(el)}el.hidden=false;el.textContent='// your program\n'+(S.script.length?S.script.map(tx).join('\n'):'(empty)')}
 function cheer(){const r=bot.getBoundingClientRect();for(let i=0;i<4;i++)setTimeout(()=>puff(r.left+r.width/2,r.top,10),i*180)}
 
-function setDiff(d){if(d===DIFF)return;try{save()}catch(e){}DIFF=d;__D=d;try{localStorage.setItem('tlp-diff',d)}catch(e){}migrate(d);try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}')}catch(e){S.prog={}}applyDiff();regPlayer();checkAch(true);{const b=badges();SEC.forEach((s,i)=>{if(done(s.boss)&&!b.includes(i))b.push(i)});try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}renderPick();menu()}
-function coachInit(){const L0=$('#learn');if(!L0||L0.querySelector('.coach'))return;const h=lv().hints||[];let n=1;
- const box=document.createElement('div');box.className='coach';box.innerHTML='<div class="cface"><span class="bface" data-m="ok"><i class="ant"></i><i class="eye"></i><i class="eye"></i></span></div><div class="cbody"><b>Coach Bolt says:</b><ol class="csteps"></ol><button class="btn sm" id="cnext">Show me the next step</button></div>';L0.appendChild(box);
+function setDiff(d){
+  if(d===DIFF)return;
+  try{save()}catch(e){}
+  DIFF=d;__D=d;
+  try{localStorage.setItem('tlp-diff',d)}catch(e){}
+  try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}')}catch(e){S.prog={}}
+  applyDiff();
+  applyPathVisuals();
+  regPlayer();
+  checkAch(true);
+  {const b=badges();SEC.forEach(s=>{if(done(s.boss)&&!b.includes(s.id))b.push(s.id)});try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}
+  renderPick();
+  updateHudLearner();
+  menu();
+  syncCurrentToCloud();
+}
+function coachInit(){const L0=$('#learn');if(!L0||document.querySelector('.coach'))return;const h=lv().hints||[];let n=1;
+ const box=document.createElement('div');box.className='coach';box.innerHTML='<div class="cface"><span class="bface" data-m="ok"><i class="ant"></i><i class="eye"></i><i class="eye"></i></span></div><div class="cbody"><b>Coach says:</b><ol class="csteps"></ol><button class="btn sm" id="cnext">Show me the next step</button></div>';document.body.appendChild(box);
  const ol=box.querySelector('.csteps'),nx=box.querySelector('#cnext'),add=()=>{if(n>h.length)return;const li=document.createElement('li');li.textContent=h[n-1];ol.appendChild(li);n++;if(n>h.length)nx.hidden=true;snd('tick')};
  const intro=document.createElement('li');intro.innerHTML='Read the mission above. Then drag the <b>glowing</b> blocks into your script and press Run.';ol.appendChild(intro);add();nx.onclick=add;
  const txt=h.join(' ').toLowerCase();document.querySelectorAll('#pal .blk').forEach(p=>{const t=[...p.classList].find(c=>NAMES[c]);if(t&&txt.includes(NAMES[t].split(' ')[0].toLowerCase()))p.classList.add('glow')})}
-puff=function(x,y,n){if(still)return;for(let i=0;i<(n||6);i++){const s=document.createElement('span');s.className='spark';const a=Math.random()*6.28,d=14+Math.random()*(DIFF==='beg'?44:26);
- if(DIFF==='beg'){s.textContent=['⭐','✨','💜','💙','🌟'][i%5];s.style.cssText=`left:${x}px;top:${y}px;font-size:${12+Math.random()*10}px;background:none;width:auto;height:auto`}else s.style.cssText=`left:${x}px;top:${y}px;width:5px;height:5px;background:${i%2?'var(--a)':'var(--b)'}`;
- document.body.appendChild(s);s.animate([{transform:'translate(0,0)',opacity:.95},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) rotate(${Math.random()*200}deg)`,opacity:0}],{duration:DIFF==='beg'?820:520,easing:'ease-out'}).onfinish=()=>s.remove()}};
+puff=function(x,y,n){
+  if(still)return;
+  for(let i=0;i<(n||6);i++){
+    const s=document.createElement('span');s.className='spark';const a=Math.random()*6.28,d=14+Math.random()*(PATH==='g16'?44:26);
+    if(PATH==='g16'){
+      s.innerHTML=['<i class=ic-star></i>','<i class=ic-sparkle></i>','<i class=ic-heart></i>','<i class=ic-heart></i>','<i class=ic-star></i>'][i%5];
+      s.style.cssText=`left:${x}px;top:${y}px;font-size:${12+Math.random()*10}px;background:none;width:auto;height:auto`;
+    }else if(PATH==='g710'){
+      s.style.cssText=`left:${x}px;top:${y}px;width:6px;height:6px;border-radius:2px;background:${i%2?'var(--a)':'var(--b)'};box-shadow:0 0 8px var(--a)`;
+    }else if(PATH==='g1112'){
+      s.style.cssText=`left:${x}px;top:${y}px;width:4px;height:4px;border-radius:0;background:${i%2?'var(--a)':'#7df9ff'}`;
+    }else{
+      s.style.cssText=`left:${x}px;top:${y}px;width:3px;height:8px;border-radius:1px;background:${i%2?'#ffc83b':'var(--b)'};opacity:.85`;
+    }
+    document.body.appendChild(s);
+    s.animate([{transform:'translate(0,0)',opacity:.95},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) rotate(${Math.random()*200}deg)`,opacity:0}],{duration:PATH==='g16'?820:520,easing:'ease-out'}).onfinish=()=>s.remove();
+  }
+};
 cheer=function(){const r=bot.getBoundingClientRect();for(let i=0;i<7;i++)setTimeout(()=>puff(r.left+r.width/2,r.top,14),i*150)};
-function bfxUpdate(){let e=$('#bfx');if(DIFF!=='beg'){if(e)e.remove();return}if(e)return;e=document.createElement('div');e.id='bfx';e.setAttribute('aria-hidden','true');const em=['⭐','✨','🌈','💫','🎈','💜','🌟'];for(let i=0;i<16;i++){const s=document.createElement('i');s.textContent=em[i%em.length];s.style.cssText=`left:${(i*6.3+Math.random()*4)%100}%;font-size:${14+Math.random()*18}px;animation-duration:${14+Math.random()*14}s;animation-delay:${-Math.random()*20}s`;e.appendChild(s)}document.body.appendChild(e)}
+function bfxUpdate(){
+  let e=$('#bfx');
+  if(PATH!=='g16'){if(e)e.remove();return}
+  if(e)return;
+  e=document.createElement('div');e.id='bfx';e.setAttribute('aria-hidden','true');
+  const em=['<i class=ic-star></i>','<i class=ic-sparkle></i>','<i class=ic-sparkle></i>','<i class=ic-sparkle></i>','<i class=ic-sparkle></i>','<i class=ic-heart></i>','<i class=ic-star></i>'];
+  for(let i=0;i<16;i++){
+    const s=document.createElement('i');
+    s.innerHTML=em[i%em.length];
+    s.style.cssText=`left:${(i*6.3+Math.random()*4)%100}%;font-size:${14+Math.random()*18}px;animation-duration:${14+Math.random()*14}s;animation-delay:${-Math.random()*20}s`;
+    e.appendChild(s);
+  }
+  document.body.appendChild(e);
+}
 let pgT=0;function proGlitch(){if(DIFF==='pro'&&!still&&!document.hidden&&!$('#game').hidden){document.body.classList.add('glitchy');setTimeout(()=>document.body.classList.remove('glitchy'),380)}pgT=setTimeout(proGlitch,22000+Math.random()*26000)}
 pgT=setTimeout(proGlitch,15000);
 bfxUpdate();
 
-menu();
-</script>
-</body>
-</html>
+async function initGameSession(){
+  if(window.TLP_AUTH){
+    try{
+      await window.TLP_AUTH.init();
+      const u=window.TLP_AUTH.getCurrentUser();
+      if(window.TLP_AUTH.isCloudConfigured()){
+        if(!u){location.replace('auth.html');return}
+        if(u.role==='parent'){location.replace('parent.html');return}
+        if(u.isAdmin){window.__adminPreview=true}
+      }
+      const l=window.TLP_AUTH.getActiveLearner();
+      if(l){
+        const lp=l.assigned_path||l.assignedPath, ld=l.current_diff||l.currentDiff;
+        if(l.name && l.name !== 'Player') S.name = l.name;
+        if(lp && PATHS_CFG[lp]) PATH = lp;
+        if(ld && ['beg','int','pro'].includes(ld)){ DIFF = ld; __D = DIFF; }
+      }
+      try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}')}catch(e){S.prog={}}
+      if(window.TLP_AUTH.isCloudConfigured() && l && !l.isGuest){
+        try{
+          const cloudBundle = await window.TLP_AUTH.getProgressBundle(l.id, PATH, DIFF);
+          if(cloudBundle && cloudBundle.prog && Object.keys(cloudBundle.prog).length > Object.keys(S.prog).length){
+            S.prog = Object.assign({}, S.prog, cloudBundle.prog);
+            save();
+          }
+        }catch(e){}
+      }
+    }catch(e){}
+  }
+  if(!DIFF){DIFF='int';__D=DIFF}
+  applyHidden();
+  applyDiff();
+  applyPathVisuals();
+  updateHudLearner();
+  renderPick();
+  menu();
+  if(window.__adminPreview){const ap=$('#adminPrev');if(ap)ap.hidden=false}
+  if(!Object.keys(S.prog).length&&!window.__adminPreview)setTimeout(()=>{try{if(!$('#cine'))storyOpening()}catch(e){}},500);
+}
+
+window.addEventListener('DOMContentLoaded', initGameSession);
+initGameSession();
+
+/* ---------- Sections as swipeable horizontal screens ---------- */
+(function(){const chs=document.getElementById('chs');if(!chs)return;let busy=false;
+ function build(){if(busy)return;const secs=[...chs.querySelectorAll(':scope>.sec')];if(secs.length<2||chs.querySelector('.hs-track'))return;busy=true;
+  const track=document.createElement('div');track.className='hs-track';track.tabIndex=0;track.setAttribute('role','region');track.setAttribute('aria-label','Game sections. Use the arrow keys or swipe.');
+  secs[0].before(track);secs.forEach(x=>track.appendChild(x));
+  const nav=document.createElement('div');nav.className='hs-nav';nav.innerHTML='<button type="button" class="hs-prev" aria-label="Previous section">←</button><span class="hs-lbl" aria-live="polite"></span><span class="hs-dots" aria-hidden="true">'+secs.map(()=>'<i></i>').join('')+'</span><button type="button" class="hs-next" aria-label="Next section">→</button>';
+  track.before(nav);
+  const prev=nav.querySelector('.hs-prev'),next=nav.querySelector('.hs-next'),dots=[...nav.querySelectorAll('.hs-dots i')],lbl=nav.querySelector('.hs-lbl');
+  const idx=()=>Math.max(0,Math.min(secs.length-1,Math.round(track.scrollLeft/Math.max(1,track.clientWidth+16))));
+  const upd=()=>{const i=idx();dots.forEach((d,k)=>d.classList.toggle('on',k===i));prev.disabled=i===0;next.disabled=i===secs.length-1;lbl.textContent='Section '+(i+1)+' of '+secs.length};
+  const go=i=>{i=Math.max(0,Math.min(secs.length-1,i));track.scrollTo({left:i*(track.clientWidth+16),behavior:document.documentElement.classList.contains('reduce-fx')?'auto':'smooth'})};
+  prev.onclick=()=>go(idx()-1);next.onclick=()=>go(idx()+1);
+  track.addEventListener('scroll',()=>{clearTimeout(track._t);track._t=setTimeout(upd,60)},{passive:true});
+  track.addEventListener('keydown',e=>{if(e.target!==track)return;if(e.key==='ArrowLeft'){e.preventDefault();go(idx()-1)}else if(e.key==='ArrowRight'){e.preventDefault();go(idx()+1)}});
+  nav.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){go(idx()-1)}else if(e.key==='ArrowRight'){go(idx()+1)}});
+  // open on the first section that still has an undefeated guardian
+  let start=0;try{start=Math.min(secs.length-1,SEC.filter(s=>done(s.boss)).length)}catch(e){}
+  track.style.scrollBehavior='auto';requestAnimationFrame(()=>{track.scrollLeft=start*(track.clientWidth+16);upd();track.style.scrollBehavior=''});upd();busy=false}
+ new MutationObserver(()=>{if(!busy&&!chs.querySelector('.hs-track'))build()}).observe(chs,{childList:true});build();
+ window.addEventListener('resize',()=>{const t=chs.querySelector('.hs-track');if(t)t.dispatchEvent(new Event('scroll'))});
+})();

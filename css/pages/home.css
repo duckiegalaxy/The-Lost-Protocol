@@ -1,0 +1,282 @@
+/* =============================================================================
+   THE LOST PROTOCOL — HOME LANDING PAGE
+   -----------------------------------------------------------------------------
+   This file only styles the landing page (index.html). Nothing here is shared
+   with the game, the account page or the dashboards, so it can be tuned freely
+   without touching gameplay.
+
+   It is loaded after css/style.css on purpose: style.css defines the design
+   tokens and the base look of every landmark on this page, and the rules below
+   refine them (spacing, rhythm, focus states, small motion). None of the text,
+   markup structure or game content is changed here; this is presentation only.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   1. PAGE RHYTHM
+   The landing page is a long scroll: hero, play card, guardians, chips, facts.
+   A consistent vertical measure and a slightly wider gutter on big screens is
+   what makes the page read as designed instead of piled together.
+   -------------------------------------------------------------------------- */
+#home .wrap {
+  padding-left: clamp(20px, 5vw, 56px);
+  padding-right: clamp(20px, 5vw, 56px);
+}
+
+/* The hero already has generous top padding in style.css; trim the bottom so
+   the "Ready to play?" label does not float in a dead zone. */
+#home .hero {
+  padding-bottom: 26px;
+}
+
+/* -----------------------------------------------------------------------------
+   2. HERO
+   Hierarchy fix: the handwritten kicker and the display title used to sit at
+   nearly the same optical weight. Here the kicker becomes a small label with a
+   hairline, the title gets tighter tracking and the paragraph is capped at a
+   comfortable reading measure.
+   -------------------------------------------------------------------------- */
+#home .kick {
+  position: relative;
+  padding-left: 26px;
+  margin-bottom: 2px;
+  letter-spacing: .01em;
+}
+
+/* Short accent rule before "welcome, player" instead of a generic pill. */
+#home .kick::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 16px;
+  height: 1px;
+  background: currentColor;
+  opacity: .55;
+}
+
+#home .hero h1 {
+  letter-spacing: -.022em;
+  margin-bottom: 18px;
+}
+
+#home .hero p.lead {
+  max-width: 56ch;
+  line-height: 1.62;
+  /* Slightly dimmer than body copy so the title stays the loudest element. */
+  color: color-mix(in srgb, var(--mut) 92%, transparent);
+}
+
+/* -----------------------------------------------------------------------------
+   3. SECTION LABELS
+   "Ready to play?" / "What you will learn" are section dividers. Giving them a
+   full-width hairline turns them into a scannable table of contents.
+   -------------------------------------------------------------------------- */
+#home .label {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 44px 0 16px;
+}
+
+#home .label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+/* -----------------------------------------------------------------------------
+   4. PLAY CARD
+   The primary call to action. Base styles (animated conic border, blur) come
+   from style.css; here we add tactile press feedback, a real keyboard focus
+   ring and a cleaner CTA chip. Hover is intentionally subtle so the card does
+   not look like a template hero.
+   -------------------------------------------------------------------------- */
+#home .playcard {
+  /* A faint inner top highlight separates the card from the page background. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+#home .playcard:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 6px;
+}
+
+#home .playcard:active {
+  transform: translateY(-1px) scale(.997);
+}
+
+/* The gradient CTA reads better with a hairline and slightly tighter padding. */
+#home .pc-cta {
+  box-shadow:
+    0 8px 26px color-mix(in srgb, var(--a) 40%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, .22);
+}
+
+/* The arrow should react to keyboard focus exactly like it reacts to hover. */
+#home .playcard:focus-visible .pc-cta i {
+  transform: translateX(6px);
+}
+
+/* Card body: keep the headline from crowding the paragraph on narrow screens. */
+#home .pc-main h3 {
+  margin-top: 10px;
+}
+
+#home .pc-main p {
+  line-height: 1.62;
+}
+
+/* -----------------------------------------------------------------------------
+   5. GUARDIANS STRIP
+   Six bots float with their own long-running animation in style.css. We only
+   fade the whole row in once, never re-animate the individual bots, so the two
+   animations cannot fight each other.
+   -------------------------------------------------------------------------- */
+#home .guards {
+  animation: homeFadeUp .7s ease both;
+}
+
+/* One colour and float delay per guardian. These were inline custom properties
+   in index.html; the values are unchanged, so the bots still light up in the
+   same order. */
+#home .gbot:nth-child(1) { --ec: #ef7a8c; --d: 0s; }
+#home .gbot:nth-child(2) { --ec: #e8a23a; --d: .6s; }
+#home .gbot:nth-child(3) { --ec: #9b5cf0; --d: 1.2s; }
+#home .gbot:nth-child(4) { --ec: #35c9e8; --d: 1.8s; }
+#home .gbot:nth-child(5) { --ec: #3ddc84; --d: 2.4s; }
+#home .gbot:nth-child(6) { --ec: #f2c94c; --d: 3s; }
+
+/* The footer "replay intro" link inherits the footer colour. */
+#replay {
+  color: inherit;
+}
+
+#home .gcap {
+  margin-bottom: 26px;
+}
+
+/* -----------------------------------------------------------------------------
+   6. TOPIC CHIPS
+   The chips are a long, dense list. Removing the "button" look (no shadow, flat
+   fill) and tightening the type makes it read as a legend rather than a toolbar.
+   -------------------------------------------------------------------------- */
+#home .chipsrow {
+  margin-top: 10px;
+}
+
+#home .cchip {
+  cursor: default;
+  font-weight: 500;
+  letter-spacing: .005em;
+  transition: border-color .2s, color .2s, background .2s;
+}
+
+#home .cchip:hover {
+  background: color-mix(in srgb, var(--a) 12%, transparent);
+  /* The base stylesheet adds a jitter animation on hover; on a legend that
+     reads as noise, so we keep only the colour and border change. */
+  animation: none;
+  transform: none;
+}
+
+/* -----------------------------------------------------------------------------
+   7. FACTS ROW
+   Numbers first, labels second. Tabular figures stop the four stats from
+   shifting horizontally while the page loads its tally line.
+   -------------------------------------------------------------------------- */
+#home .facts {
+  gap: 14px 0;
+  margin-top: 42px;
+}
+
+#home .facts span {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding-right: 26px;
+}
+
+#home .facts b {
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+#home .facts span + span {
+  border-left: 1px solid var(--line);
+  padding-left: 26px;
+}
+
+#home .tally {
+  margin-top: 14px;
+}
+
+/* -----------------------------------------------------------------------------
+   8. KEYBOARD & MOTION
+   Everything interactive on this page is reachable by keyboard; give those
+   users the same affordance mouse users get from hover.
+   -------------------------------------------------------------------------- */
+#home a:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+@keyframes homeFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Respect the operating-system setting. Players who ask for less motion get a
+   still page with immediate states. */
+@media (prefers-reduced-motion: reduce) {
+  #home .guards {
+    animation: none;
+  }
+  #home .playcard:hover,
+  #home .playcard:active {
+    transform: none;
+  }
+  #home .playcard:hover .pc-cta i,
+  #home .playcard:focus-visible .pc-cta i {
+    transform: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   9. NARROW SCREENS
+   Below ~640px the play card stacks; loosen the padding and let the facts row
+   wrap into two clean columns instead of one long ragged line.
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  #home .hero {
+    padding-top: clamp(36px, 9vh, 64px);
+  }
+
+  #home .playcard {
+    padding: 26px 22px;
+    gap: 20px;
+  }
+
+  #home .pc-cta {
+    width: 100%;
+    justify-content: center;
+  }
+
+  #home .guards {
+    gap: 22px;
+    flex-wrap: wrap;
+    max-width: 300px;
+    margin-inline: auto;
+  }
+
+  #home .facts span + span {
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  #home .facts span {
+    padding-right: 0;
+    min-width: 46%;
+  }
+}
