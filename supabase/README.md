@@ -14,7 +14,6 @@ The live project is authoritative. Repository SQL mirrors the database; it does 
 | `migrations/20261115000002_grant_browser_table_access.sql` | The `anon`/`authenticated` table privileges the browser app needs. `leaderboard_entries` INSERT stays RPC-only so scores remain server-computed. |
 | `functions/coop-submit/` | Deno edge function that re-simulates and scores co-op submissions server-side. |
 | `functions/learner-admin/` | Deno edge function for parent-only learner creation and password resets. |
-| `legacy/` | Old schema and migration files. Historical only. |
 
 ## Making a schema change
 
@@ -27,7 +26,7 @@ The live project is authoritative. Repository SQL mirrors the database; it does 
 
 ## Rules
 
-- Never paste `legacy/*.sql` into the SQL editor. Those files predate the live schema and would overwrite working functions (for example the co-op RPCs and `submit_leaderboard_score`).
+- Never re-run the old `legacy/*.sql` files (deleted in the 2026-11-15 restructure). They predated the live schema and would overwrite working functions (for example the co-op RPCs and `submit_leaderboard_score`). The baseline dump is the only historical reference.
 - Keep the browser key publishable. The service-role key belongs only in edge-function secrets.
 - `public.site_owner` stays locked (RLS on, no policies). Only `is_admin()` reads it.
 - Leaderboard scores are computed server-side from saved progress. `coop-submit` recomputes the match; never accept a browser-sent score.
