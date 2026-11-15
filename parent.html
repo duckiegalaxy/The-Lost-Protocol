@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parent and Educator Area · The Lost Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.edu{max-width:1040px;margin:30px auto 70px;position:relative;z-index:5}
+.edu h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.edu .lead{color:var(--mut);margin:0 0 18px;max-width:70ch;line-height:1.5}
+.bar2{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px}
+.count{font:700 15px var(--sans);color:var(--mut)}
+.count b{font:800 26px var(--serif);color:var(--fg);margin-right:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.lc2{border:1px solid var(--line);border-radius:18px;padding:16px}
+.lc2 h3{margin:0 0 2px;font:800 20px var(--serif)}
+.pid{display:inline-flex;gap:8px;align-items:center;margin:6px 0;padding:6px 10px;border:1px dashed var(--a);border-radius:10px;font:800 15px var(--sans);letter-spacing:.05em}
+.meta{font-size:13px;color:var(--mut);margin:2px 0 8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.chip{font:700 12px var(--sans);padding:4px 10px;border:1px solid var(--line);border-radius:999px}
+.row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.row2 .btn{flex:1 1 120px}
+table.rank{width:100%;border-collapse:collapse;font-size:14px}
+table.rank th,table.rank td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
+table.rank th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.sec2{margin-top:30px}
+.sec2 h2{margin:0 0 10px;font:800 24px var(--serif)}
+.warnbox{border:1px solid #ef7a8c;border-radius:14px;padding:12px 14px;margin:12px 0;line-height:1.5}
+.cred{border:1px solid var(--a);border-radius:14px;padding:14px;margin:12px 0}
+.cred code{font:800 20px var(--sans);letter-spacing:.05em}
+.fld label{display:block;margin:12px 0 4px;font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.msg2{min-height:1.3em;margin-top:10px;font-size:14px}
+</style>
+</head>
+<body>
+<header><nav><div class="wrap">
+  <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
+  <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
+  <a class="navlink" href="leaderboard.html"><span class="sp" aria-hidden="true"></span>Leaderboards</a>
+  <a class="navlink" href="auth.html"><span class="sp" aria-hidden="true"></span>Account</a>
+  <a class="navlink on" href="parent.html" id="navParent"><span class="sp" aria-hidden="true"></span>Parent and Educator</a>
+</div></nav></header>
+
+<main>
+<div class="wrap edu">
+  <h1>Parent and Educator area</h1>
+  <p class="lead">After creating your account, you will enter the Parent and Educator area, where you can add learner profiles for your children or students, view their stars and chapter progress, and share each learner's Player ID and password so they can sign in and play on their own device.</p>
+
+  <div id="gate" class="warnbox" hidden></div>
+  <div id="app" hidden>
+    <div class="bar2">
+      <div class="count"><b id="cnt">0</b><span id="cntLbl">learners</span></div>
+      <button class="btn" id="addBtn" type="button">Add a learner</button>
+    </div>
+    <div id="list" class="grid"></div>
+
+    <div class="sec2" id="rankSec" hidden>
+      <h2>Your learners, ranked</h2>
+      <p class="meta">Ranked by score within your own learners. The public leaderboards compare each age group separately.</p>
+      <div style="overflow-x:auto"><table class="rank" id="rank"></table></div>
+    </div>
+  </div>
+</div>
+</main>
+
+<!-- Add learner -->
+<div class="tlpm" id="addM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="addT">
+  <button class="tlpm-x" type="button" id="addX" aria-label="Close">&#10005;</button>
+  <h2 id="addT">Add a learner</h2>
+  <p class="s">A Player ID is created automatically. The learner signs in with that ID and the password you choose here.</p>
+  <form id="addF" autocomplete="off">
+    <div class="fld"><label for="aName">Learner name</label><input id="aName" maxlength="32" required></div>
+    <div class="fld"><label for="aPath">Age group</label><select id="aPath">
+      <option value="g16">Grades 1 to 6</option><option value="g710" selected>Grades 7 to 10</option><option value="g1112">Grades 11 to 12</option><option value="adult">College and adult</option></select></div>
+    <div class="fld"><label for="aDiff">Starting difficulty</label><select id="aDiff">
+      <option value="beg">Beginner</option><option value="int" selected>Intermediate</option><option value="pro">Professional</option></select></div>
+    <p class="meta" id="aDiffHelp"></p>
+    <div class="fld"><label for="aPw">Password for the learner (at least 6 characters)</label>
+      <input id="aPw" type="text" minlength="6" maxlength="72" required autocomplete="off"></div>
+    <div class="row2"><button type="button" class="tlpm-btn" id="aGen">Suggest a password</button></div>
+    <p class="msg2" id="aMsg" role="status" aria-live="polite"></p>
+    <div class="tlpm-row"><button type="button" class="tlpm-btn" id="aCancel">Cancel</button><button type="submit" class="tlpm-btn pri" id="aGo">Create learner</button></div>
+  </form>
+  <div id="aDone" hidden>
+    <div class="cred"><p style="margin:0 0 6px">Give these sign-in details to the learner. The password is shown only now, so please save it.</p>
+      <p style="margin:6px 0">Player ID: <code id="cPid"></code></p><p style="margin:6px 0">Password: <code id="cPw"></code></p></div>
+    <div class="tlpm-row"><button type="button" class="tlpm-btn" id="cCopy">Copy details</button><button type="button" class="tlpm-btn pri" id="cClose">Done</button></div>
+  </div>
+</div></div>
+
+<!-- Reset password -->
+<div class="tlpm" id="pwM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="pwT">
+  <button class="tlpm-x" type="button" id="pwX" aria-label="Close">&#10005;</button>
+  <h2 id="pwT">Reset password</h2><p class="s" id="pwWho"></p>
+  <div class="fld"><label for="pwNew">New password (at least 6 characters)</label><input id="pwNew" type="text" minlength="6" maxlength="72" autocomplete="off"></div>
+  <p class="msg2" id="pwMsg" role="status" aria-live="polite"></p>
+  <div class="tlpm-row"><button type="button" class="tlpm-btn" id="pwCancel">Cancel</button><button type="button" class="tlpm-btn pri" id="pwGo">Save new password</button></div>
+</div></div>
+
+<!-- Delete learner -->
+<div class="tlpm" id="delM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="delT">
+  <button class="tlpm-x" type="button" id="delX" aria-label="Close">&#10005;</button>
+  <h2 id="delT">Delete learner</h2>
+  <div class="warnbox">This permanently deletes the learner's sign-in, progress, stars and leaderboard entries. It cannot be undone.</div>
+  <div class="fld"><label for="delTxt" id="delLbl"></label><input id="delTxt" autocomplete="off"></div>
+  <p class="msg2" id="delMsg" role="status" aria-live="polite"></p>
+  <div class="tlpm-row"><button type="button" class="tlpm-btn" id="delCancel">Cancel</button><button type="button" class="tlpm-btn pri" id="delGo" disabled>Delete permanently</button></div>
+</div></div>
+
+<footer><div class="wrap"><span>The Lost Protocol, an interactive educational game</span></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="tlp-auth.js"></script>
+<script src="tlp-common.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const A = () => window.TLP_AUTH;
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PN = { g16: 'Grades 1 to 6', g710: 'Grades 7 to 10', g1112: 'Grades 11 to 12', adult: 'College and adult' };
+const DN = { beg: 'Beginner', int: 'Intermediate', pro: 'Professional' };
+const DHELP = { beg: 'Beginner: the learner completes Beginner first. Finishing it unlocks Intermediate, then Professional.',
+  int: 'Intermediate: finishing it unlocks Professional. Beginner unlocks only after the whole game is finished on Professional.',
+  pro: 'Professional: hints are restricted. After finishing, Beginner and Intermediate become available.' };
+const BOSS_KEYS = ['3-0', '9-0', '14-0', '19-0', '24-0', '29-0'];
+let learners = [], selected = null;
+
+const open = (id) => { $(id).hidden = false; }, close = (id) => { $(id).hidden = true; };
+['add', 'pw', 'del'].forEach((k) => { $('#' + k + 'X').onclick = () => close('#' + k + 'M'); });
+$('#aCancel').onclick = () => close('#addM'); $('#pwCancel').onclick = () => close('#pwM'); $('#delCancel').onclick = () => close('#delM'); $('#cClose').onclick = () => { close('#addM'); load(); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ['#addM', '#pwM', '#delM'].forEach(close); });
+
+function summarize(l, recs) {
+  const mine = recs.filter((r) => r.learner_id === l.id);
+  const cur = mine.find((r) => r.learning_path === (l.assigned_path) && r.game_diff === l.current_diff) || mine[0];
+  const prog = (cur && cur.prog) || {};
+  const vals = Object.entries(prog).filter(([k, v]) => /^\d+-\d+$/.test(k) && Number(v) >= 1);
+  const stars = vals.reduce((a, [, v]) => a + Math.min(3, Number(v)), 0);
+  const bosses = BOSS_KEYS.filter((k) => Number(prog[k]) >= 1).length;
+  return { stars, missions: vals.length, bosses, score: stars * 100 };
+}
+
+function genPw() {
+  const w = ['Robot', 'Signal', 'Comet', 'Circuit', 'Planet', 'Rocket', 'Pixel', 'Orbit'];
+  return w[Math.floor(Math.random() * w.length)] + (100 + Math.floor(Math.random() * 900)) + w[Math.floor(Math.random() * w.length)].slice(0, 3).toLowerCase();
+}
+
+async function load() {
+  $('#list').innerHTML = '<p class="meta">Loading...</p>';
+  const all = await A().getLearners();
+  learners = all.filter((l) => l.parent_user_id === A().getCurrentUser().id);
+  const recs = learners.length ? await A().getProgressSummaries(learners.map((l) => l.id)).catch(() => []) : [];
+  $('#cnt').textContent = learners.length; $('#cntLbl').textContent = learners.length === 1 ? 'learner' : 'learners';
+  if (!learners.length) { $('#list').innerHTML = '<p class="meta">No learners yet. Use "Add a learner" to create the first Player ID.</p>'; $('#rankSec').hidden = true; return; }
+  const sums = learners.map((l) => ({ l, s: summarize(l, recs) }));
+  $('#list').innerHTML = sums.map(({ l, s }) =>
+    '<div class="lc2" data-id="' + esc(l.id) + '"><h3>' + esc(l.name) + '</h3>' +
+    '<div class="pid">' + esc(l.player_id) + ' <button class="btn ghost sm" data-act="copy" type="button">Copy</button></div>' +
+    '<div class="meta">' + esc(PN[l.assigned_path] || '') + ' · ' + esc(DN[l.current_diff] || '') + '</div>' +
+    '<div class="chips"><span class="chip">' + s.stars + ' stars</span><span class="chip">' + s.missions + ' missions</span><span class="chip">' + s.bosses + ' of 6 guardians</span><span class="chip">' + s.score + ' points</span></div>' +
+    '<div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="' + s.bosses + '" aria-label="Guardians defeated"><i style="width:' + Math.round(s.bosses / 6 * 100) + '%"></i></div>' +
+    '<div class="row2"><button class="btn ghost sm" data-act="pw" type="button">Reset password</button><button class="btn ghost sm" data-act="del" type="button">Delete</button></div></div>').join('');
+  const ranked = sums.slice().sort((a, b) => b.s.score - a.s.score || b.s.stars - a.s.stars);
+  $('#rank').innerHTML = '<thead><tr><th>Rank</th><th>Learner</th><th>Player ID</th><th>Age group</th><th>Points</th><th>Stars</th></tr></thead><tbody>' +
+    ranked.map((x, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(x.l.name) + '</td><td>' + esc(x.l.player_id) + '</td><td>' + esc(PN[x.l.assigned_path]) + '</td><td>' + x.s.score + '</td><td>' + x.s.stars + '</td></tr>').join('') + '</tbody>';
+  $('#rankSec').hidden = false;
+}
+
+$('#list').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const l = learners.find((x) => x.id === b.closest('.lc2').dataset.id); if (!l) return;
+  selected = l;
+  if (b.dataset.act === 'copy') { try { navigator.clipboard.writeText(l.player_id); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1400); } catch (x) {} }
+  if (b.dataset.act === 'pw') { $('#pwWho').textContent = l.name + ' (' + l.player_id + ')'; $('#pwNew').value = ''; $('#pwMsg').textContent = ''; open('#pwM'); }
+  if (b.dataset.act === 'del') { $('#delLbl').textContent = 'Type the Player ID ' + l.player_id + ' to confirm'; $('#delTxt').value = ''; $('#delGo').disabled = true; $('#delMsg').textContent = ''; open('#delM'); }
+});
+
+$('#addBtn').onclick = () => { $('#addF').hidden = false; $('#aDone').hidden = true; $('#addF').reset(); $('#aMsg').textContent = ''; $('#aDiffHelp').textContent = DHELP.int; open('#addM'); };
+$('#aDiff').onchange = () => { $('#aDiffHelp').textContent = DHELP[$('#aDiff').value]; };
+$('#aGen').onclick = () => { $('#aPw').value = genPw(); };
+$('#addF').addEventListener('submit', async (e) => {
+  e.preventDefault(); const btn = $('#aGo'); btn.disabled = true; $('#aMsg').textContent = 'Creating...';
+  try {
+    const pw = $('#aPw').value;
+    const r = await A().createLearnerViaFunction({ name: $('#aName').value, gradeRange: $('#aPath').value, startDiff: $('#aDiff').value, password: pw });
+    $('#cPid').textContent = r.playerId; $('#cPw').textContent = pw; $('#addF').hidden = true; $('#aDone').hidden = false;
+  } catch (err) {
+    const m = String(err.message || '');
+    $('#aMsg').textContent = /weak_password/.test(m) ? 'The password must be 6 to 72 characters.' : /limit_reached/.test(m) ? 'You have reached the maximum number of learners.' :
+      /not_educator/.test(m) ? 'Only Parent and Educator accounts can add learners.' : /FunctionsHttpError|Failed to send|Requested function/i.test(m) ? 'The learner service is not available yet. The site owner must deploy it.' : 'Could not create the learner: ' + m;
+  } finally { btn.disabled = false; }
+});
+$('#cCopy').onclick = () => { try { navigator.clipboard.writeText('Player ID: ' + $('#cPid').textContent + '\nPassword: ' + $('#cPw').textContent); $('#cCopy').textContent = 'Copied'; } catch (e) {} };
+
+$('#pwGo').onclick = async () => {
+  const pw = $('#pwNew').value; if (pw.length < 6) return ($('#pwMsg').textContent = 'The password must be at least 6 characters.');
+  $('#pwGo').disabled = true; $('#pwMsg').textContent = 'Saving...';
+  try { await A().resetLearnerPassword(selected.id, pw); $('#pwMsg').textContent = 'Saved. The new password is: ' + pw; }
+  catch (err) { $('#pwMsg').textContent = 'Could not save: ' + err.message; } finally { $('#pwGo').disabled = false; }
+};
+$('#delTxt').addEventListener('input', () => { $('#delGo').disabled = $('#delTxt').value.trim().toUpperCase() !== (selected && selected.player_id); });
+$('#delGo').onclick = async () => {
+  $('#delGo').disabled = true; $('#delMsg').textContent = 'Deleting...';
+  try { await A().deleteLearnerAccount(selected.id, $('#delTxt').value); close('#delM'); load(); }
+  catch (err) { $('#delMsg').textContent = 'Could not delete: ' + err.message; $('#delGo').disabled = false; }
+};
+
+(async function boot() {
+  const g = $('#gate');
+  try {
+    await A().init();
+    const u = A().getCurrentUser();
+    if (!u) { g.hidden = false; g.innerHTML = 'Please <a href="auth.html">sign in</a> with a Parent or Educator account.'; return; }
+    if (u.role !== 'parent') { g.hidden = false; g.innerHTML = 'This area is for Parent and Educator accounts. <a href="' + (u.isAdmin ? 'admin.html' : 'webgame.html') + '">Continue</a>'; return; }
+    if (!A().isCloudConfigured()) {
+      g.hidden = false;
+      g.style.borderColor = 'var(--a)';
+      g.innerHTML = '<b>Local Demo Mode:</b> Cloud connection is not configured or offline. Learners created here are saved locally on this browser session.';
+    }
+    $('#app').hidden = false; await load();
+  } catch (e) { g.hidden = false; g.textContent = 'Something went wrong: ' + (e && e.message || e); }
+})();
+window.addEventListener('unhandledrejection', (e) => { const g = $('#gate'); g.hidden = false; g.textContent = 'Something went wrong: ' + ((e.reason && e.reason.message) || e.reason); });
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leaderboards · The Lost Protocol</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.lbp{max-width:1000px;margin:30px auto 70px;position:relative;z-index:5}
+.lbp h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.lbp .lead{color:var(--mut);margin:0 0 16px;max-width:70ch;line-height:1.5}
+.swt{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+.swt button,.tabs2 button,.chips2 button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px var(--sans);cursor:pointer}
+.swt button[aria-selected=true],.tabs2 button[aria-selected=true],.chips2 button[aria-pressed=true]{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
+.vw{overflow:hidden;border-radius:18px}
+.slides{display:flex;width:200%;transition:transform .45s cubic-bezier(.4,0,.2,1)}
+.slides.co{transform:translateX(-50%)}
+.slide{width:50%;box-sizing:border-box;padding:0 2px;min-width:0}
+.tabs2{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 0 10px;scroll-snap-type:x proximity}
+.tabs2 button{flex:0 0 auto;scroll-snap-align:start}
+.chips2{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.chips2 button{min-height:38px;padding:0 14px;font-size:14px}
+.tw{border:1px solid var(--line);border-radius:16px;overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+table.t th,table.t td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+table.t td.rk{font:800 16px var(--serif)}
+.msg3{padding:22px;color:var(--mut)}
+.pg{display:flex;gap:10px;align-items:center;justify-content:center;margin:12px 0}
+.pg button{min-height:40px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 14px var(--sans);cursor:pointer}
+.pg button:disabled{opacity:.4;cursor:default}
+.rules{margin-top:22px;font-size:14px;color:var(--mut);line-height:1.6;max-width:80ch}
+.pidc{font:700 13px var(--sans);letter-spacing:.04em;opacity:.85}
+</style>
+</head>
+<body>
+<header><nav><div class="wrap">
+  <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
+  <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
+  <a class="navlink on" href="leaderboard.html"><span class="sp" aria-hidden="true"></span>Leaderboards</a>
+  <a class="navlink" href="webgame.html"><span class="sp" aria-hidden="true"></span>Play Game</a>
+  <a class="navlink" href="auth.html"><span class="sp" aria-hidden="true"></span>Account</a>
+</div></nav></header>
+
+<main>
+<div class="wrap lbp">
+  <h1>Leaderboards</h1>
+  <p class="lead">Anyone can view the rankings. Each age group has its own table, so children, students and adults are never compared directly. Players are shown by public Player ID and display name only.</p>
+
+  <div class="swt" role="tablist" aria-label="Leaderboard type">
+    <button role="tab" id="tInd" aria-selected="true" type="button">Individual</button>
+    <button role="tab" id="tCo" aria-selected="false" type="button">Co-op teams</button>
+  </div>
+
+  <div class="vw" id="view"><div class="slides" id="slides">
+    <section class="slide" aria-label="Individual leaderboard">
+      <div class="tabs2" id="pathTabs" role="tablist" aria-label="Age group"></div>
+      <div class="chips2" id="diffChips" role="group" aria-label="Difficulty"></div>
+      <div class="tw"><div id="indBody" class="msg3" aria-live="polite">Loading...</div></div>
+      <div class="pg"><button id="indPrev" type="button">Previous</button><span id="indPage"></span><button id="indNext" type="button">Next</button></div>
+    </section>
+    <section class="slide" aria-label="Co-op leaderboard">
+      <div class="chips2" id="weekChips" role="group" aria-label="Weekly mission"></div>
+      <div class="tw"><div id="coBody" class="msg3" aria-live="polite">Loading...</div></div>
+      <div class="pg"><button id="coPrev" type="button">Previous</button><span id="coPage"></span><button id="coNext" type="button">Next</button></div>
+    </section>
+  </div></div>
+
+  <div class="rules">
+    <b>How ranking works.</b> Individual: higher score first (each star is worth 100 points), then more stars, then the player who reached it first. Players with the same score and stars share a rank. Co-op: higher team score first, then the faster completion time, which is measured by the server. Test accounts and test matches never appear here. Bonus section results are never counted.
+  </div>
+</div>
+</main>
+
+<footer><div class="wrap"><span>The Lost Protocol, an interactive educational game</span></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="tlp-auth.js"></script>
+<script src="tlp-common.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const A = () => window.TLP_AUTH;
+const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PATHS = [['g16', 'Grades 1 to 6'], ['g710', 'Grades 7 to 10'], ['g1112', 'Grades 11 to 12'], ['adult', 'College and adult']];
+const DIFFS = [['beg', 'Beginner'], ['int', 'Intermediate'], ['pro', 'Professional']];
+const PER = 15;
+let path = 'g16', diff = 'int', indPage = 0, week = '', coPage = 0, coLoaded = false;
+
+function fmtTime(ms) { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function fmtDate(d) { try { return new Date(d).toLocaleDateString(); } catch (e) { return ''; } }
+
+function buildTabs() {
+  $('#pathTabs').innerHTML = PATHS.map(([id, n]) => '<button type="button" role="tab" data-id="' + id + '" aria-selected="' + (id === path) + '">' + n + '</button>').join('');
+  $('#diffChips').innerHTML = DIFFS.map(([id, n]) => '<button type="button" data-id="' + id + '" aria-pressed="' + (id === diff) + '">' + n + '</button>').join('');
+  $('#pathTabs').querySelectorAll('button').forEach((b) => b.onclick = () => { path = b.dataset.id; indPage = 0; buildTabs(); loadInd(); });
+  $('#diffChips').querySelectorAll('button').forEach((b) => b.onclick = () => { diff = b.dataset.id; indPage = 0; buildTabs(); loadInd(); });
+}
+
+async function loadInd() {
+  const body = $('#indBody'); body.className = 'msg3'; body.textContent = 'Loading...';
+  try {
+    const { rows, hasMore } = await A().getPublicLeaderboardPage({ path, diff, offset: indPage * PER, limit: PER });
+    if (!rows.length) { body.textContent = indPage ? 'No more entries.' : 'No scores yet in this group. Finish a mission to be the first.'; }
+    else {
+      body.className = '';
+      // shared rank for equal score and stars (rank counts from the first row of the whole table)
+      let html = '<table class="t"><thead><tr><th>Rank</th><th>Player ID</th><th>Name</th><th>Score</th><th>Stars</th><th>Chapters</th><th>Badges</th><th>Updated</th></tr></thead><tbody>';
+      let prev = null, prevRank = 0;
+      rows.forEach((r, i) => {
+        const pos = indPage * PER + i + 1;
+        const same = prev && prev.total_score === r.total_score && prev.total_stars === r.total_stars;
+        const rank = same ? prevRank : pos; prev = r; prevRank = rank;
+        html += '<tr><td class="rk">' + rank + '</td><td class="pidc">' + esc(r.player_id) + '</td><td>' + esc(r.display_name) + '</td><td>' + r.total_score + '</td><td>' + r.total_stars + '</td><td>' + r.chapters_cleared + '</td><td>' + r.badges + ' of 6</td><td>' + esc(fmtDate(r.updated_at)) + '</td></tr>';
+      });
+      body.innerHTML = html + '</tbody></table>';
+    }
+    $('#indPrev').disabled = indPage === 0; $('#indNext').disabled = !hasMore; $('#indPage').textContent = 'Page ' + (indPage + 1);
+  } catch (e) { body.textContent = 'The leaderboard could not be loaded. Please try again later.'; $('#indNext').disabled = true; }
+}
+$('#indPrev').onclick = () => { indPage = Math.max(0, indPage - 1); loadInd(); };
+$('#indNext').onclick = () => { indPage++; loadInd(); };
+
+async function initCo() {
+  coLoaded = true;
+  try {
+    const weeks = await A().getCoopChallenges();
+    if (weeks.length) week = weeks[0];
+    $('#weekChips').innerHTML = weeks.length ? weeks.map((w) => '<button type="button" data-id="' + esc(w) + '" aria-pressed="' + (w === week) + '">Mission ' + esc(w) + '</button>').join('') : '';
+    $('#weekChips').querySelectorAll('button').forEach((b) => b.onclick = () => { week = b.dataset.id; coPage = 0; $('#weekChips').querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', o === b)); loadCo(); });
+  } catch (e) {}
+  loadCo();
+}
+async function loadCo() {
+  const body = $('#coBody'); body.className = 'msg3'; body.textContent = 'Loading...';
+  try {
+    const { rows, hasMore } = await A().getCoopLeaderboardPage({ challengeId: week, offset: coPage * PER, limit: PER });
+    if (!rows.length) { body.textContent = coPage ? 'No more entries.' : 'No completed co-op matches yet. Be the first team on the board.'; }
+    else {
+      body.className = '';
+      let html = '<table class="t"><thead><tr><th>Rank</th><th>Team</th><th>Score</th><th>Time</th><th>Steps</th><th>Mission</th><th>Date</th></tr></thead><tbody>', prev = null, prevRank = 0;
+      rows.forEach((r, i) => {
+        const pos = coPage * PER + i + 1, same = prev && prev.score === r.score && prev.duration_ms === r.duration_ms;
+        const rank = same ? prevRank : pos; prev = r; prevRank = rank;
+        html += '<tr><td class="rk">' + rank + '</td><td>' + esc(r.p1_name) + ' <span class="pidc">' + esc(r.p1_player_id) + '</span><br>' + esc(r.p2_name) + ' <span class="pidc">' + esc(r.p2_player_id) + '</span></td><td>' + r.score + '</td><td>' + fmtTime(r.duration_ms) + '</td><td>' + r.steps + '</td><td>' + esc(r.challenge_id) + '</td><td>' + esc(fmtDate(r.finished_at)) + '</td></tr>';
+      });
+      body.innerHTML = html + '</tbody></table>';
+    }
+    $('#coPrev').disabled = coPage === 0; $('#coNext').disabled = !hasMore; $('#coPage').textContent = 'Page ' + (coPage + 1);
+  } catch (e) { body.textContent = 'The co-op leaderboard could not be loaded. Please try again later.'; $('#coNext').disabled = true; }
+}
+$('#coPrev').onclick = () => { coPage = Math.max(0, coPage - 1); loadCo(); };
+$('#coNext').onclick = () => { coPage++; loadCo(); };
+
+// sliding between Individual and Co-op: buttons, arrow keys on the buttons, and a swipe on touch screens
+function show(co) {
+  $('#slides').classList.toggle('co', co);
+  $('#tInd').setAttribute('aria-selected', !co); $('#tCo').setAttribute('aria-selected', co);
+  if (co && !coLoaded) initCo();
+}
+$('#tInd').onclick = () => show(false); $('#tCo').onclick = () => show(true);
+document.querySelector('.swt').addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { show(true); $('#tCo').focus(); } if (e.key === 'ArrowLeft') { show(false); $('#tInd').focus(); } });
+let sx = null;
+$('#view').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+$('#view').addEventListener('touchend', (e) => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 70 && !e.target.closest('.tw,.tabs2')) show(dx < 0); }, { passive: true });
+
+buildTabs(); loadInd();
+</script>
+</body>
+</html>
