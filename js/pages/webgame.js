@@ -246,6 +246,32 @@ function goHue(t){cancelAnimationFrame(tw);tweening=true;const s0=hue,d=((t-s0+5
 document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>{const v=s.dataset.v;auto=v==='auto';goHue(auto?(hue+90+Math.random()*120)%360:+v);try{localStorage.setItem('tlp-mood',v)}catch(e){}mark()});
 setHue(hue);mark();
 setInterval(()=>{if(auto&&!still&&!tweening)setHue((hue+.6)%360)},50);
+/* On phones the swatches move into the More panel. The row is relocated rather
+   than copied, so the swatch handlers and the saved mood stay the same, and the
+   header gives its space to the player card and the mission. */
+(function(){
+ /* The panel that will hold the row, the row itself, and the logo it sits
+    beside on wider screens. */
+ const panel=$('#hudMore'),themes=$('#themes'),logo=$('.top .logo');
+ /* An older cached page may lack one of these; do nothing rather than throw. */
+ if(!panel||!themes||!logo)return;
+ /* The same 520px breakpoint the CSS uses, kept in one place for the script. */
+ const mq=matchMedia('(max-width:520px)');
+ /* Move the row to wherever the current width wants it. */
+ const place=()=>{
+  /* Phone: put the row at the top of the More panel, above the menu choices. */
+  if(mq.matches){if(themes.parentElement!==panel)panel.insertBefore(themes,panel.firstChild)}
+  /* Wider screens: put it back under the logo where the header expects it. */
+  else if(themes.parentElement===panel)logo.insertAdjacentElement('afterend',themes);
+ };
+ /* Position it once as soon as the page loads. */
+ place();
+ /* Follow the breakpoint when a phone rotates or the window is resized. The
+    addListener branch is for older Safari, which lacks addEventListener here. */
+ if(mq.addEventListener)mq.addEventListener('change',place);else mq.addListener(place);
+ /* Extra safety net for embeds that resize without firing the media-query event. */
+ window.addEventListener('resize',place);
+})();
 
 /* -----------------------------------------------------------------------------
    6. HUD, CHAPTER MENU AND LEVEL LOADING
@@ -1115,14 +1141,23 @@ function openLib(tab){
 }
 $('#libb').onclick=()=>openLib();$('#sndg').onclick=toggleMute;$('#sndg').innerHTML=mute?'<i class=ic-mute></i>':'<i class=ic-volume></i>';
 /* The More panel keeps the infrequent controls out of the header. It closes
-   after a choice, on an outside click, and with Escape. */
+   after a menu choice, on an outside click, and with Escape. The colour
+   swatches stay open so a mood can be tried without reopening the panel. */
 (function(){
+ /* The toggle button and the panel it controls. */
  const btn=$('#moreBtn'),panel=$('#hudMore');
+ /* An older cached page may lack the panel; do nothing rather than throw. */
  if(!btn||!panel)return;
+ /* One place to hide the panel and keep the button's state honest. */
  const close=()=>{panel.hidden=true;btn.setAttribute('aria-expanded','false')};
+ /* Clicking More toggles the panel. stopPropagation keeps the document click
+    handler below from closing it during the same click. */
  btn.onclick=e=>{e.stopPropagation();const open=panel.hidden;panel.hidden=!open;btn.setAttribute('aria-expanded',String(open))};
- panel.addEventListener('click',e=>{if(e.target.closest('button,a'))close()});
+ /* Only a menu choice closes the panel; mood swatches (.sw) leave it open. */
+ panel.addEventListener('click',e=>{if(e.target.closest('.hm'))close()});
+ /* A click anywhere outside the panel and the button closes it. */
  document.addEventListener('click',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!btn.contains(e.target))close()});
+ /* Escape closes the panel and returns focus to the More button. */
  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){close();btn.focus()}});
 })();
 $('#run').addEventListener('click',()=>snd('tick'));

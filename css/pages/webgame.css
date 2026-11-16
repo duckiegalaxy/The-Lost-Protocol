@@ -426,6 +426,29 @@ body.d-beg,body.d-pro{--a:hsl(var(--h) 80% 66%);--b:hsl(calc(var(--h) + 45) 85% 
 .hm{background:none;border:0;border-radius:9px;padding:10px 12px;text-align:left;color:var(--fg);font:600 14px var(--sans);cursor:pointer}
 .hm:hover,.hm:focus-visible{background:color-mix(in srgb,var(--a) 16%,transparent);outline:none}
 .hm[aria-pressed="true"]{color:var(--a)}
+/* Phones move the colour swatches in here. The same buttons are relocated by
+   script, so the row leaves the header without a second set of handlers.
+   These rules only apply while #themes sits inside the More panel. */
+.hud-more #themes{
+ /* The header spacing must not follow the row into the panel. */
+ margin:0;
+ /* Small inset lines the swatches up with the menu labels below them. */
+ padding:2px 8px 10px;
+ /* A hairline separates "mood" from the menu choices underneath. */
+ border-bottom:1px solid var(--line);
+ /* A little air before the first menu button. */
+ margin-bottom:4px;
+ /* Six swatches wrap onto a second line instead of shrinking on a phone. */
+ flex-wrap:wrap
+}
+.hud-more #themes small{
+ /* Same handwritten label style as the mood row in Settings. */
+ font:600 16px var(--hand);
+ /* Muted colour signals that this is a label, not a value. */
+ color:var(--mut);
+ /* Keeps the word "mood:" tight against the first swatch. */
+ margin-right:2px
+}
 /* One Continue button at the top of the map opens the next unfinished level. */
 .cont{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 20px}
 .cont[hidden]{display:none}
@@ -447,6 +470,16 @@ body.d-beg,body.d-pro{--a:hsl(var(--h) 80% 66%);--b:hsl(calc(var(--h) + 45) 85% 
  .hud #exit{order:2;margin-left:8px}
 }
 @media(max-width:520px){
+ /* The logo and HUD stack on a phone, so trim the space around them and let
+    the mission begin as high on the screen as possible. */
+ .top{
+  /* Shorter top and bottom padding than the desktop bar. */
+  padding:8px 0 10px;
+  /* Less space below the bar before the mission card. */
+  margin-bottom:14px;
+  /* Tighter gap between the logo and the HUD. */
+  gap:10px
+ }
  .hud{padding:8px;gap:6px 8px}
  .hud-eyebrow,.hud-who .diff{display:none}
  .hud-who{flex:0 1 auto;gap:8px;padding:2px 0 2px 2px}
@@ -477,7 +510,33 @@ body.path-adult .sec-art{border-radius:3px;border-color:rgba(255,255,255,.1)}
 body.path-adult .sec-art img{filter:saturate(.8) brightness(.78) contrast(1.05)}
 body.path-g16{font-size:1.06em}
 body:has(#res:not([hidden])) .coach,body:has(#cine) .coach{display:none}
-.coach{position:fixed!important;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(680px,94vw);max-height:28vh;overflow:auto;z-index:35;margin:0!important;box-shadow:0 6px 24px rgba(0,0,0,.28);background:color-mix(in srgb,var(--bg) 94%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* The Coach tip floats above the lesson. Auto margins do the centring instead
+   of a transform, because the pop animation animates transform and would
+   otherwise start the tip half a width off to the side on a phone. */
+.coach{
+ /* Fixed keeps the tip in view while the lesson behind it scrolls. */
+ position:fixed!important;
+ /* Anchor to both edges; the width and auto margins below do the centring. */
+ left:0;
+ right:0;
+ /* Sits just above the bottom edge, clear of the phone's home indicator. */
+ bottom:calc(10px + env(safe-area-inset-bottom,0px));
+ /* Never wider than the page: 680px on desktop, 94% of the phone width. */
+ width:min(680px,94vw);
+ /* Long instructions scroll inside the tip instead of covering the lesson. */
+ max-height:28vh;
+ overflow:auto;
+ /* Above the lesson and palette, below the tour overlay (z-index 140+). */
+ z-index:35;
+ /* Equal side margins centre the tip; the vertical margin stays at zero. */
+ margin:0 auto!important;
+ /* Lifts it off the page so it reads as a floating card. */
+ box-shadow:0 6px 24px rgba(0,0,0,.28);
+ /* Slightly translucent background plus blur hints at the lesson underneath. */
+ background:color-mix(in srgb,var(--bg) 94%,transparent);
+ -webkit-backdrop-filter:blur(10px);
+ backdrop-filter:blur(10px)
+}
 /* While the Coach is open it sits over the bottom of the page, so the page
    keeps a matching amount of empty space underneath and nothing is lost. */
 body:has(.coach) .wrap{padding-bottom:calc(30vh + 40px)}
