@@ -790,6 +790,19 @@ footer {
   font-size: 14px;
 }
 
+/* Secondary pages keep one quiet footer line, so a single Privacy link sits
+   inline with the project description instead of a second navigation row. */
+footer a {
+  color: var(--a);
+  text-decoration: none;
+  text-underline-offset: 3px;
+}
+
+footer a:hover,
+footer a:focus-visible {
+  text-decoration: underline;
+}
+
 footer .wrap {
   display: flex;
   flex-wrap: wrap;

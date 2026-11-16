@@ -314,6 +314,78 @@
   border-radius: 4px;
 }
 
+/* --- Privacy consent ------------------------------------------------------
+   The inline agreement line above the Create account button and the same row
+   inside the pre-registration dialog. The shared modal styles treat every
+   label as a field caption, so the dialog version resets that here. */
+
+.consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 18px 0 0;
+  font: 400 14px/1.5 var(--sans);
+  color: var(--mut);
+  cursor: pointer;
+}
+
+.consent input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex: none;
+  accent-color: var(--a);
+  cursor: pointer;
+}
+
+.consent a {
+  color: var(--a);
+  text-underline-offset: 3px;
+}
+
+/* Higher specificity than .tlpm-pan label, which is meant for form fields. */
+.tlpm .consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 0 0;
+  font: 400 14px/1.5 var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.tlpm .consent input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex: none;
+}
+
+/* The short summary in the dialog is a normal list, not a form control. */
+.tlpm .pvlist {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--mut);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tlpm .pvlist li + li {
+  margin-top: 6px;
+}
+
+.tlpm .pvlink {
+  margin: 0 0 2px;
+  font-size: 14px;
+}
+
+.tlpm .pvlink a {
+  color: var(--a);
+  text-underline-offset: 3px;
+}
+
 /* --- Notes, alerts and Player ID ------------------------------------------ */
 
 .note {

@@ -3,20 +3,20 @@
    once still works without a connection. Sign-in, scores and co-op always go
    to the network; nothing here touches game results. Bump CACHE to retire an
    old copy of the site. */
-/* Cache version for this release (phone header, mood row and Coach tip fixes).
+/* Cache version for this release (privacy notice and sign-up consent).
    A new name makes the browser download the changed files and delete the old
    cache; forget to bump it and visitors keep the previous copies. */
-const CACHE = 'tlp-2026-11-16-6';
+const CACHE = 'tlp-2026-11-16-7';
 const CDN = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//;
 const SHELL = [
   'index.html', 'webgame.html', 'bonus.html', 'auth.html', 'parent.html',
-  'leaderboard.html', 'coop.html', 'friends.html', 'admin.html',
+  'leaderboard.html', 'coop.html', 'friends.html', 'admin.html', 'privacy.html',
   'manifest.webmanifest',
   'css/style.css',
   'css/pages/admin.css', 'css/pages/auth.css', 'css/pages/bonus.css',
   'css/pages/coop.css', 'css/pages/friends.css', 'css/pages/home.css',
   'css/pages/leaderboard.css', 'css/pages/parent.css', 'css/pages/webgame.css',
-  'css/pages/explainers.css',
+  'css/pages/explainers.css', 'css/pages/privacy.css',
   'js/config.js', 'js/coop-core.js', 'js/explainers.js', 'js/music.js', 'js/password.js',
   'js/script.js', 'js/story.js', 'js/streak.js', 'js/tlp-auth.js',
   'js/tlp-common.js', 'js/tlp-presence.js',

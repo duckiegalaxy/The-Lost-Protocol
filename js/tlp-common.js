@@ -337,6 +337,8 @@
     '.tlpm-btn.pri{background:var(--a,#35c9e8);border-color:transparent;color:var(--ink,#0b0f14)}' +
     '.tlpm-btn:disabled{opacity:.6;cursor:default}' +
     '.tlpm-note{min-height:1.2em;margin-top:10px;font-size:14px}' +
+    /* A plain link inside a dialog (privacy notice) uses the accent colour. */
+    '.tlpm-pan a{color:var(--a,#35c9e8);text-underline-offset:3px}' +
     /* story lines */
     '.story{margin:12px 0;padding:10px 12px;border-left:3px solid var(--a,#35c9e8);border-radius:8px;background:color-mix(in srgb,var(--a,#35c9e8) 8%,transparent)}' +
     '.sline{display:flex;flex-direction:column;gap:2px;margin:6px 0;font-size:14px;line-height:1.45}' +

@@ -194,6 +194,9 @@
 /* The footer "replay intro" link inherits the footer colour. */
 #replay {
   color: inherit;
+  /* The shared footer link rule removes underlines; this text is an action,
+     so it keeps one. */
+  text-decoration: underline;
 }
 
 /* Secondary pages moved out of the top navigation. The header keeps only the

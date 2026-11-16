@@ -107,7 +107,54 @@ function tab(up) {
   say('');
 }
 $('#tabIn').onclick = () => tab(false);
-$('#tabUp').onclick = () => tab(true);
+// The Create account tab opens the privacy summary first; see below.
+$('#tabUp').onclick = () => openConsent();
+
+/* -----------------------------------------------------------------------------
+   4a. PRIVACY CONSENT BEFORE REGISTRATION
+
+   Registering sends a name, an email address and progress to the server, and
+   the learner's name appears on a public leaderboard, so the notice is shown
+   before the form rather than hidden in the footer. One acknowledgement per
+   page visit is enough; the form keeps its own visible checkbox as well.
+   -------------------------------------------------------------------------- */
+let consentSeen = false;
+const pv = () => $('#pvM');
+
+function closePv() {
+  pv().hidden = true;
+}
+
+function openConsent() {
+  if (consentSeen) return tab(true);
+  // An earlier half-finished visit must not leave the box ticked.
+  $('#pvOk').checked = false;
+  $('#pvGo').disabled = true;
+  pv().hidden = false;
+  $('#pvOk').focus();
+}
+
+$('#pvOk').addEventListener('change', () => {
+  $('#pvGo').disabled = !$('#pvOk').checked;
+});
+
+$('#pvGo').onclick = () => {
+  if (!$('#pvOk').checked) return;
+  consentSeen = true;
+  // Carry the acknowledgement into the form's own visible checkbox.
+  $('#rgConsent').checked = true;
+  closePv();
+  tab(true);
+  $('#rgName').focus();
+};
+
+$('#pvCancel').onclick = closePv;
+$('#pvX').onclick = closePv;
+// Clicking the dark backdrop closes the dialog, as on the volume panel.
+pv().addEventListener('click', (e) => { if (e.target === pv()) closePv(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !pv().hidden) closePv();
+});
 
 function method(byId) {
   $('#mEmail').setAttribute('aria-pressed', !byId);
@@ -201,6 +248,7 @@ $('#regForm').addEventListener('submit', async (e) => {
   say('');
   const name = $('#rgName').value.trim();
   if (name.length < 2) return say('Please enter a name of at least 2 characters.');
+  if (!$('#rgConsent').checked) return say('Please confirm that you have read the privacy notice.');
   const btn = $('#rgGo');
   btn.disabled = true;
   try {

@@ -104,6 +104,9 @@
       <label class="l" for="rgPw">Password (at least 10 characters)</label><input type="password" id="rgPw" autocomplete="new-password" aria-describedby="rgHint">
       <div class="pwbar" id="rgMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <p class="pwhint" id="rgHint" role="status" aria-live="polite">Three unrelated words make a strong, easy password.</p>
+      <!-- The dialog below sets this box, but it stays visible here so the
+           agreement is still on screen when the form is submitted. -->
+      <label class="consent"><input type="checkbox" id="rgConsent"> <span>I have read the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</span></label>
       <button class="btn big go" type="submit" id="rgGo">Create account</button>
       <p class="note">We send a confirmation email. If it does not arrive in a few minutes, check your spam folder.</p>
     </form>
@@ -148,7 +151,28 @@
 </div>
 </main>
 
-<footer><div class="wrap"><span>The Lost Protocol, an interactive educational game</span></div></footer>
+<!-- ======================================================================= -->
+<!-- PRIVACY SUMMARY — shown once before the Create account form appears     -->
+<!-- The Continue button is disabled until the box is ticked. Cancel leaves  -->
+<!-- the page on the sign-in view; nothing is created either way.           -->
+<!-- ======================================================================= -->
+<div class="tlpm" id="pvM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="pvT">
+  <button class="tlpm-x" type="button" id="pvX" aria-label="Close">&#10005;</button>
+  <h2 id="pvT">Before you create an account</h2>
+  <p class="s">The short version:</p>
+  <ul class="pvlist">
+    <li>We keep the display name, email address and account type you enter.</li>
+    <li>Learner progress, stars and scores are saved to the account so they follow it to another device.</li>
+    <li>The display name and Player ID appear on the public leaderboards.</li>
+    <li>The password is stored as a secure hash and cannot be read by us.</li>
+    <li>You can delete the account and all its progress from the Account page.</li>
+  </ul>
+  <p class="pvlink"><a href="privacy.html" target="_blank" rel="noopener">Read the full privacy notice</a></p>
+  <label class="consent"><input type="checkbox" id="pvOk"> <span>I have read the privacy notice.</span></label>
+  <div class="tlpm-row"><button class="tlpm-btn" id="pvCancel" type="button">Cancel</button><button class="tlpm-btn pri" id="pvGo" type="button" disabled>Continue</button></div>
+</div></div>
+
+<footer><div class="wrap"><span>The Lost Protocol, an interactive educational game · <a href="privacy.html">Privacy notice</a></span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
