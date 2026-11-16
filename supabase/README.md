@@ -12,6 +12,7 @@ The live project is authoritative. Repository SQL mirrors the database; it does 
 | `migrations/20261115000000_baseline_public_schema.sql` | Point-in-time dump of the live `public` schema generated from `pg_catalog` on 2026-11-15. Reference and recovery only. |
 | `migrations/20261115000001_grant_service_role_app_tables.sql` | Minimum `service_role` table and function grants used by `coop-submit` and `learner-admin`. |
 | `migrations/20261115000002_grant_browser_table_access.sql` | The `anon`/`authenticated` table privileges the browser app needs. `leaderboard_entries` INSERT stays RPC-only so scores remain server-computed. |
+| `migrations/20261115000003_learner_login_allowlist.sql` | Service-role-only `learner_login_allowlist` table plus the updated `guard_learner_login_domain` trigger. `learner-admin` pre-approves one Player ID address before `admin.createUser`, because GoTrue applies `app_metadata` after the `auth.users` insert. |
 | `functions/coop-submit/` | Deno edge function that re-simulates and scores co-op submissions server-side. |
 | `functions/learner-admin/` | Deno edge function for parent-only learner creation and password resets. |
 

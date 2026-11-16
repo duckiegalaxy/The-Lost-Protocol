@@ -28,3 +28,67 @@
 .kv div{border:1px solid var(--line);border-radius:12px;padding:10px}
 .kv b{display:block;font-size:24px}
 .adm input[type=text],.adm select,.adm textarea{padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:15px var(--sans);max-width:100%}
+
+/* -----------------------------------------------------------------------------
+   Story tab
+   Native <details> keeps the accordion keyboard accessible; the open state
+   fades its body in so a click visibly reveals the scene lines.
+   -------------------------------------------------------------------------- */
+.stbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 10px}
+.stver{display:inline-flex;padding:3px;border:1px solid var(--line);border-radius:999px;gap:2px}
+.stver button{min-height:38px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:inherit;font:700 13px var(--sans);cursor:pointer}
+.stver button[aria-pressed=true]{background:var(--a);color:var(--ink,#0b0f14)}
+.stnote{color:var(--mut);line-height:1.55;max-width:75ch;margin:0 0 14px}
+.stsec{border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden;background:rgba(255,255,255,.015)}
+.stsec summary{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:13px 14px;cursor:pointer;list-style:none}
+.stsec summary::-webkit-details-marker{display:none}
+.stsec summary:before{content:"";width:8px;height:8px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(-45deg);transition:transform .25s;flex:none}
+.stsec[open] summary:before{transform:rotate(45deg)}
+.stsec summary b{font:800 17px var(--serif)}
+.stsec summary em{margin-left:auto;font:600 12px var(--sans);color:var(--mut);font-style:normal}
+.sttag{font:800 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--a);border:1px solid var(--a);border-radius:999px;padding:3px 8px}
+.stbody{padding:0 16px 14px;border-top:1px solid var(--line);animation:stIn .35s ease both}
+@keyframes stIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.stblock{margin:14px 0 0}
+.stblock h4{margin:0 0 4px;font:800 13px var(--sans);letter-spacing:.06em;text-transform:uppercase}
+.stmeta{margin:0 0 8px;font-size:12px;line-height:1.5;color:var(--mut)}
+.stmeta b{color:var(--fg);font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-right:6px}
+.stlines{padding-left:12px;border-left:2px solid color-mix(in srgb,var(--a) 35%,transparent)}
+.stchap{margin:16px 0 0;padding:12px;border:1px dashed var(--line);border-radius:12px}
+.stchap h3{margin:0;font:800 15px var(--serif)}
+.stobj{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04)}
+.stobj b{font-size:10px;letter-spacing:.1em;text-transform:uppercase;margin-right:6px;color:var(--a)}
+
+/* -----------------------------------------------------------------------------
+   Streak tab
+   The ladder animates in row by row. Each row is a button that replays the
+   real reward popup, so the admin sees exactly what a learner sees.
+   -------------------------------------------------------------------------- */
+.mstair{display:grid;gap:8px;margin-top:14px}
+.msrow{--c:#35c9e8;display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:center;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) 8%,transparent);color:inherit;font:inherit;cursor:pointer;opacity:0;animation:msIn .45s cubic-bezier(.2,1.2,.4,1) both;min-height:52px}
+.msrow.rare{--c:#8d7bff}.msrow.epic{--c:#ff9f43}.msrow.legendary{--c:#ff4d6d}
+.msrow.veryrare{border-width:2px;border-style:double;background:linear-gradient(120deg,color-mix(in srgb,#ff4d6d 18%,transparent),transparent 65%)}
+.msrow:hover{transform:translateX(3px)}
+.msday{font:800 20px var(--serif);color:var(--c);text-align:center;line-height:1}
+.msday small{display:block;font:700 9px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-top:2px}
+.msname b{display:block;font-size:14px}
+.msname small{display:block;font-size:12px;color:var(--mut);line-height:1.35}
+.mstier{font:700 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--c);border:1px solid var(--c);border-radius:999px;padding:3px 8px;white-space:nowrap}
+.msdemo{margin:0 0 4px;padding:12px;border:1px dashed var(--line);border-radius:14px;min-height:96px}
+.msdemo>small{display:block;font:700 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.msdemo p{margin:0;color:var(--mut);font-size:13px}
+@keyframes msIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+html.reduce-fx .msrow{opacity:1;animation:none}
+@media (prefers-reduced-motion:reduce){
+  .msrow{opacity:1;animation:none}
+  .stbody{animation:none}
+}
+@media (max-width:560px){
+  .msrow{grid-template-columns:48px 1fr;row-gap:6px}
+  .mstier{grid-column:2;justify-self:start}
+  .stsec summary em{flex-basis:100%;margin-left:18px}
+}
+
+/* Sync tab */
+.diag{white-space:pre-wrap;font-size:12px;line-height:1.5;max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0 0}
+

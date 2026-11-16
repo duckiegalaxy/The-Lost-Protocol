@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="assets/brand/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#080d16">
 <title>Co-op · The Lost Protocol</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,12 +16,13 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/pages/coop.css">
 </head>
-<body>
+<body data-music="coop" data-activity="In the co-op lobby">
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="webgame.html"><span class="sp" aria-hidden="true"></span>Play Game</a>
   <a class="navlink on" href="coop.html"><span class="sp" aria-hidden="true"></span>Co-op</a>
   <a class="navlink" href="leaderboard.html"><span class="sp" aria-hidden="true"></span>Leaderboards</a>
+  <a class="navlink" href="friends.html"><span class="sp" aria-hidden="true"></span>Friends</a>
   <a class="navlink" href="auth.html"><span class="sp" aria-hidden="true"></span>Account</a>
 </div></nav></header>
 
@@ -27,18 +34,28 @@
 
   <!-- lobby -->
   <div id="lobby" hidden>
-    <div class="pn"><h2>Start or join a team</h2>
+    <p class="m" id="adminNote" hidden>Owner preview: rooms, invitations and team scores are off on this account. Practice levels work normally and record nothing.</p>
+    <div class="pn" id="teamCard"><h2>Start or join a team</h2>
       <p class="m">Your Player ID: <b id="myPid"></b>. Share it with your teammate so they can invite you, or invite them using theirs.</p>
       <div class="row3"><button class="btn" id="mkRoom" type="button">Create a room</button>
         <input type="text" id="joinCode" maxlength="6" placeholder="Room code" aria-label="Room code" autocomplete="off"><button class="btn ghost" id="joinBtn" type="button">Join with code</button></div>
-      <p class="msg4" id="lobbyMsg" role="status" aria-live="polite"></p></div>
-    <div class="pn"><h2>Invitations for you</h2><div id="invites" class="m">None right now.</div></div>
+      <p class="msg4" id="lobbyMsg" role="status" aria-live="polite"></div>
+    <div class="pn"><h2>Practice levels</h2>
+      <p class="m">Learn one lane at a time before you team up. A practice bot covers the other lane, so you can test the whole grid on your own. Practice never records a score.</p>
+      <div class="prac" id="pracList">
+        <div class="pracrow"><div><b>Relay Basics</b><small>Small targets and a simple Core.</small></div><button class="btn ghost sm" type="button" data-prac="easy" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="easy" data-side="guest">Guest lane</button></div>
+        <div class="pracrow"><div><b>Split Signal</b><small>More stations to balance.</small></div><button class="btn ghost sm" type="button" data-prac="medium" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="medium" data-side="guest">Guest lane</button></div>
+        <div class="pracrow"><div><b>Relay Overload</b><small>Bigger amounts and a heavier Core.</small></div><button class="btn ghost sm" type="button" data-prac="hard" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="hard" data-side="guest">Guest lane</button></div>
+      </div>
+      <p class="msg4" id="pracMsg" role="status" aria-live="polite"></p></div>
+    <div class="pn" id="invitesCard"><h2>Invitations for you</h2><div id="invites" class="m">None right now.</div></div>
   </div>
 
   <!-- waiting room -->
   <div id="waiting" hidden>
     <div class="pn"><h2>Room</h2>
-      <p class="m">Room code (share it, or invite by Player ID):</p><div class="code" id="roomCode"></div>
+      <p class="m">Room code (share it, or invite by Player ID):</p><div class="row3"><span class="code" id="roomCode"></span><button class="btn ghost sm" id="copyCode" type="button">Copy code</button></div>
+      <p class="m" id="weekInfo"></p>
       <div class="row3" id="invRow"><input type="text" id="invPid" maxlength="12" placeholder="Teammate Player ID, TLP-12345678" aria-label="Teammate Player ID" autocomplete="off"><button class="btn ghost" id="invBtn" type="button">Send invite</button></div>
       <div class="row3" id="whoRow"></div>
       <div class="row3"><button class="btn" id="readyBtn" type="button">I am ready</button><button class="btn ghost" id="leaveBtn" type="button">Leave room</button></div>
@@ -48,6 +65,17 @@
 
   <!-- mission -->
   <div id="mission" hidden>
+    <div class="pip" id="pip" aria-label="Teammate preview">
+      <div class="piphead" id="pipHead" title="Drag to move, double-click to enlarge">
+        <span class="pipdot" id="pipDot"></span><b id="pipName">Teammate</b><span class="pipact" id="pipAct">preview</span>
+        <button class="pipbtn" id="pipMin" type="button" aria-label="Minimize teammate preview">–</button>
+      </div>
+      <div class="pipbody" id="pipBody">
+        <p class="m" id="pipPresence">Live preview of your teammate's lane.</p>
+        <ol class="prog" id="pipProg"></ol>
+        <p class="m" id="pipTest"></p>
+      </div>
+    </div>
     <div class="pn"><div class="row3 between"><div><h2 id="mTitle">Restore the Relay Grid</h2><p class="m" id="mWho"></p></div><div class="timer" id="timer" aria-label="Elapsed time">0:00</div></div>
       <p class="m" id="mRules"></p></div>
     <div class="cols">
@@ -67,7 +95,7 @@
       <div class="lane"><h3 id="pLaneT">Teammate's lane</h3><ol class="prog" id="pProg"></ol><p class="m" id="pPresence"></p></div>
     </div>
     <div class="pn mt"><h2>Check your work</h2>
-      <div class="row3"><button class="btn ghost" id="testBtn" type="button">Test run</button><button class="btn" id="subBtn" type="button">Submit as a team</button><button class="btn ghost" id="mLeave" type="button">Leave mission</button></div>
+      <div class="row3 actbar"><button class="btn ghost" id="testBtn" type="button">Test run</button><button class="btn" id="subBtn" type="button">Submit as a team</button><button class="btn ghost" id="mLeave" type="button">Leave mission</button></div>
       <div class="scroll-x"><table class="st" id="stTable"></table></div><p class="m" id="preview"></p>
       <p class="msg4" id="subMsg" role="status" aria-live="polite"></p>
       <div class="chat"><p class="m">Quick messages for your teammate:</p><div id="quick"></div><div id="log" aria-live="polite"></div></div></div>
@@ -85,6 +113,9 @@
 <script src="js/tlp-auth.js"></script>
 <script src="js/coop-core.js"></script>
 <script src="js/tlp-common.js"></script>
+<script src="js/tlp-presence.js"></script>
+<script src="js/streak.js"></script>
+<script src="js/music.js"></script>
 <script src="js/pages/coop.js"></script>
 </body>
 </html>

@@ -1,0 +1,98 @@
+/* =============================================================================
+   LESSON EXPLAINER STYLES  (css/pages/explainers.css)
+   -----------------------------------------------------------------------------
+   The animated diagram shown at the top of a lesson. Every colour comes from
+   the page theme, so it follows the mood swatches and each age look. Parts are
+   dimmed until their step arrives; the current one pops and glows.
+   ============================================================================= */
+.ex{margin:12px 0 14px;border:1px solid color-mix(in srgb,var(--a) 30%,var(--line));border-radius:16px;background:linear-gradient(160deg,color-mix(in srgb,var(--a) 8%,transparent),transparent 65%);overflow:hidden}
+.ex-head{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid color-mix(in srgb,var(--line) 65%,transparent)}
+.ex-k{font:800 10.5px var(--sans);letter-spacing:.13em;text-transform:uppercase;color:var(--a)}
+.ex-dots{display:flex;gap:4px;flex:1}
+.ex-dots i{height:3px;flex:1;border-radius:99px;background:var(--line);transition:background .3s}
+.ex-dots i.on{background:var(--a)}
+.ex-count{font:700 11px var(--sans);color:var(--mut);font-variant-numeric:tabular-nums}
+.ex-stage{position:relative;display:grid;place-items:center;min-height:136px;padding:18px 12px;overflow:hidden;background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--a) 11%,transparent),transparent 72%)}
+.ex-stage:before{content:"";position:absolute;inset:0;background:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:30px 30px;opacity:.16}
+.ex-foot{padding:9px 12px 11px;border-top:1px solid color-mix(in srgb,var(--line) 65%,transparent)}
+.ex-cap{margin:0 0 8px;font:14px/1.5 var(--sans);min-height:2.8em}
+.ex-ctl{display:flex;gap:8px;justify-content:flex-end}
+.ex-btn{min-height:34px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:600 12px var(--sans);cursor:pointer;transition:border-color .2s,color .2s,transform .15s}
+.ex-btn:hover:not(:disabled){border-color:var(--a);color:var(--a)}
+.ex-btn:active:not(:disabled){transform:scale(.96)}
+.ex-btn:disabled{opacity:.35;cursor:default}
+
+/* Parts appear one step at a time. The current step also pops. */
+.ex-el{position:relative;z-index:1;opacity:.24;transform:translateY(9px) scale(.95);filter:grayscale(.75);transition:opacity .4s,transform .45s cubic-bezier(.2,1.3,.4,1),filter .4s,box-shadow .4s}
+.ex-el.on{opacity:1;transform:none;filter:none}
+.ex-el.now{animation:exPop .5s cubic-bezier(.2,1.4,.4,1)}
+.ex-row{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;max-width:100%}
+.ex-stack{display:grid;gap:8px;justify-items:center;max-width:100%}
+
+.nd{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:60px;min-height:52px;padding:7px 12px;border:1px solid color-mix(in srgb,var(--a) 45%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--bg) 62%,transparent);font:600 12px var(--sans);text-align:center;line-height:1.25}
+.nd b{font-weight:800}
+.nd i{font-style:normal;font:800 19px var(--serif);color:var(--a)}
+.nd small{font-weight:500;color:var(--mut)}
+.chip{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;border:1px dashed color-mix(in srgb,var(--a) 55%,transparent);color:var(--a);font:700 11.5px var(--sans);white-space:nowrap}
+.ln{display:block;width:26px;height:2px;flex:none;background:linear-gradient(90deg,color-mix(in srgb,var(--a) 30%,transparent),var(--a));border-radius:99px}
+.ln:after{content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid var(--a);border-top:4px solid transparent;border-bottom:4px solid transparent}
+.ex-el.ln{position:relative;transform:scaleX(0);transform-origin:left;opacity:0}
+.ex-el.ln.on{transform:scaleX(1);opacity:1;filter:none}
+
+/* Individual scenes */
+.bx{min-width:86px}
+.bx.lock{border-style:double;border-width:3px}
+.frame{display:inline-flex;padding:10px;border:2px dashed color-mix(in srgb,var(--a) 55%,transparent);border-radius:16px;position:relative}
+.frame:after{content:"↺";position:absolute;right:-16px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--a)}
+.q{padding:10px 18px;border:2px solid var(--a);border-radius:999px;background:color-mix(in srgb,var(--a) 10%,transparent);font:800 13px var(--sans);transform:rotate(-4deg)}
+.branches{display:flex;flex-direction:column;gap:6px}
+.ghost{opacity:.55;border-style:dashed}
+.glitch{padding:10px 16px;border-radius:12px;border:2px solid #ef7a8c;background:linear-gradient(100deg,#ef7a8c22,#9b5cf022);color:#ef7a8c;font:800 13px var(--sans);animation:exGlitch 2.4s steps(2) infinite}
+.mini{padding:6px 10px;border:1px solid var(--line);border-radius:8px;font:600 11px var(--sans);color:var(--mut);background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.mini.bad{border-color:#ef7a8c;color:#ef7a8c}
+.type{display:grid;place-items:center;min-width:58px;min-height:58px;border-radius:10px;font:800 22px var(--serif);border:2px solid var(--a);background:color-mix(in srgb,var(--a) 8%,transparent)}
+.type small{margin-top:2px;font:600 9.5px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.type.txt{border-style:dashed;border-radius:22px;color:var(--mut);font-family:var(--sans);font-size:18px}
+.conv{padding:8px 12px;border-radius:10px;border:1px solid var(--a);font:800 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--a);animation:exSpinSlow 6s linear infinite}
+.bead{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:42px;padding:0 10px;border-radius:99px;border:2px solid var(--a);background:color-mix(in srgb,var(--a) 12%,transparent);font:800 16px var(--serif)}
+.str{border-radius:99px;padding:6px 16px;border-width:2px}
+.sum{min-width:96px;gap:2px}
+.slot{position:relative;display:grid;place-items:center;width:52px;height:58px;border-radius:8px;border:1px solid var(--line);border-bottom:4px solid color-mix(in srgb,var(--a) 60%,var(--line));background:color-mix(in srgb,var(--bg) 58%,transparent);font:800 18px var(--serif)}
+.slot small{position:absolute;top:2px;left:5px;font:600 9px var(--sans);color:var(--mut)}
+.person{border-radius:50% 50% 40% 40%}
+.screen{border-radius:6px;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--a) 34%,transparent);color:var(--a)}
+.code{font-family:ui-monospace,Consolas,monospace;font-size:11.5px;border-radius:6px;border-left:3px solid var(--a)}
+.code.broken{border-left-color:#ef7a8c;color:#ef7a8c;text-decoration:line-through}
+.sticky{padding:10px 12px;border-radius:4px;background:#ffe9a833;border:1px solid #ffe9a8;color:#ffe9a8;font:600 12px 'Caveat',cursive;transform:rotate(3deg)}
+.machine{border-style:double;border-width:3px;min-width:88px}
+.room{padding:9px 12px;border:2px solid color-mix(in srgb,var(--a) 45%,var(--line));border-radius:14px;min-width:84px;background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.room b{display:block;font:700 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+.room.inner{border-style:dashed;border-color:var(--a);background:color-mix(in srgb,var(--a) 9%,transparent)}
+.mirror{border-radius:6px 6px 2px 2px;box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 35%,transparent) inset;padding:8px 12px;font:700 11px var(--sans);background:linear-gradient(160deg,color-mix(in srgb,var(--a) 16%,transparent),transparent)}
+.mirror:nth-child(2){transform:scale(.92)}
+.bit{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:99px;border:2px solid var(--line);font:800 14px var(--sans);color:var(--mut);background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.bit.on{border-color:var(--a);color:#0b0f14;background:var(--a);box-shadow:0 0 14px color-mix(in srgb,var(--a) 55%,transparent)}
+.bitsrow{display:flex;gap:6px;align-items:center;justify-content:center}
+.bitsrow.res{margin-top:2px;padding-top:6px;border-top:1px solid var(--line)}
+.in{border-radius:99px;min-width:54px;min-height:38px;padding:4px 10px}
+.gate{clip-path:polygon(0 0,42% 0,72% 18%,88% 50%,72% 82%,42% 100%,0 100%);padding:12px 20px;border-radius:0;background:color-mix(in srgb,var(--a) 22%,transparent);border-color:var(--a);font-weight:800;letter-spacing:.06em}
+.lamp{width:44px;height:44px;min-height:0;min-width:0;border-radius:50%;border:2px solid var(--line);color:var(--mut);font:800 9px var(--sans);text-transform:uppercase}
+.bars .bar{width:20px;height:44px;border-radius:6px;background:color-mix(in srgb,var(--a) 55%,transparent);border:0;min-width:0;min-height:0}
+.bars .bar.tall{height:66px}
+.bars .bar.short{height:30px}
+.bars .bar.best{height:84px;background:linear-gradient(180deg,#ffd166,var(--a));box-shadow:0 0 18px color-mix(in srgb,var(--a) 45%,transparent)}
+.stack{gap:3px}
+.stack b{padding:4px 12px;border:1px solid var(--line);border-radius:6px;font:600 11px var(--sans);background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.loopbox{border-width:2px;min-width:92px;padding:10px 14px}
+
+@keyframes exPop{0%{transform:scale(.9)}55%{transform:scale(1.05)}100%{transform:none}}
+@keyframes exGlitch{0%,92%,100%{transform:none}94%{transform:translateX(-2px)}96%{transform:translateX(2px)}}
+@keyframes exSpinSlow{to{transform:rotate(360deg)}}
+@media(max-width:420px){.nd{min-width:52px;padding:6px 9px}.ex-stage{min-height:120px}.ex-cap{font-size:13px;min-height:3.2em}}
+@media(prefers-reduced-motion:reduce){.ex-el,.ex-el.now,.glitch,.conv{animation:none!important;transition-duration:.01s!important}}
+
+/* The age looks shape the explainer too, so it never feels bolted on. */
+body.path-g16 .ex{border-radius:24px;border-width:2px}
+body.path-g16 .nd{border-radius:16px;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+body.path-g1112 .ex{border-radius:8px}
+body.path-adult .ex{border-radius:8px;background:rgba(10,14,20,.6)}

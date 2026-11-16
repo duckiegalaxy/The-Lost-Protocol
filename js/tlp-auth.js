@@ -1105,17 +1105,43 @@
       return results;
     }
 
-    async getPublicLeaderboardPage({ path, diff, offset = 0, limit = 20 }) {
+    // Search text is short and goes inside a PostgREST or() filter, so commas,
+    // parentheses and pattern characters are removed before it is sent.
+    _cleanSearch(v) {
+      return String(v == null ? '' : v).replace(/[%_,()*"'\\]/g, ' ').trim().slice(0, 40);
+    }
+
+    async getPublicLeaderboardPage({ path, diff, offset = 0, limit = 20, search = '', today = false }) {
       await this.init();
       if (!this.isCloudConfigured()) return { rows: [], hasMore: false };
-      const { data, error } = await this.supabase.from('public_leaderboard')
+      let q = this.supabase.from('public_leaderboard')
         .select('player_id, display_name, total_score, total_stars, chapters_cleared, badges, updated_at')
-        .eq('learning_path', path).eq('game_diff', diff)
+        .eq('learning_path', path).eq('game_diff', diff);
+      const s = this._cleanSearch(search);
+      if (s) q = q.or('display_name.ilike.%' + s + '%,player_id.ilike.%' + s + '%');
+      if (today) q = q.gte('updated_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
+      const { data, error } = await q
         .order('total_score', { ascending: false }).order('total_stars', { ascending: false }).order('updated_at', { ascending: true })
         .range(offset, offset + limit);
       if (error) throw new Error(error.message);
       const rows = data || [];
       return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
+    }
+
+    // Position of one player in the full table. Ties on score and stars share a
+    // rank, which matches how the board is rendered.
+    async getLeaderboardRank({ path, diff, playerId }) {
+      await this.init();
+      if (!this.isCloudConfigured() || !playerId) return null;
+      const { data: row } = await this.supabase.from('public_leaderboard')
+        .select('player_id, display_name, total_score, total_stars')
+        .eq('learning_path', path).eq('game_diff', diff).eq('player_id', playerId).maybeSingle();
+      if (!row) return null;
+      const base = () => this.supabase.from('public_leaderboard')
+        .select('*', { count: 'exact', head: true }).eq('learning_path', path).eq('game_diff', diff);
+      const { count: above } = await base().gt('total_score', row.total_score);
+      const { count: sameScore } = await base().eq('total_score', row.total_score).gt('total_stars', row.total_stars);
+      return { rank: (above || 0) + (sameScore || 0) + 1, row };
     }
 
     async getCoopChallenges() {
@@ -1125,12 +1151,14 @@
       return [...new Set((data || []).map(r => r.challenge_id))].slice(0, 12);
     }
 
-    async getCoopLeaderboardPage({ challengeId, offset = 0, limit = 20 }) {
+    async getCoopLeaderboardPage({ challengeId, offset = 0, limit = 20, search = '' }) {
       await this.init();
       if (!this.isCloudConfigured()) return { rows: [], hasMore: false };
       let q = this.supabase.from('public_coop_leaderboard')
         .select('p1_player_id, p1_name, p2_player_id, p2_name, score, correct, steps, duration_ms, finished_at, challenge_id');
       if (challengeId) q = q.eq('challenge_id', challengeId);
+      const s = this._cleanSearch(search);
+      if (s) q = q.or('p1_name.ilike.%' + s + '%,p2_name.ilike.%' + s + '%,p1_player_id.ilike.%' + s + '%,p2_player_id.ilike.%' + s + '%');
       const { data, error } = await q.order('score', { ascending: false }).order('duration_ms', { ascending: true }).range(offset, offset + limit);
       if (error) throw new Error(error.message);
       const rows = data || [];

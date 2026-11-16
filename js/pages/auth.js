@@ -86,7 +86,10 @@ function cards(el, list, current, onPick) {
     onPick(b.dataset.id);
   });
 }
-cards($('#pathCards'), PATHS, pathId, (v) => pathId = v);
+function renderPaths() {
+  cards($('#pathCards'), PATHS, pathId, (v) => pathId = v);
+}
+renderPaths();
 cards($('#diffCards'), DIFFS, diffId, (v) => diffId = v);
 
 /* -----------------------------------------------------------------------------
@@ -120,16 +123,49 @@ $('#mId').onclick = () => method(true);
 document.querySelectorAll('#regForm .pick[data-role]').forEach((b) => b.onclick = () => {
   role = b.dataset.role;
   document.querySelectorAll('#regForm .pick[data-role]').forEach((o) => o.setAttribute('aria-pressed', o === b));
+  // The Adult learner card is a Learner account with the adult path already
+  // chosen. The plain Learner card restores the default path if adult was set.
+  if (b.dataset.path) pathId = b.dataset.path;
+  else if (pathId === 'adult') pathId = 'g710';
+  renderPaths();
+  $('#pathLabel').textContent = pathId === 'adult' ? 'Learning path' : 'Age group';
   $('#learnerFields').hidden = role !== 'learner';
   $('#rgNameLabel').textContent = role === 'parent' ? 'Full name' : 'Display name';
   $('#rgName').placeholder = role === 'parent' ? 'For example: Sandra Lewis' : 'Name shown on the leaderboards';
 });
 $('#rgName').placeholder = 'Name shown on the leaderboards';
 
-// Where a signed-in account belongs after login.
+// Where a signed-in account belongs after login. The owner account can also be
+// a parent, so the administrator dashboard wins: that is the only destination
+// the session view offers it.
 function where(user) {
-  return user.role === 'parent' ? 'parent.html' : user.isAdmin ? 'admin.html' : 'webgame.html';
+  return user.isAdmin ? 'admin.html' : user.role === 'parent' ? 'parent.html' : 'webgame.html';
 }
+
+/* -----------------------------------------------------------------------------
+   4b. PASSWORD STRENGTH METER
+
+   Local, instant feedback while typing. The real check (length, common list,
+   breach lookup) runs when the form is submitted, in js/password.js.
+   -------------------------------------------------------------------------- */
+function wireMeter(inputSel, meterSel, hintSel, idleText) {
+  const input = $(inputSel), meter = $(meterSel), hint = $(hintSel);
+  if (!input || !meter) return;
+  const words = ['Too short', 'Weak', 'Okay', 'Good', 'Strong'];
+  const update = () => {
+    const pw = input.value;
+    const min = (window.TLP_PASSWORD && TLP_PASSWORD.MIN) || 10;
+    const s = window.TLP_PASSWORD ? TLP_PASSWORD.score(pw) : 0;
+    meter.dataset.score = s;
+    meter.setAttribute('aria-hidden', 'true');
+    if (!pw) { hint.textContent = idleText; return; }
+    hint.textContent = pw.length < min ? 'At least ' + min + ' characters, please.' : words[s] + ' password.';
+  };
+  input.addEventListener('input', update);
+  update();
+}
+wireMeter('#rgPw', '#rgMeter', '#rgHint', 'Three unrelated words make a strong, easy password.');
+wireMeter('#npPw', '#npMeter', '#npHint', 'Use at least 10 characters. Three unrelated words work well.');
 
 /* -----------------------------------------------------------------------------
    5. SIGN IN
@@ -168,9 +204,14 @@ $('#regForm').addEventListener('submit', async (e) => {
   const btn = $('#rgGo');
   btn.disabled = true;
   try {
+    // Length, common-password and breach checks live in js/password.js. Only a
+    // confirmed breach blocks the form; a network failure lets the user through.
+    const pw = $('#rgPw').value;
+    const pwCheck = await window.TLP_PASSWORD.check(pw);
+    if (!pwCheck.ok) return say(pwCheck.msg);
     const r = await A().registerUser({
       email: $('#rgEmail').value,
-      password: $('#rgPw').value,
+      password: pw,
       role,
       displayName: name,
       learnerName: name,
@@ -239,11 +280,12 @@ $('#resetForm').addEventListener('submit', async (e) => {
   say('');
   const p1 = $('#npPw').value;
   const p2 = $('#npPw2').value;
-  if (p1.length < 6) return say('Use a password of at least 6 characters.');
   if (p1 !== p2) return say('The two passwords do not match.');
   const btn = $('#npGo');
   btn.disabled = true;
   try {
+    const pwCheck = await window.TLP_PASSWORD.check(p1);
+    if (!pwCheck.ok) return say(pwCheck.msg);
     await A().updatePassword(p1);
     say('Your password has been changed. Taking you to the game…', 'ok');
     setTimeout(() => { location.href = 'index.html'; }, 900);
@@ -270,14 +312,22 @@ async function refresh() {
   }
 
   showView('session');
+  const l = A().getActiveLearner();
+  const isAdult = u.role === 'learner' && l && !l.isGuest && (l.assigned_path || l.assignedPath) === 'adult';
   $('#sName').textContent = u.displayName;
-  $('#sRole').textContent = u.isAdmin ? 'Administrator' : u.role === 'parent' ? 'Parent or Educator account' : 'Learner account';
+  $('#sRole').textContent = u.isAdmin ? 'Administrator' : u.role === 'parent' ? 'Parent or Educator account' : isAdult ? 'Adult learner account' : 'Learner account';
   $('#goAdmin').hidden = !u.isAdmin;
   $('#goMain').textContent = u.role === 'parent' ? 'Open the Parent and Educator area' : 'Open the game';
   $('#goMain').href = u.role === 'parent' ? 'parent.html' : 'webgame.html';
   if (u.isAdmin) $('#goMain').hidden = true;
 
-  const l = A().getActiveLearner();
+  // The delete section is only offered to accounts the database allows to be
+  // deleted, so an administrator never sees a control that cannot work.
+  const danger = document.querySelector('.acct .danger');
+  if (danger) danger.hidden = !!u.isAdmin;
+  // Player IDs only belong to learner profiles.
+  $('#sId').hidden = true;
+
   if (u.role === 'learner' && l && !l.isGuest) {
     $('#sId').hidden = false;
     $('#sPid').textContent = l.player_id || '';

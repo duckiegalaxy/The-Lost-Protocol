@@ -46,11 +46,19 @@ Deno.serve(async (req) => {
 
     const { data: pid, error: pidErr } = await admin.rpc("generate_player_id");
     if (pidErr || !pid) { console.error("player id failed"); return json({ error: "server" }, 500); }
+    const loginEmail = String(pid).toLowerCase() + "@" + DOMAIN;
+    // GoTrue inserts auth.users with empty app_metadata and applies the metadata we
+    // send in a follow-up UPDATE, so the reserved-domain guard cannot see
+    // tlp_learner on the INSERT. Pre-approve this one address instead; the
+    // allowlist table is service-role only and the row is removed again below.
+    const { error: allowErr } = await admin.from("learner_login_allowlist").upsert({ email: loginEmail });
+    if (allowErr) { console.error("allowlist insert failed"); return json({ error: "server" }, 500); }
     const { data: created, error: cErr } = await admin.auth.admin.createUser({
-      email: String(pid).toLowerCase() + "@" + DOMAIN, password: pw, email_confirm: true,
+      email: loginEmail, password: pw, email_confirm: true,
       app_metadata: { tlp_learner: "1" }, user_metadata: { role: "learner", display_name: name },
     });
-    if (cErr || !created || !created.user) { console.error("create user failed"); return json({ error: "server" }, 500); }
+    await admin.from("learner_login_allowlist").delete().eq("email", loginEmail);
+    if (cErr || !created || !created.user) { console.error("create user failed: " + (cErr && cErr.message)); return json({ error: "server" }, 500); }
     const { data: lrn, error: lErr } = await admin.from("learners").insert({
       user_id: created.user.id, parent_user_id: u.user.id, name, grade_range: grade, assigned_path: grade,
       current_diff: diff, start_diff: diff, created_by_educator: true, player_id: pid,

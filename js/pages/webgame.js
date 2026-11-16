@@ -15,7 +15,8 @@
    8. EXECUTOR ............. interprets the block script against a fake machine.
    9. RUN LIFECYCLE ........ run(), finish(), the result screen, next level.
   10. BOSS MODE ............ rounds, hearts, taunts and the boss fight loop.
-  11. CURRICULUM DATA ...... the six sections, twenty-four chapters and bosses.
+  11. CURRICULUM DATA ...... the five story sections, twenty chapters, bosses and
+                             the optional Mastery bonus section.
   12. ACHIEVEMENTS ......... the badge queue and its popups.
   13. BLOCK LIBRARY ........ the reference sheet opened from the HUD.
   14. PATH + DIFFICULTY .... configuration, unlock rules and the settings modal.
@@ -34,10 +35,13 @@ let __D = DIFF;
 
 const __raw = (() => {
   const g = Storage.prototype.getItem, s = Storage.prototype.setItem, r = Storage.prototype.removeItem;
-  const NS = /^tlp-(prog|draft|boss\d*|ach|badges)$/;
+  const NS = /^tlp-(prog|draft|boss\d*|ach|badges|runs|bonus-points|daily)$/;
   const m = (k) => {
     if (!NS.test(k)) return k;
     const itemKey = k.replace(/^tlp-/, '');
+    // The administrator preview keeps a save space of its own, so trying a
+    // mission never adds stars, runs or achievements to a learner's profile.
+    if (window.__adminPreview) return `tlp-preview@${PATH || 'g710'}@${DIFF || 'int'}@${itemKey}`;
     if (window.TLP_AUTH && typeof window.TLP_AUTH.getActiveSaveKey === 'function') {
       return window.TLP_AUTH.getActiveSaveKey(itemKey, PATH, DIFF);
     }
@@ -61,13 +65,49 @@ function storyOutcome(last){try{if(!window.TLP_STORY||!last)return;const c=S.ci;
  const si=TLP_STORY.sectionOf(c);const _sx=SEC.find(x=>x.id===si);if(_sx&&_sx.boss===c)h+=TLP_STORY.lines(TLP_STORY.actEnd(si,PATH));
  if(!h)return;const d=document.createElement('div');d.className='story';d.innerHTML=h;const p=$('#pan p');if(p)p.after(d)}catch(e){}}
 function storyFail(){try{if(!window.TLP_STORY)return'';const f=TLP_STORY.fail();return ' <i>'+TLP_STORY.WHO[f[0]].name+': '+f[1]+'</i>'}catch(e){return''}}
-function storyScenes(o,done){let i=0;const c=cine(`<div class="stage"><h2 class="ctitle">${o.title}</h2><div class="sbody" id="sc-body" aria-live="polite"></div>${o.objective?`<div class="sobj" id="sc-obj" hidden>${o.objective}</div>`:''}<div class="bar" style="justify-content:center"><button class="btn ghost sm" id="sc-listen" type="button"><i class=ic-volume></i> Listen</button><button class="btn ghost sm" id="sc-skip" type="button">Skip</button><button class="btn" id="sc-next" type="button">Next</button></div></div>`);
- const body=c.querySelector('#sc-body'),nx=c.querySelector('#sc-next'),obj=c.querySelector('#sc-obj');
- const show=()=>{body.innerHTML=TLP_STORY.lines(o.scenes[i]);if(i===o.scenes.length-1){if(obj)obj.hidden=false;nx.textContent=o.button}else nx.textContent='Next'};
- const end=()=>{try{TLP.Voice.stop()}catch(e){}uncine();done()};
- nx.onclick=()=>{snd('chime');if(i<o.scenes.length-1){i++;show()}else end()};
- c.querySelector('#sc-skip').onclick=end;c.querySelector('#sc-listen').onclick=()=>TLP.Voice.speak(TLP_STORY.plain(o.scenes[i]));
- show();nx.focus()}
+/* The text always comes from story.js; only the delivery is animated here.
+   A scene plays line by line: speaker portrait, typed line, a dot per scene.
+   Next finishes a long line first, then moves on. Skipping or running out of
+   lines hands control back to the caller, which owns every progress change. */
+function storyScenes(o,done){
+ const art={
+  s:'<span class="cs-term"><b></b><b></b><b></b><i></i></span>',
+  r:'<span class="cs-bot r"><span class="cs-head"><i></i><i></i><b></b></span><span class="cs-ant"></span><span class="cs-halo"></span></span>',
+  u:'<span class="cs-bot u"><span class="cs-head"><i></i><i></i><b></b></span><span class="cs-halo"></span></span>',
+  l:'<span class="cs-radio"><span class="cs-waves"><i></i><i></i><i></i><i></i><i></i></span><b>VOSS · COMMS</b></span>'
+ };
+ const c=cine(`<div class="stage cs-stage"><div class="cs-bg" aria-hidden="true"><i class="cs-grid"></i><i class="cs-scan"></i>${'<b></b>'.repeat(6)}</div>`+
+  `<h2 class="ctitle cs-title">${o.title}</h2>`+
+  `<div class="cs-scene" id="sc-scene" data-who="s"><div class="cs-port" id="sc-port" aria-hidden="true"></div>`+
+  `<div class="cs-say"><div class="sbody" id="sc-body"></div><div class="cs-live" id="sc-live" aria-live="polite"></div></div></div>`+
+  `${o.objective?`<div class="sobj" id="sc-obj" hidden>${o.objective}</div>`:''}`+
+  `<div class="cs-dots" id="sc-dots" aria-hidden="true">${o.scenes.map(()=>'<span class="cs-dot"></span>').join('')}</div>`+
+  `<div class="bar cs-bar"><button class="btn ghost sm" id="sc-listen" type="button"><i class=ic-volume></i> Listen</button><button class="btn ghost sm" id="sc-skip" type="button">Skip</button><button class="btn" id="sc-next" type="button">Show all</button></div></div>`,'c-story');
+ const stage=c.querySelector('#sc-scene'),port=c.querySelector('#sc-port'),body=c.querySelector('#sc-body'),live=c.querySelector('#sc-live'),
+       dots=[...c.querySelectorAll('.cs-dot')],nx=c.querySelector('#sc-next'),obj=c.querySelector('#sc-obj');
+ const beats=[];o.scenes.forEach((sc,si)=>sc.forEach(p=>beats.push({who:p[0],text:p[1],si})));
+ let i=0,timer=null,full='',span=null;
+ const last=()=>i===beats.length-1;
+ const halt=()=>{if(timer){clearInterval(timer);timer=null}};
+ const idle=()=>{nx.textContent=last()?o.button:'Next';if(last()&&obj)obj.hidden=false};
+ const reveal=()=>{halt();if(span){span.textContent=full;span.classList.remove('typing')}idle()};
+ const say=()=>{const b=beats[i];stage.dataset.who=b.who;port.innerHTML=art[b.who]||art.s;
+  stage.classList.remove('swap');void stage.offsetWidth;stage.classList.add('swap');
+  const box=document.createElement('div');box.innerHTML=TLP_STORY.line([b.who,b.text]);
+  const ln=box.firstElementChild;span=ln.querySelector('span');body.replaceChildren(ln);
+  full=b.text;live.textContent=TLP_STORY.plain([[b.who,b.text]]);
+  dots.forEach((d,k)=>d.classList.toggle('on',k<=b.si));
+  if(still){idle();return}
+  const chars=Array.from(full);let n=0;span.textContent='';span.classList.add('typing');nx.textContent='Show all';
+  timer=setInterval(()=>{n++;span.textContent=chars.slice(0,n).join('');if(n>=chars.length){halt();span.classList.remove('typing');idle()}},22)};
+ const end=()=>{halt();document.removeEventListener('keydown',key);try{TLP.Voice.stop()}catch(e){}uncine();done()};
+ const key=e=>{if(e.key==='Escape')end()};
+ nx.onclick=()=>{if(timer){snd('tap');reveal();return}snd('chime');if(!last()){i++;say()}else end()};
+ c.querySelector('.cs-scene').onclick=()=>{if(timer){snd('tap');reveal()}};
+ c.querySelector('#sc-skip').onclick=end;
+ c.querySelector('#sc-listen').onclick=()=>{try{TLP.Voice.speak(TLP_STORY.plain([[beats[i].who,beats[i].text]]))}catch(e){}};
+ document.addEventListener('keydown',key);
+ say();nx.focus()}
 function storyOpening(force){if(!window.TLP_STORY||(!force&&TLP_STORY.seen('intro'))||$('#sc-body'))return;storyScenes(TLP_STORY.opening(PATH),()=>{TLP_STORY.mark('intro');play(ORDER[0],0)})}
 function storyEnding(next){if(!window.TLP_STORY)return next();storyScenes(TLP_STORY.ending(PATH),()=>{TLP_STORY.mark('ending');difficultyCelebration(next)})}
 window.storyOpening=storyOpening;
@@ -89,6 +129,9 @@ function lbSubmit(l){try{if(!window.TLP_AUTH||!TLP_AUTH.recordLeaderboardScore||
  return TLP_AUTH.recordLeaderboardScore({learnerId:l.id,displayName:l.name||S.name,learningPath:PATH,gameDiff:DIFF,score:score(),stars,chaptersCleared:CH.filter((c,i)=>c.L&&done(i)).length})}catch(e){}}
 
 function syncCurrentToCloud() {
+  // The admin preview plays only: no progress is written to a learner profile
+  // and no score is posted to a leaderboard.
+  if (window.__adminPreview) return;
   if (window.TLP_AUTH && typeof window.TLP_AUTH.saveProgressBundle === 'function') {
     const l = window.TLP_AUTH.getActiveLearner();
     if (l && l.id && !l.isGuest) {
@@ -141,10 +184,48 @@ CH.push({n:'Chapter 4',t:'Boss: The Glitch',d:'A boss that remembers every attac
 const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const NAMES={set:'set',change:'change',move:'move',say:'say',rep:'repeat',if:'if / else',note:'note',ask:'ask player',calc:'calculate',join:'join words',cast:'turn into',pick:'item of list',while:'repeat while',base:'convert base',def:'define function',call:'call function',bit:'switch on bit'};
 const NARRATION={};
-let S={ci:0,li:0,script:[],hint:0,run:false,id:0,prog:{},name:'Player'};
+let S={ci:0,li:0,script:[],hint:0,run:false,id:0,prog:{},name:'Player',lastPts:0,lastRunPts:0,runT0:0};
 try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}');S.name=localStorage.getItem('tlp-name')||'Player'}catch(e){}
 const save=()=>{try{localStorage.setItem('tlp-prog',JSON.stringify(S.prog));localStorage.setItem('tlp-name',S.name)}catch(e){}try{syncCurrentToCloud()}catch(e){}};
-const key=(c,l)=>c+'-'+l,score=()=>Object.values(S.prog).reduce((a,b)=>a+b*100,0);
+const key=(c,l)=>c+'-'+l;
+/* -----------------------------------------------------------------------------
+   PER-LEVEL RECORDS
+   S.prog still stores stars, because the cloud table and the old save files use
+   that shape. A second local record stores how many attempts a mission took,
+   the best time and the best points ever earned. Points are what the score and
+   the leaderboard use now:
+     stars x 100, adjusted down if the mission needed several attempts,
+     plus a first-try bonus, a speed bonus for guardians and a hardcore bonus.
+   Old saves without a record keep the old stars x 100 value.
+   -------------------------------------------------------------------------- */
+function runsAll(){try{return JSON.parse(localStorage.getItem('tlp-runs')||'{}')}catch(e){return{}}}
+function saveRuns(r){try{localStorage.setItem('tlp-runs',JSON.stringify(r))}catch(e){}}
+function runRec(k){return runsAll()[k]||{}}
+function bonusPoints(){try{return Number(localStorage.getItem('tlp-bonus-points')||0)||0}catch(e){return 0}}
+function addBonus(n){try{localStorage.setItem('tlp-bonus-points',String(bonusPoints()+n))}catch(e){}}
+function bumpTry(k){const r=runsAll(),x=r[k]||{tries:0};x.tries=(x.tries||0)+1;x.last=Date.now();r[k]=x;saveRuns(r);return x}
+function score(){return Object.entries(S.prog).reduce((a,[k,v])=>{const r=runRec(k);const p=r&&typeof r.points==='number'?r.points:Number(v)*100;return a+(isFinite(p)?p:0)},0)+bonusPoints()}
+/* hardMode() is a setting, not a fourth difficulty: it layers extra rules on
+   top of Professional or Intermediate for Grades 11-12 and college students,
+   so switching it on never wipes saved progress. */
+function hardMode(){try{return !!(pref('hard',false)&&(PATH==='g1112'||PATH==='adult'))}catch(e){return false}}
+function completeLevel(k,st,meta){
+ meta=meta||{};
+ const r=runsAll(),x=r[k]||{},tries=Math.max(1,x.tries||1),old=typeof x.points==='number'?x.points:0;
+ const first=!x.done,mult=Math.max(.55,1-.09*(tries-1));
+ let pts=Math.round(st*100*mult);
+ if(first&&tries===1)pts+=40;
+ if(meta.timeLeft)pts+=Math.round(meta.timeLeft)*3;
+ if(meta.hardcore)pts=Math.round(pts*1.5);
+ if(meta.noHit)pts+=60;
+ x.points=Math.max(old,pts);x.done=true;
+ x.bestTries=Math.min(x.bestTries||99,tries);
+ x.first=x.first||!!(first&&tries===1);
+ x.noHit=x.noHit||!!meta.noHit;
+ x.hard=x.hard||!!meta.hardcore;
+ if(meta.ms)x.bestTime=Math.min(x.bestTime||1e9,meta.ms);
+ x.last=Date.now();r[k]=x;saveRuns(r);S.lastPts=x.points;S.lastRunPts=pts;return x.points;
+}
 const rawLv=()=>CH[S.ci].L[S.li];
 const lv=()=>{const base=rawLv();if(!base||base.boss)return base;const k=key(S.ci,S.li),adapt=(PATH_CONTENT[k]&&PATH_CONTENT[k][PATH])||null;return adapt?Object.assign({},base,adapt):base};
 const isBonus=l=>!!(l&&(l.bonus||(l.t&&l.t.toLowerCase().includes('bonus'))));
@@ -172,12 +253,11 @@ setInterval(()=>{if(auto&&!still&&!tweening)setHue((hue+.6)%360)},50);
    to a chapter/level, and render() redraws the script area after every edit.
    -------------------------------------------------------------------------- */
 function hud(){$('#pn').textContent=S.name;$('#sc').textContent=score();setLight()}
-function play(c,l,k){S.ci=c;S.li=l;S.script=[];S.hint=0;if(lv().boss)bossRound(k);try{const d=JSON.parse(localStorage.getItem('tlp-draft')||'null');if(!k&&d&&d.k===c+'-'+l&&Array.isArray(d.s)){S.script=d.s;S.id=Math.max(S.id,...(function m(a){return a.flatMap(b=>[b.id,...m(b.c),...m(b.e||[])])})(d.s),0)}}catch(e){}if(!S.script.length&&lv().start)S.script=lv().start();$('#menu').hidden=true;$('#game').hidden=false;document.body.dataset.sec=Math.max(0,SEC.findIndex(s=>s.ch.includes(c)||s.boss===c));track.dataset.sk=Math.random()*4|0;if(DIFF==='beg'&&(PATH==='g16'||PATH==='g710')&&!lv().boss)setTimeout(coachInit,0);$('#exit').hidden=false;$('#res').hidden=true;
- const L=lv();$('#learn').innerHTML=`<span class="hand">${CH[c].n} · ${CH[c].t}</span><span class="diff">${L.df}</span><h2>${L.t}</h2><p>${L.learn}</p><div class="mis"><b>Mission:</b> ${L.mis}</div><ul class="goals" id="goals"></ul><button class="btn ghost sm" id="nar">Narrate lesson</button>`;$('#nar').onclick=narrate;
+function play(c,l,k){stopNarration();stopBossClock();S.ci=c;S.li=l;S.script=[];S.hint=0;S.lastPts=0;S.runT0=0;if(lv().boss)bossRound(k);try{const d=JSON.parse(localStorage.getItem('tlp-draft')||'null');if(!k&&d&&d.k===c+'-'+l&&Array.isArray(d.s)){S.script=d.s;S.id=Math.max(S.id,...(function m(a){return a.flatMap(b=>[b.id,...m(b.c),...m(b.e||[])])})(d.s),0)}}catch(e){}if(!S.script.length&&lv().start)S.script=lv().start();$('#menu').hidden=true;$('#game').hidden=false;document.body.dataset.sec=Math.max(0,SEC.findIndex(s=>s.ch.includes(c)||s.boss===c));track.dataset.sk=Math.random()*4|0;const firstTour=!lv().boss&&!tourSeen();if(firstTour)setTimeout(()=>runTour(),320);else if(pref('guide',true)&&!lv().boss)setTimeout(coachInit,0);$('#exit').hidden=false;$('#res').hidden=true; const L=lv();$('#learn').innerHTML=lessonCard(L,c);mountLesson(c);$('#nar').onclick=narrate;
  $('#learn').style.animation='none';void $('#learn').offsetWidth;$('#learn').style.animation='';storyBrief();
  layout();track.classList.toggle('fog',DIFF==='pro'&&!!mazeP);tp('--g',L.goal==null?-5:L.goal);
- $('#pal').innerHTML=L.allow.map(t=>`<div class="blk pal ${t}" draggable="true" data-new="${t}">${NAMES[t]}</div>`).join('');
- reset();render();bossUI()}
+ $('#pal').innerHTML=L.allow.map(t=>`<div class="blk pal ${t}" draggable="true" data-new="${t}" tabindex="0" role="button" aria-label="Add ${NAMES[t]} to the end of the script">${NAMES[t]}</div>`).join('');
+ reset();render();bossUI();if(lv().boss)startBossClock();if(window.TLP_PRESENCE)TLP_PRESENCE.setActivity('Playing '+CH[c].t+' · '+L.df);}
 const first=()=>Object.keys(lv().vars)[0]||'';
 const mk=t=>{const o={id:++S.id,t,v:first(),val:t==='note'?'':'0',n:t==='rep'?2:t==='if'?4:1,src:t==='move'?'#':first(),src2:first(),to:t==='base'?'bin':'number',op:t==='calc'?'+':'>',idx:'#',j:'none',v2:first(),op2:'>',n2:0,rv:'#',rv2:'#',c:[],e:[]};if(t==='def'||t==='call')o.v=(lv().fns||[''])[0];if(t==='pick')o.v=Object.keys(lv().vars)[1]||first();return o};
 const vopt=(sel,num)=>(num?['#']:[]).concat(Object.keys(lv().vars)).map(v=>`<option value="${v}"${v==sel?' selected':''}>${v==='#'?'a number':v}</option>`).join('');
@@ -200,8 +280,8 @@ function blk(b){const d=`data-id="${b.id}"`;let h='';
  if(b.t==='def')h=`define function <select ${d} data-k="v">${fo(b.v)}</select><div class="zone in" data-z="${b.id}">${b.c.map(blk).join('')}</div>`;
  if(b.t==='call')h=`call <select ${d} data-k="v">${fo(b.v)}</select>`;
  if(b.t==='bit')h=`switch on bit worth <select ${d} data-k="n">${sopt([[1,1],[2,2],[4,4],[8,8],[16,16],[32,32],[64,64],[128,128]],b.n)}</select>`;
- return `<div class="blk ${b.t}" draggable="true" ${d}>${h}</div>`}
-function render(){try{localStorage.setItem('tlp-draft',JSON.stringify({k:S.ci+'-'+S.li,s:S.script}))}catch(e){}$('#area').innerHTML=S.script.length?S.script.map(blk).join(''):'<div class="empty">Drag blocks here</div>'}
+ return `<div class="blk ${b.t}" draggable="true" ${d} tabindex="0" role="group" aria-label="${NAMES[b.t]||b.t}. Alt and arrow keys move it, Delete removes it." title="Alt + arrow keys move this block. Delete removes it.">${h}</div>`}
+function render(){try{localStorage.setItem('tlp-draft',JSON.stringify({k:S.ci+'-'+S.li,s:S.script}))}catch(e){}$('#area').innerHTML=S.script.length?S.script.map(blk).join(''):'<div class="empty">Drag or tap blocks here</div>'}
 function find(id,arr=S.script){for(let i=0;i<arr.length;i++){if(arr[i].id===id)return{arr,i,b:arr[i]};const r=find(id,arr[i].c)||find(id,arr[i].e||[]);if(r)return r}return null}
 const kids=b=>b.c.concat(b.e||[]),count=a=>a.reduce((n,b)=>n+1+count(kids(b)),0),has=(a,t)=>a.some(b=>b.t===t||has(kids(b),t));
 const holds=(b,id)=>kids(b).some(x=>x.id===id||holds(x,id));
@@ -216,15 +296,172 @@ document.addEventListener('dragstart',e=>{const b=e.target.closest&&e.target.clo
 document.addEventListener('dragover',e=>{const z=e.target.closest('.zone,#pal');if(!z)return;e.preventDefault();$$('.over').forEach(x=>x.classList.remove('over'));z.classList.add('over')});
 const $$=s=>[...document.querySelectorAll(s)];
 document.addEventListener('dragend',()=>$$('.over').forEach(x=>x.classList.remove('over')));
-document.addEventListener('drop',e=>{$$('.over').forEach(x=>x.classList.remove('over'));
- const data=dt(e).getData('text/plain');if(!data||S.run)return;const [k,v]=data.split(':'),z=e.target.closest('.zone'),inPal=e.target.closest('#pal');
- if(inPal){if(k==='m'){const f=find(+v);if(f){f.arr.splice(f.i,1);render()}}return}
- if(!z)return;e.preventDefault();
+/* Both the mouse drop and the touch drop end here, so a block lands the same
+   way whatever moved it. Returns false when the point is not a valid target. */
+function place(data,x,y){
+ if(!data||S.run||!/^[nm]:/.test(data))return false;
+ const el=document.elementFromPoint(x,y)||document.body;
+ const z=el.closest('.zone'),inPal=el.closest('#pal');
+ if(inPal){const f=data[0]==='m'?find(+data.slice(2)):null;if(f){f.arr.splice(f.i,1);render()}return !!f}
+ if(!z)return false;
+ const [k,v]=data.split(':');
  const zid=z.dataset.z,zn=parseInt(zid),arr=zid==='root'?S.script:zid.endsWith('e')?find(zn).b.e:find(zn).b.c;
- let idx=[...z.children].filter(c=>c.classList.contains('blk')&&e.clientY>c.getBoundingClientRect().top+c.getBoundingClientRect().height/2).length;
+ let idx=[...z.children].filter(c=>c.classList.contains('blk')&&y>c.getBoundingClientRect().top+c.getBoundingClientRect().height/2).length;
  if(k==='n'){arr.splice(idx,0,mk(v))}
- else{const f=find(+v);if(!f||(zid!=='root'&&(zn===f.b.id||holds(f.b,zn))))return;if(f.arr===arr&&f.i<idx)idx--;f.arr.splice(f.i,1);arr.splice(idx,0,f.b)}
- render();snd('tick');puff(e.clientX,e.clientY)});
+ else{const f=find(+v);if(!f||(zid!=='root'&&(zn===f.b.id||holds(f.b,zn))))return false;if(f.arr===arr&&f.i<idx)idx--;f.arr.splice(f.i,1);arr.splice(idx,0,f.b)}
+ render();return true;
+}
+document.addEventListener('drop',e=>{$$('.over').forEach(x=>x.classList.remove('over'));
+ const data=dt(e).getData('text/plain');if(!data||S.run)return;e.preventDefault();
+ if(place(data,e.clientX,e.clientY)){snd('tick');puff(e.clientX,e.clientY)}});
+/* -----------------------------------------------------------------------------
+   7b. TOUCH AND PEN INPUT
+   Browsers do not fire HTML5 drag events on touch, so touch and pen get their
+   own path: hold a block for a moment to pick it up, drag it, and release on a
+   zone or back on the block list. A quick tap on a block in the list adds it to
+   the end of the script. Mouse drag above is left exactly as it was.
+   -------------------------------------------------------------------------- */
+let TDRAG=null;
+function ghostOf(el){
+ const g=el.cloneNode(true);
+ g.classList.remove('pal','run','glow','over');
+ g.classList.add('bt-ghost');
+ g.removeAttribute('draggable');
+ g.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));
+ g.style.width=el.getBoundingClientRect().width+'px';
+ document.body.appendChild(g);
+ return g;
+}
+function markAt(x,y){
+ $$('.over').forEach(z=>z.classList.remove('over'));
+ const t=document.elementFromPoint(x,y),z=t&&t.closest('.zone,#pal');
+ if(z)z.classList.add('over');
+}
+function cleanupDrag(){
+ if(TDRAG&&TDRAG.ghost)TDRAG.ghost.remove();
+ if(TDRAG&&TDRAG.el&&TDRAG.el.isConnected)TDRAG.el.draggable=true;
+ document.body.classList.remove('bt-dragging');
+ $$('.over').forEach(z=>z.classList.remove('over'));
+ TDRAG=null;
+}
+function startHold(st,x,y){
+ TDRAG=st;
+ st.timer=setTimeout(()=>{
+  if(TDRAG!==st)return;
+  st.live=true;st.el.draggable=false;
+  st.ghost=ghostOf(st.el);
+  st.ghost.style.transform='translate('+(x-st.dx)+'px,'+(y-st.dy)+'px)';
+  document.body.classList.add('bt-dragging');
+  try{navigator.vibrate&&navigator.vibrate(12)}catch(err){}
+  markAt(x,y);
+ },240);
+}
+function moveGhost(x,y){
+ if(!TDRAG||!TDRAG.live)return;
+ TDRAG.ghost.style.transform='translate('+(x-TDRAG.dx)+'px,'+(y-TDRAG.dy)+'px)';
+ markAt(x,y);
+ // Keep long scripts reachable: nudge the page when the finger nears an edge.
+ const m=70;if(y<m)scrollBy(0,-14);else if(y>innerHeight-m)scrollBy(0,14);
+}
+function dropGhost(x,y){
+ const st=TDRAG;if(!st)return false;
+ if(!st.live)return false;
+ if(st.ghost)st.ghost.remove();
+ document.body.classList.remove('bt-dragging');
+ $$('.over').forEach(z=>z.classList.remove('over'));
+ const ok=place(st.data,x,y);
+ if(st.el&&st.el.isConnected)st.el.draggable=true;
+ TDRAG=null;
+ if(ok){snd('tick');puff(x,y)}
+ return ok;
+}
+/* Touch. Moving after the hold calls preventDefault on touchmove, which is
+   what stops the page from scrolling instead of the block. */
+document.addEventListener('touchstart',e=>{
+ if(S.run||TDRAG||e.touches.length!==1)return;
+ if(e.target.closest('input,select,textarea,button,a'))return;
+ const el=e.target.closest('.blk');if(!el)return;
+ const t=e.touches[0],r=el.getBoundingClientRect(),pal=el.classList.contains('pal');
+ startHold({x0:t.clientX,y0:t.clientY,id:t.identifier,el,pal,live:false,
+  data:pal?'n:'+el.dataset.new:'m:'+el.dataset.id,ghost:null,
+  dx:t.clientX-r.left,dy:t.clientY-r.top},t.clientX,t.clientY);
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+ if(!TDRAG||e.touches.length!==1)return;
+ const t=e.touches[0];if(t.identifier!==TDRAG.id)return;
+ if(!TDRAG.live){
+  if(Math.hypot(t.clientX-TDRAG.x0,t.clientY-TDRAG.y0)>10){clearTimeout(TDRAG.timer);TDRAG=null}
+  return;
+ }
+ e.preventDefault();
+ moveGhost(t.clientX,t.clientY);
+},{passive:false});
+document.addEventListener('touchend',e=>{
+ if(!TDRAG)return;
+ const t=[...e.changedTouches].find(x=>x.identifier===TDRAG.id);if(!t)return;
+ const st=TDRAG;clearTimeout(st.timer);
+ if(st.live){dropGhost(t.clientX,t.clientY);return}
+ TDRAG=null;
+ // A tap adds a block from the list; tapping a placed block leaves it alone.
+ if(st.pal&&Math.hypot(t.clientX-st.x0,t.clientY-st.y0)<12){
+  const b=mk(st.el.dataset.new);S.script.push(b);render();focusBlock(b.id);snd('tick');
+ }
+},{passive:true});
+document.addEventListener('touchcancel',()=>cleanupDrag(),{passive:true});
+/* Pen. It is a pointer, not a touch, so it keeps the pointer path. */
+document.addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='pen'||S.run||TDRAG)return;
+ if(e.target.closest('input,select,textarea,button,a'))return;
+ const el=e.target.closest('.blk');if(!el)return;
+ const r=el.getBoundingClientRect(),pal=el.classList.contains('pal');
+ startHold({x0:e.clientX,y0:e.clientY,id:e.pointerId,el,pal,live:false,
+  data:pal?'n:'+el.dataset.new:'m:'+el.dataset.id,ghost:null,
+  dx:e.clientX-r.left,dy:e.clientY-r.top},e.clientX,e.clientY);
+});
+document.addEventListener('pointermove',e=>{
+ if(!TDRAG||e.pointerId!==TDRAG.id)return;
+ if(!TDRAG.live){
+  if(Math.hypot(e.clientX-TDRAG.x0,e.clientY-TDRAG.y0)>10){clearTimeout(TDRAG.timer);TDRAG=null}
+  return;
+ }
+ e.preventDefault();moveGhost(e.clientX,e.clientY);
+},{passive:false});
+document.addEventListener('pointerup',e=>{
+ if(!TDRAG||e.pointerId!==TDRAG.id)return;
+ const st=TDRAG;clearTimeout(st.timer);
+ if(st.live){dropGhost(e.clientX,e.clientY);return}
+ TDRAG=null;
+ if(st.pal&&Math.hypot(e.clientX-st.x0,e.clientY-st.y0)<12){
+  const b=mk(st.el.dataset.new);S.script.push(b);render();focusBlock(b.id);snd('tick');
+ }
+},{passive:true});
+document.addEventListener('pointercancel',e=>{if(TDRAG&&e.pointerId===TDRAG.id){clearTimeout(TDRAG.timer);cleanupDrag()}},{passive:true});
+// Holding a block must not open the phone's text menu instead, and no native
+// drag may start beside our own.
+document.addEventListener('contextmenu',e=>{if(TDRAG&&TDRAG.live)e.preventDefault()});
+document.addEventListener('dragstart',e=>{if(TDRAG)e.preventDefault()},true);
+/* Keyboard path for the block builder. Palette blocks add themselves to the
+   end of the script; a focused block moves with Alt and the arrow keys and is
+   removed with Delete. Nothing here changes game rules, only arrangement. */
+function focusBlock(id){const el=document.querySelector('.blk[data-id="'+id+'"]');if(el)el.focus()}
+document.addEventListener('keydown',e=>{
+ if(e.target.closest('input,select,textarea'))return;
+ const pal=e.target.closest('.blk.pal');
+ if(pal&&(e.key==='Enter'||e.key===' ')){
+  e.preventDefault();if(S.run)return;
+  const b=mk(pal.dataset.new);S.script.push(b);render();focusBlock(b.id);snd('tick');return;
+ }
+ const el=e.target.closest('#area .blk');if(!el)return;
+ const f=find(+el.dataset.id);if(!f)return;
+ if(e.key==='Delete'||e.key==='Backspace'){
+  e.preventDefault();if(S.run)return;f.arr.splice(f.i,1);render();snd('tap');return;
+ }
+ if((e.key==='ArrowUp'||e.key==='ArrowDown')&&e.altKey){
+  e.preventDefault();if(S.run)return;
+  const j=f.i+(e.key==='ArrowDown'?1:-1);if(j<0||j>=f.arr.length)return;
+  const t=f.arr[f.i];f.arr[f.i]=f.arr[j];f.arr[j]=t;render();focusBlock(el.dataset.id);snd('tick');
+ }
+});
 function edit(e){const t=e.target;if(!t.dataset.k)return;const f=find(+t.dataset.id);if(!f)return;f.b[t.dataset.k]=t.value;if(e.type==='change'&&(t.dataset.k==='src'||t.dataset.k==='idx'||t.dataset.k==='j'||t.dataset.k==='rv'||t.dataset.k==='rv2'))render()}
 $('#area').addEventListener('input',edit);$('#area').addEventListener('change',edit);
 
@@ -264,8 +501,10 @@ async function exec(list){for(const b of list){if(!S.run)return;const el=$('.blk
  el&&el.classList.remove('run')}}
 async function run(){if(S.run)return;reset();S.err=null;bot.dataset.m=['hop','bounce','glide','spin','wobble'][Math.random()*5|0];const L=lv();if(!S.script.length){msg('Add some blocks to your script first.','bad');return}
  if(DIFF==='pro'&&!L.boss&&count(S.script)>L.par+2){msg('Professional rules: use at most '+(L.par+2)+' blocks for this mission.','bad');return}
+ if(hardMode()&&!L.boss&&count(S.script)>L.par+1){msg('Hardcore rule: this mission allows at most '+(L.par+1)+' blocks. Try a tighter solution.','bad');return}
  if(L.cap&&count(S.script)>L.cap){msg('This mission allows at most '+L.cap+' blocks. Try a loop.','bad');return}
  if(L.boss&&(bossWait||bossRepeat()))return;
+ bumpTry(key(S.ci,S.li));S.runT0=Date.now();
  S.run=true;$('#run').disabled=true;const CS=cases(),miss=[];
  for(let i=0;i<CS.length&&S.run;i++){const X=CS[i];if(i){await sleep(800);bot.className='bot'}useCase(i);if(CS.length>1)msg('<b>Test '+(i+1)+' of '+CS.length+'</b>');
   await exec(S.script);
@@ -278,9 +517,9 @@ async function run(){if(S.run)return;reset();S.err=null;bot.dataset.m=['hop','bo
  
  if(L.needs&&!has(S.script,'rep'))miss.push('This mission wants a loop. Try using a repeat block.');
  if(L.rule&&!L.rule.f(S.script))miss.push('Round rule not met: '+L.rule.txt+'.');
- if(miss.length){bot.classList.add('oops');snd('err');msg(miss.join(' ')+' Check your blocks and try again, or ask for a hint.'+(DIFF==='beg'?' You are doing great!'+((PATH==='g16'||PATH==='g710')?' The Coach steps can help.':''):'')+storyFail(),'bad');return}
+ if(miss.length){bot.classList.add('oops');snd('err');msg(miss.join(' ')+' '+(kidMode()?'Almost! Take a breath, change one block and try again. You can do it!':(DIFF==='beg'?'Check your blocks and try again, or ask for a hint. You are doing great!'+((PATH==='g16'||PATH==='g710')?' The Coach steps can help.':''):'Check your blocks and try again, or ask for a hint.'))+storyFail(),'bad');return}
  if(L.boss)return bossHit();
- bot.classList.add('win');sparks();const n=count(S.script),st=n<=L.par+PB()?3:n<=L.par+PB()+1?2:1,k=key(S.ci,S.li);S.prog[k]=Math.max(S.prog[k]||0,st);save();hud();checkAch();snd('win');if(DIFF==='beg')cheer();
+ bot.classList.add('win');sparks();const n=count(S.script),st=n<=L.par+PB()?3:n<=L.par+PB()+1?2:1,k=key(S.ci,S.li);S.prog[k]=Math.max(S.prog[k]||0,st);completeLevel(k,st,{hardcore:hardMode(),ms:Date.now()-S.runT0});save();hud();dailyFromWin(st);checkAch();snd('win');if(DIFF==='beg')cheer();
  msg('<b>Correct! Protocol restored.</b> Here is what each block in your code did:'+whyList());await sleep(2600);finish(st,n)}
 /* -----------------------------------------------------------------------------
    9. RUN LIFECYCLE AND RESULT SCREEN
@@ -291,15 +530,24 @@ function sparks(){const r=bot.getBoundingClientRect(),x=r.left+r.width/2,y=r.top
 function finish(st,n){hideToast();try{localStorage.removeItem('tlp-draft')}catch(e){}const L=CH[S.ci].L,last=S.li===L.length-1,all=CH.every(c=>!c.L||done(CH.indexOf(c)));
  let title='Mission complete',txt=`You used ${n} block${n>1?'s':''}. ${st===3?'Perfect, that is the tidiest solution.':'Can you solve it with fewer blocks for three stars?'}`,go='Next mission',nx=()=>play(S.ci,S.li+1);
  const curBonus=isBonus(lv()),nextIsBonus=!last&&isBonus(L[S.li+1]);
- if(last&&lv().boss){const kd=SEC.filter(s=>done(s.boss)).length;title='Guardian defeated';txt='You beat '+nice(bi().name)+' with '+st+' heart'+(st>1?'s':'')+' left. '+(kd<SEC.length?(SEC.length-kd)+' guardian'+(SEC.length-kd>1?'s remain':' remains')+' in the dark, but the light is growing.':'All the guardians are gone. The protocol is restored and the light is back.')+' Score: '+score()+'.';go=kd<SEC.length?'Next section':'Back to menu';nx=()=>{const nc=nextOf(S.ci);nc!=null?play(nc,0):menu()}}
+ if(last&&lv().boss){
+  // The main story ends at the last non-bonus boss. Mastery is an optional
+  // bonus section after that, so its boss must not hold the ending hostage.
+  const isMainEnd=S.ci===mainBoss(),left=mainSecs().filter(s=>!done(s.boss)).length,isBonusBoss=SEC.some(s=>s.bonus&&s.boss===S.ci);
+  title=isMainEnd?'Main story complete':'Guardian defeated';
+  txt='You beat '+nice(bi().name)+' with '+st+' heart'+(st>1?'s':'')+' left. '+(isMainEnd?'Every main guardian is down and the light is coming back. The final scene is next.':left?left+' main guardian'+(left>1?'s are':' is')+' still awake, but the light is growing.':(isBonusBoss?'All the guardians, main and bonus, are gone. The protocol is restored and the light is back.':'All the main guardians are down. The bonus guardian is optional.'))+' Score: '+score()+'.';
+  go=isMainEnd?'See the ending':(nextOf(S.ci)!=null?'Next section':'Back to menu');
+  nx=isMainEnd?()=>menu():()=>{const nc=nextOf(S.ci);nc!=null?play(nc,0):menu()};
+ }
  else if(curBonus){const nc=nextOf(S.ci);title='Bonus complete';txt='You solved the bonus challenge! '+txt+(nc!=null?' Next: '+CH[nc].t+'.':'');go=nc!=null?(CH[nc].L[0].boss?'Face the boss':'Next chapter'):'Back to menu';nx=nc!=null?()=>play(nc,0):menu}
  else if(last){const nc=nextOf(S.ci);title='Chapter complete';txt+=' You finished '+CH[S.ci].t+'.'+(nc!=null?' Next: '+CH[nc].t+'.':'');go=nc!=null?(CH[nc].L[0].boss?'Face the boss':'Next chapter'):'Back to menu';nx=nc!=null?()=>play(nc,0):menu}
  else if(nextIsBonus){const nc=nextOf(S.ci);title='Chapter core complete';txt+=' You finished the core missions of '+CH[S.ci].t+'! Next chapter is unlocked, or try the optional bonus mission.';go='Bonus mission';nx=()=>play(S.ci,S.li+1)}
- if(S.ci===29&&last&&lv().boss){const _n=nx;nx=()=>storyEnding(_n)}
+ if(last&&lv().boss&&S.ci===mainBoss()){const _n=nx;nx=()=>storyEnding(_n)}
  const showLearned=last||nextIsBonus||curBonus;
- $('#pan').innerHTML=`<span class="hand">${lv().boss?'Boss defeated':n+' blocks'} · +${st*100} points</span><h2>${title}</h2><div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><p>${txt}</p>${whyHTML()}${showLearned?learnedHTML(S.ci):''}<div class="bar" style="justify-content:center"><button class="btn" id="nx">${go}</button><button class="btn ghost" id="rt">Play again</button></div>`;
+ $('#pan').innerHTML=`<span class="hand">${lv().boss?'Boss defeated':n+' blocks'} · +${S.lastPts||st*100} points</span><h2>${title}</h2><div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><p>${txt}</p>${whyHTML()}${showLearned?learnedHTML(S.ci):''}<div class="bar" style="justify-content:center"><button class="btn" id="nx">${go}</button><button class="btn ghost" id="rt">Play again</button></div>`;
  $('#pan').classList.toggle('big',true);storyOutcome(last);$('#res').hidden=false;$('#nx').onclick=()=>{stopSay();$('#res').hidden=true;nx()};$('#rt').onclick=()=>{stopSay();$('#res').hidden=true;reset()}
- if(showLearned){confetti();$('#lis').onclick=()=>sayLearned(S.ci);sayLearned(S.ci)}}
+ if(showLearned){confetti();$('#lis').onclick=()=>sayLearned(S.ci);sayLearned(S.ci)}
+ if(kidMode()){const p=document.createElement('p');p.className='kidpraise';p.textContent=kidPraise();const bar=$('#pan .bar');if(bar)bar.before(p);kidBurst()}}
 let cc=0;
 const cases=()=>{const c=lv().cases||[{vars:{},goal:lv().goal,say:lv().say}];return DIFF==='beg'&&!lv().boss?c.slice(0,1):c};
 function useCase(i){cc=i;const X=cases()[i];INP=X.input;onBits=new Set();FN={};fdepth=0;env={...lv().vars,...X.vars};pos=0;said=null;tp('--p',0);tp('--g',X.goal==null?-5:X.goal);$$('.track i').forEach(c=>c.classList.remove('vis'));$$('.bub').forEach(x=>x.remove());goals();mem()}
@@ -312,12 +560,40 @@ function goals(){const L=lv(),CS=cases(),X=CS[cc],g=[];
  g.push(['tip',L.boss?'Stars come from your hearts. Keep your hearts for more stars.':'For 3 stars use '+(L.par+PB())+' blocks or fewer'+(DIFF==='pro'?' (limit: '+(L.par+2)+')':'')]);
  $('#goals').innerHTML=g.map(([k,t])=>`<li class="${k==='tip'?'tip':''}" data-g="${k}">${t}</li>`).join('');chk()}
 function chk(){const X=cases()[cc],on=(k,v)=>{const e=$('#goals [data-g="'+k+'"]');e&&e.classList.toggle('ok',v)};on('pos',pos===X.goal);on('say',said===X.say);on('loop',has(S.script,'rep'));lv().rule&&on('rule',lv().rule.f(S.script))}
-let au;
-function narrate(){if(speechSynthesis.speaking||(au&&!au.paused)){speechSynthesis.cancel();au&&au.pause();return}
- const k=key(S.ci,S.li);if(NARRATION[k]){au=new Audio(NARRATION[k]);au.play();return}
- const L=lv();TLP.Voice.speak(L.learn.replace(/<[^>]+>/g,'')+' Your mission: '+L.mis)}
-$('#run').onclick=run;$('#reset').onclick=reset;$('#adminPrev').onclick=openAdminPreview;$('#bugOpen').onclick=()=>TLP.openBugReport('Game');$('#exit').onclick=()=>{S.run=false;menu()};
-$('#hint').onclick=()=>{const h=lv().hints,mx=Math.max(1,Math.min(DIFF==='pro'?1:h.length,{g16:99,g710:99,g1112:2,adult:1}[PATH]||99,h.length));if(S.hint<mx)S.hint++;msg(`<b>Hint ${S.hint}/${mx}:</b> ${h[S.hint-1]}`,'hint')};
+let au=null,narrating=false;
+function sectionArt(c){const si=SEC.findIndex(s=>s.ch.includes(c)||s.boss===c);return si<0?'':`<figure class="sec-art" aria-hidden="true"><img src="assets/art/sec${si+1}.jpg" alt="" loading="lazy" decoding="async"></figure>`}
+function lessonCard(L,c){const ex=(!L.boss&&window.TLP_EXPLAIN)?TLP_EXPLAIN.html(c):'';return `${S.li===0?sectionArt(c):''}<span class="hand">${CH[c].n} · ${CH[c].t}</span><span class="diff">${L.df}</span><h2>${L.t}</h2>${ex}<p>${L.learn}</p><div class="mis"><b>Mission:</b> ${L.mis}</div><button class="btn ghost sm" id="nar">Narrate lesson</button><ul class="goals" id="goals"></ul>`}
+function mountLesson(c){const f=$('#ex');if(f&&window.TLP_EXPLAIN)TLP_EXPLAIN.mount(f,c)}
+function narrationLabel(){const b=$('#nar');if(!b)return;b.textContent=narrating?'Stop narration':'Narrate lesson';b.setAttribute('aria-pressed',narrating?'true':'false');b.classList.toggle('on',narrating)}
+function stopNarration(){narrating=false;try{if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}if(au){try{au.pause()}catch(e){}au=null}try{if(window.TLP_EXPLAIN)TLP_EXPLAIN.stop()}catch(e){}narrationLabel()}
+function narrationText(){const L=lv();return String(L.learn||'').replace(/<[^>]+>/g,' ')+' Your mission: '+String(L.mis||'').replace(/<[^>]+>/g,' ')}
+function speakNarration(done){try{if(window.TLP&&TLP.Voice&&TLP.Voice.speak){TLP.Voice.speak(narrationText(),done);return}}catch(e){}done()}
+function narrate(){
+ if(narrating){stopNarration();return}
+ // A lesson with an explainer speaks its steps so the voice and the picture
+ // move together. Lessons without one keep the plain read-aloud.
+ const ex=window.TLP_EXPLAIN&&TLP_EXPLAIN.mounted();
+ if(ex){
+  narrating=true;narrationLabel();
+  TLP_EXPLAIN.narrate(()=>{if(!narrating)return;narrating=false;narrationLabel()});
+  return;
+ }
+ narrating=true;narrationLabel();
+ const k=key(S.ci,S.li);
+ const done=()=>{if(!narrating)return;narrating=false;au=null;narrationLabel()};
+ if(NARRATION[k]){
+  try{au=new Audio(NARRATION[k])}catch(e){au=null}
+  if(au){
+   au.onended=done;au.onerror=()=>{au=null;if(narrating)speakNarration(done)};
+   const p=au.play();
+   if(p&&p.catch)p.catch(()=>{au=null;if(narrating)speakNarration(done)});
+   return;
+  }
+ }
+ speakNarration(done);
+}
+$('#run').onclick=run;$('#reset').onclick=reset;$('#adminPrev').onclick=openAdminPreview;$('#bugOpen').onclick=()=>TLP.openBugReport('Game');$('#exit').onclick=()=>{S.run=false;menu()};$('#friendsBtn').onclick=()=>{location.href='friends.html'};
+$('#hint').onclick=()=>{if(hardMode()){msg('Hardcore mode has no hints. Trust your own logic.','bad');return}const h=lv().hints,mx=Math.max(1,Math.min(DIFF==='pro'?1:h.length,{g16:99,g710:99,g1112:2,adult:1}[PATH]||99,h.length));if(S.hint<mx)S.hint++;msg(`<b>Hint ${S.hint}/${mx}:</b> ${h[S.hint-1]}`,'hint')};
 $('#chs').onclick=e=>{const b=e.target.closest('.lb');if(b&&!b.disabled)play(+b.dataset.c,+b.dataset.l)};
 $('#name').oninput=e=>{S.name=e.target.value.trim()||'Player';save();hud()};
 const any=(a,f)=>a.some(b=>f(b)||any(kids(b),f));
@@ -327,7 +603,7 @@ const LEARN=[
  ['An if block asks a yes or no question, and else runs when the answer is no.','Conditions compare with more than, less than, or exactly equal.','Your script must work for every test case, not just one.','You can put an if inside an else for three outcomes, and an if inside a loop to decide again every lap.'],
  ['Variables, loops and logic are strongest when you combine them.','There is almost always more than one way to solve a problem, so you can write fresh code instead of repeating yourself.','Reading what a program remembers and does is how you plan, test and fix your code like a real programmer.']];
 const learnedHTML=c=>`<div class="learned"><b>What you learned in ${CH[c].t.replace('Boss: ','')}</b><ul>${LEARN[c].map(x=>'<li>'+x+'</li>').join('')}</ul><button class="btn ghost sm" id="lis">Listen again</button></div>`;
-function stopSay(){try{speechSynthesis.cancel();au&&au.pause()}catch(e){}}
+function stopSay(){narrating=false;try{speechSynthesis.cancel()}catch(e){}if(au){try{au.pause()}catch(e){}au=null}narrationLabel()}
 function sayLearned(c){stopSay();try{if(NARRATION['ch'+c]){au=new Audio(NARRATION['ch'+c]);au.play().catch(()=>{});return}
  TLP.Voice.speak('Congratulations '+S.name+'! You finished '+CH[c].n+', '+CH[c].t.replace('Boss: ','')+'. Here is what you learned. '+LEARN[c].join(' '))}catch(e){}}
 function confetti(){if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;for(let i=0;i<140;i++){const e=document.createElement('span');e.className='spark';e.style.cssText=`left:${Math.random()*innerWidth}px;top:-14px;width:${6+Math.random()*7}px;height:${10+Math.random()*8}px;background:hsl(${Math.random()*360} 85% 62%)`;document.body.appendChild(e);e.animate([{transform:'translate(0,0) rotate(0)'},{transform:`translate(${(Math.random()-.5)*240}px,${innerHeight+40}px) rotate(${Math.random()*900}deg)`}],{duration:2200+Math.random()*2200,delay:Math.random()*900,easing:'cubic-bezier(.2,.6,.4,1)',fill:'backwards'}).onfinish=()=>e.remove()}}
@@ -379,7 +655,7 @@ function hudFit(){const b=$('#boss'),h=(b.hidden||$('#game').hidden)?0:b.offsetH
 addEventListener('resize',hudFit);
 function cine(html,cls){uncine();const c=document.createElement('div');c.id='cine';c.className=cls||'';c.innerHTML=html;document.body.appendChild(c);return c}
 function uncine(){const c=$('#cine');if(c)c.remove()}
-function bossRepeat(){const old=B.mem.find(m=>m.g===sig(S.script));if(!old)return false;bossWait=true;B.me--;bossAttack(old);return true}
+function bossRepeat(){const old=B.mem.find(m=>m.g===sig(S.script));if(!old)return false;bossWait=true;B.me--;B.lost=(B.lost||0)+1;bossAttack(old);return true}
 async function bossAttack(old){try{
  taunt(['I remember this one!','Same trick again? Predictable.','You already showed me that.'][Math.floor(Math.random()*3)]);bossDraw(false,true);
  const bb=$('#bb');bb.classList.add('atk');snd('zap');await fly(bb,$('#hearts'),'#ff4d6a',520);
@@ -390,7 +666,8 @@ async function bossAttack(old){try{
 
 /* -----------------------------------------------------------------------------
   11. CURRICULUM DATA
-   SEC describes the six sections and which chapters belong to each. CH is built
+   SEC describes the five story sections plus the optional Mastery section and
+   which chapters belong to each. CH is built
    from chapter objects, then extra levels are appended by the L1/RD helpers.
    Content only: no browser APIs are touched in this area.
    -------------------------------------------------------------------------- */
@@ -400,7 +677,7 @@ const SEC=[
  {t:'Tools',d:'Do more with less code: maths, lists, input and notes.',ch:[10,11,12,13],boss:14},
  {t:'Structure',d:'Build bigger programs from small reusable parts.',ch:[15,16,17,18],boss:19},
  {t:'Bits and Bytes',d:'Go deep on the switches inside every computer.',ch:[20,21,22,23],boss:24},
- {t:'Mastery',d:'Debug, search and optimise like a real programmer.',ch:[25,26,27,28],boss:29}];
+ {t:'Mastery',d:'Optional bonus: debug, search and optimise like a real programmer.',ch:[25,26,27,28],boss:29,bonus:true}];
 const BC=['#ef7a8c','#e8a23a','#9b5cf0','#35c9e8','#3ddc84','#f2c94c'];
 const L1=(t,df,learn,mis,o)=>Object.assign({t,df,learn,mis,vars:{},allow:[],par:2,hints:[]},o);
 CH.push(
@@ -470,7 +747,7 @@ CH.push(
 {n:'',t:'Debugging',d:'Find the mistake in a script that is almost right.',L:[
  L1('The missing step','Easy','A <b>bug</b> is a mistake in code. Debugging means finding it and fixing it. This script has one.','The script should reach cell 6, but it stops at cell 3. Fix it.',{vars:{steps:3},allow:['move','say'],goal:6,par:2,start:()=>[BK('move',{src:'steps'})],hints:['Run it and watch where the robot stops.','It only walks once.','Add a second move steps.']}),
  L1('Too far','Medium','Bugs are often a wrong number. Read the script slowly and work out what it does.','The script should reach cell 5, but it walks too far. Fix it.',{vars:{},allow:['rep','move'],goal:5,par:2,path:'snake',start:()=>[BK('rep',{n:3},[BK('move',{n:2})])],hints:['3 laps of 2 is 6.','Change the numbers.','Repeat 5 times and move 1.']}),
- // Puzzle 4 (Section 6 / Chapter 25, Mission 3): Pre-populates starter block with R-067 and checks for designation output.
+ // Puzzle 4 (Mastery / Chapter 25, Mission 3): Pre-populates starter block with R-067 and checks for designation output.
  L1('Wrong order','Medium','Order matters. A box must be filled before you read it, so the order of blocks can be the bug.','The robot should output its designation R-067, but the readout is empty. Fix the order.',{vars:{word:''},allow:['set','say'],cases:[{vars:{},say:'R-067'}],par:2,path:'maze',start:()=>[BK('say',{src:'word'}),BK('set',{v:'word',val:'R-067'})],hints:['What is in word when the robot attempts to output it?','Drag the set block above the say block.','Set word to R-067 first, then say word.']})]},
 {n:'',t:'Searching',d:'Walk through a list to find what you need.',L:[
  L1('Find the 8','Hard','A <b>search</b> looks at each item in turn until it finds a match. The item number is the answer.','Walk to the position of the number 8 in the list. Pass all three tests.',{vars:{list:[3,8,5],i:0,x:0},allow:['rep','change','pick','if','move'],cases:[{vars:{list:[3,8,5]},goal:2},{vars:{list:[8,1,1]},goal:1},{vars:{list:[2,2,8]},goal:3}],par:5,path:'stairs',hints:['Look at each item and compare it.','i is the position. Move by i when x is 8.','Repeat 3: change i by 1, pick x item i, if x = 8 then move i.']}),
@@ -506,12 +783,25 @@ LEARN[27]=['To find the biggest, remember the best so far and replace it when yo
 LEARN[28]=['Optimising means doing the same job with less code.','Loops replace repeated blocks and are easier to change.','Shorter code has fewer places for bugs to hide.'];
 LEARN[29]=['Every idea you learned can combine into bigger programs.','You searched, compared, looped and used functions together.','Every guardian is gone and the light is back.'];
 
-SEC.forEach((s,si)=>{s.ch.forEach((c,i)=>CH[c].n='Section '+(si+1)+' · Chapter '+(i+1));CH[s.boss].n='Section '+(si+1)+' · Boss'});
+SEC.forEach((s,si)=>{s.ch.forEach((c,i)=>CH[c].n=(s.bonus?'Bonus':'Section '+(si+1))+' · Chapter '+(i+1));CH[s.boss].n=(s.bonus?'Bonus':'Section '+(si+1))+' · Boss'});
 const ORDER=SEC.flatMap(s=>[...s.ch,s.boss]),nextOf=c=>ORDER[ORDER.indexOf(c)+1];
 const SEC0=SEC.map((s,i)=>({...s,id:i,ch:s.ch.slice()}));
-function applyHidden(){const hid=(window.TLP&&TLP.HIDDEN&&TLP.HIDDEN[PATH])||[];SEC.length=0;
+function applyHidden(){
+ // An administrator previewing the game sees every section and chapter,
+ // including the ones hidden from learners and the optional Mastery section.
+ const admin=!!window.__adminPreview;
+ const hid=admin?[]:((window.TLP&&TLP.HIDDEN&&TLP.HIDDEN[PATH])||[]);SEC.length=0;
  SEC0.forEach(x=>{const ch=x.ch.filter(c=>!hid.includes(c));if(!ch.length&&hid.includes(x.boss))return;SEC.push({...x,ch})});
- ORDER.length=0;SEC.forEach(x=>{x.ch.forEach(c=>ORDER.push(c));if(!hid.includes(x.boss))ORDER.push(x.boss)})}
+ ORDER.length=0;SEC.forEach(x=>{x.ch.forEach(c=>ORDER.push(c));if(!hid.includes(x.boss))ORDER.push(x.boss)});
+ // Grades 1–6: missions marked "Hard" become optional bonus missions, so the
+ // youngest players are never required to finish the toughest puzzles. The
+ // flag is cleared first, because it is stored on the shared level objects.
+ CH.forEach(c=>{if(!c.L)return;c.L.forEach(l=>{if(l.__kidOpt){delete l.bonus;delete l.__kidOpt}})});
+ if(!admin&&PATH==='g16')CH.forEach(c=>{if(!c.L)return;c.L.forEach(l=>{if(l.df==='Hard'&&!l.boss){l.bonus=1;l.__kidOpt=1}})});
+}
+// The main story ends at the last boss that is not part of a bonus section.
+const mainSecs=()=>SEC.filter(s=>!s.bonus);
+const mainBoss=()=>{const m=mainSecs();return m.length?m[m.length-1].boss:null};
 
 const anyProg=c=>CH[c].L.some((_,l)=>S.prog[key(c,l)]);
 const isOpen=c=>{if(window.__adminPreview)return true;const i=ORDER.indexOf(c);return i<1||done(ORDER[i-1])||ORDER.slice(i).some(anyProg)};
@@ -568,7 +858,10 @@ const WHY={set:'Puts a value into a labelled box (a variable). Whatever was ther
 const tx=b=>{const k=b.c.map(tx).join('; '),e=(b.e||[]).map(tx).join('; ');return b.t==='rep'?`repeat ${b.n} {${k}}`:b.t==='if'?`if ${b.v} ${b.op} ${b.n}${b.j&&b.j!=='none'?' '+b.j+' '+b.v2+' '+b.op2+' '+b.n2:''} {${k}} else {${e}}`:b.t==='while'?`while ${b.v} ${b.op} ${b.n} {${k}}`:b.t==='def'?`define ${b.v} {${k}}`:one(b)};
 const sg=b=>[b.t,b.v,b.val,b.src,b.src2,b.to,b.idx,b.op,+b.n,b.rv,b.rv2,b.j,b.v2,b.op2,b.n2,b.c.map(sg),b.e.map(sg)],sig=a=>JSON.stringify(a.map(sg));
 function snd(k){if(mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime;
- const tone=(f,d,w,v,s,f2)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=w||'square';o.frequency.setValueAtTime(f,t+(s||0));if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+(s||0)+d);g.gain.setValueAtTime(v||.12,t+(s||0));g.gain.exponentialRampToValueAtTime(.001,t+(s||0)+d);o.connect(g);g.connect(AC.destination);o.start(t+(s||0));o.stop(t+(s||0)+d)};
+ // Master × effects from the shared volume panel. Re-read on every sound so
+ // the sliders take effect immediately.
+ const fxv=window.TLP_VOL?TLP_VOL.factor('fx'):1;if(fxv<=0)return;
+ const tone=(f,d,w,v,s,f2)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=w||'square';o.frequency.setValueAtTime(f,t+(s||0));if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+(s||0)+d);g.gain.setValueAtTime((v||.12)*fxv,t+(s||0));g.gain.exponentialRampToValueAtTime(.001,t+(s||0)+d);o.connect(g);g.connect(AC.destination);o.start(t+(s||0));o.stop(t+(s||0)+d)};
  const SF={hit:()=>{tone(520,.18,'sawtooth',.14,0,120);tone(90,.25,'square',.12,.02)},zap:()=>tone(900,.4,'sawtooth',.1,0,120),crack:()=>{tone(180,.2,'square',.15,0,60);tone(1200,.08,'triangle',.1,.02,400)},intro:()=>[110,98,82].forEach((f,i)=>tone(f,.5,'sawtooth',.12,i*.28)),lose:()=>[392,330,262,196].forEach((f,i)=>tone(f,.45,'triangle',.16,i*.32)),win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,.3,'square',.1,i*.15)),ominous:()=>{tone(70,1.8,'sawtooth',.1,0,55);tone(74,1.8,'sawtooth',.08,0,58)},boom:()=>tone(120,.7,'sawtooth',.18,0,30),
   tick:()=>tone(520,.06,'triangle',.05),step:()=>tone(240,.05,'triangle',.04),chime:()=>{tone(784,.18,'sine',.07);tone(1175,.3,'sine',.06,.09)},err:()=>tone(150,.22,'sawtooth',.07,0,90),ach:()=>[784,988,1319].forEach((f,i)=>tone(f,.22,'sine',.07,i*.1)),
   b1:()=>{tone(300,.5,'sawtooth',.09,0,1200);[523,659,784,1047].forEach((f,i)=>tone(f,.35,'square',.07,.45+i*.1))},b2:()=>[1319,1568,2093,1568,2637].forEach((f,i)=>tone(f,.45,'sine',.08,i*.12)),b3:()=>{[0,.08,.16].forEach(s=>tone(120,.05,'square',.09,s));[392,494,587,784].forEach(f=>tone(f,.9,'triangle',.06,.35))},b4:()=>{[262,330,392,523].forEach(f=>tone(f,1.4,'sawtooth',.05,0));[523,659,784,1047,1319].forEach((f,i)=>tone(f,.5,'square',.06,.5+i*.14))}};
@@ -576,42 +869,169 @@ function snd(k){if(mute)return;try{AC=AC||new(window.AudioContext||window.webkit
 function toggleMute(){mute=!mute;try{localStorage.setItem('tlp-mute',mute?'1':'0')}catch(e){}const g=$('#sndg');if(g)g.innerHTML=mute?'<i class=ic-mute></i>':'<i class=ic-volume></i>';const s=$('#snd');if(s)s.textContent='Sound: '+(mute?'off':'on')}
 function puff(x,y,n){if(still)return;for(let i=0;i<(n||6);i++){const s=document.createElement('span');s.className='spark';s.style.cssText=`left:${x}px;top:${y}px;width:5px;height:5px;background:${i%2?'var(--a)':'var(--b)'}`;document.body.appendChild(s);const a=Math.random()*6.28,d=14+Math.random()*26;s.animate([{transform:'translate(0,0)',opacity:.9},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`,opacity:0}],{duration:520,easing:'ease-out'}).onfinish=()=>s.remove()}}
 function goalFx(){const c=track.querySelector('.chip');if(!c)return;const r=c.getBoundingClientRect();puff(r.left+r.width/2,r.top+r.height/2,10);c.classList.add('hit');setTimeout(()=>c.classList.remove('hit'),900)}
-function setLight(){try{const k=SEC.filter(s=>done(s.boss)).length;document.documentElement.style.setProperty('--dim',[.5,.42,.34,.26,.18,.09,0][k])}catch(e){}}
-function chCard(ci){const c=CH[ci],open=isOpen(ci);return `<div class="card ch ${c.L[0].boss?'bossc ':''}${open?'':'lock'}"><span class="hand">${c.n}${open?'':' · locked'}</span><h3>${c.t}</h3><p>${c.d}</p><div class="lvls">${c.L.map((l,li)=>`<button class="lb" data-c="${ci}" data-l="${li}" ${open&&(li===0||S.prog[key(ci,li-1)])?'':'disabled'}>${li+1}. ${l.t}<small>${'★'.repeat(S.prog[key(ci,li)]||0)||l.df}</small></button>`).join('')}</div></div>`}
-function menu(){document.querySelectorAll('.coach').forEach(x=>x.remove());$('#menu').hidden=false;$('#game').hidden=true;hudFit();$('#exit').hidden=true;$('#name').value=S.name;delete document.body.dataset.sec;hud();renderPick();renderTally();
- const kd=SEC.filter(s=>done(s.boss)).length;
- $('#chs').innerHTML=`<div class="guard">${SEC.map((_,i)=>`<div class="gd ${i<kd?'dead':''}">${bossBot(i<kd?'dead k'+SEC[i].id:'sil','--s:5px;--ec:'+BC[SEC[i].id])}<small>${i<kd?'defeated':'watching'}</small></div>`).join('')}<div class="gtxt"><b>${SEC.length-kd} of ${SEC.length} guardians alive</b><span>Light restored: ${kd} of ${SEC.length}</span></div></div>`+SEC.map((s,si)=>`<section class="sec"><h2><span class="hand">Section ${si+1}</span> ${s.t}</h2><p class="sd">${s.d}</p><div class="chs">${[...s.ch,s.boss].map(chCard).join('')}</div></section>`).join('')}
+function setLight(){try{const k=mainSecs().filter(s=>done(s.boss)).length;document.documentElement.style.setProperty('--dim',[.5,.42,.34,.26,.18,0][k])}catch(e){}}
+function chCard(ci){const c=CH[ci],open=isOpen(ci);return `<div class="card ch ${c.L[0].boss?'bossc ':''}${open?'':'lock'}"><span class="hand">${c.n}${open?'':' · locked'}</span><h3>${c.t}</h3><p>${c.d}</p><div class="lvls">${c.L.map((l,li)=>`<button class="lb" data-c="${ci}" data-l="${li}" ${open&&(window.__adminPreview||li===0||S.prog[key(ci,li-1)])?'':'disabled'}>${li+1}. ${l.t}<small>${'★'.repeat(S.prog[key(ci,li)]||0)||l.df}</small></button>`).join('')}</div></div>`}
+/* Streak card in the menu. The engine lives in js/streak.js so the parent and
+   admin pages can show the same numbers. */
+function renderStreak(){const el=$('#streak');if(!el||!window.TLP_STREAK)return;try{el.innerHTML=TLP_STREAK.cardHtml()}catch(e){}}
+function showStreak(m){
+ if(!m||!window.TLP_STREAK)return;
+ snd('ach');
+ const d=document.createElement('div');d.className='tlpm';
+ d.innerHTML='<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="tsT">'+TLP_STREAK.popHtml(m)+'<div class="tlpm-row"><button class="tlpm-btn pri" id="tsOk" type="button">Keep going</button></div></div>';
+ document.body.appendChild(d);
+ const close=()=>d.remove();
+ d.querySelector('#tsOk').onclick=close;
+ d.addEventListener('click',e=>{if(e.target===d)close()});
+ setTimeout(()=>{const b=d.querySelector('#tsOk');if(b)b.focus()},40);
+}
+function streakCheck(){
+ if(!window.TLP_STREAK)return;
+ try{const r=TLP_STREAK.check();renderStreak();if(r.milestone)setTimeout(()=>showStreak(r.milestone),700)}catch(e){}
+}
+/* -----------------------------------------------------------------------------
+   DAILY MISSIONS
+   Three small goals are chosen for each learner, path and difficulty. They are
+   generated from the date, so they are the same all day on every device, and
+   different tomorrow. Finishing a mission feeds every goal that matches.
+   -------------------------------------------------------------------------- */
+const DAILY_DEFS=[
+ {id:'clear2',t:'Clear 2 missions',goal:2,ev:'clear',pts:150},
+ {id:'stars6',t:'Earn 6 stars',goal:6,ev:'stars',pts:150},
+ {id:'points600',t:'Earn 600 points',goal:600,ev:'points',pts:150},
+ {id:'perfect1',t:'Get 3 stars on a mission',goal:1,ev:'perfect',pts:200},
+ {id:'nohint1',t:'Clear a mission without a hint',goal:1,ev:'nohint',pts:200},
+ {id:'say1',t:'Use a say block in a mission',goal:1,ev:'say',pts:150},
+ {id:'loop1',t:'Use a repeat block in a mission',goal:1,ev:'loop',pts:150},
+ {id:'boss1',t:'Defeat a guardian',goal:1,ev:'boss',pts:300,when:()=>SEC.some(s=>isOpen(s.boss))}
+];
+const DAILY_BY_ID={};DAILY_DEFS.forEach(d=>DAILY_BY_ID[d.id]=d);
+function dhash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function dToday(){const d=new Date();return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function dailyIds(){
+ const pool=DAILY_DEFS.filter(d=>!d.when||d.when()).slice();
+ let seed=dhash(dToday()+'|'+PATH+'|'+DIFF);
+ for(let i=pool.length-1;i>0;i--){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const j=seed%(i+1);const tmp=pool[i];pool[i]=pool[j];pool[j]=tmp}
+ return pool.slice(0,3).map(d=>d.id);
+}
+function dailyState(){
+ const t=dToday();
+ let d=null;try{d=JSON.parse(localStorage.getItem('tlp-daily')||'null')}catch(e){}
+ if(!d||d.date!==t||d.path!==PATH||d.diff!==DIFF||!Array.isArray(d.ids)||d.ids.some(id=>!DAILY_BY_ID[id])){
+  d={date:t,path:PATH,diff:DIFF,ids:dailyIds(),prog:{},claimed:[],bonusGiven:false};
+  try{localStorage.setItem('tlp-daily',JSON.stringify(d))}catch(e){}
+ }
+ return d;
+}
+function saveDaily(d){try{localStorage.setItem('tlp-daily',JSON.stringify(d))}catch(e){}}
+function dailyEvent(ev,val){
+ if(!val)return;
+ const st=dailyState();let changed=false;
+ st.ids.forEach(id=>{const d=DAILY_BY_ID[id];if(!d||d.ev!==ev||st.claimed.includes(id))return;const before=st.prog[id]||0,after=Math.min(d.goal,before+val);if(after!==before){st.prog[id]=after;changed=true}});
+ if(changed){saveDaily(st);renderDaily()}
+}
+function dailyFromWin(st,pts){
+ dailyEvent('clear',1);dailyEvent('stars',st);dailyEvent('points',pts||0);dailyEvent('perfect',st===3?1:0);
+ if(S.hint===0)dailyEvent('nohint',1);
+ if(has(S.script,'rep'))dailyEvent('loop',1);
+ if(has(S.script,'say'))dailyEvent('say',1);
+ if(lv().boss)dailyEvent('boss',1);
+}
+function claimDaily(id){
+ const st=dailyState(),d=DAILY_BY_ID[id];
+ if(!d||st.claimed.includes(id)||(st.prog[id]||0)<d.goal)return;
+ st.claimed.push(id);addBonus(d.pts);
+ if(!st.bonusGiven&&st.ids.every(x=>st.claimed.includes(x))){st.bonusGiven=true;addBonus(200)}
+ saveDaily(st);renderDaily();hud();snd('ach');checkAch();
+ msg('<b>Daily reward claimed.</b> +'+d.pts+' points added to your score.','ok');
+}
+function renderDaily(){
+ const el=$('#daily');if(!el)return;
+ const st=dailyState(),all=st.ids.every(id=>st.claimed.includes(id));
+ const rows=st.ids.map(id=>{
+  const d=DAILY_BY_ID[id],n=Math.min(d.goal,st.prog[id]||0),done=n>=d.goal,claimed=st.claimed.includes(id);
+  return '<div class="dmi'+(done?' done':'')+'"><div class="dmt"><b>'+d.t+'</b><span>'+n+' / '+d.goal+' · '+d.pts+' points</span></div><div class="dbar"><i style="width:'+Math.round(n/d.goal*100)+'%"></i></div>'+
+   (claimed?'<span class="dclaim got">Claimed</span>':done?'<button class="dclaim" data-claim="'+id+'" type="button">Claim</button>':'<span class="dclaim wait">In progress</span>')+'</div>';
+ });
+ el.innerHTML='<div class="daily"><div class="dhead"><b>Daily missions</b><span>New set every day</span></div><div class="dlist">'+rows.join('')+'</div><div class="dfoot">'+(all?'All three complete. +200 bonus earned.':'Claim all three for +200 extra points.')+'</div></div>';
+}
+(function(){const el=$('#daily');if(!el)return;el.addEventListener('click',e=>{const b=e.target.closest('[data-claim]');if(b)claimDaily(b.dataset.claim)})})();
+
+function menu(){stopBossClock();stopNarration();document.querySelectorAll('.coach').forEach(x=>x.remove());try{window.TLP_MUSIC&&TLP_MUSIC.setTheme(PATH)}catch(e){};$('#menu').hidden=false;$('#game').hidden=true;hudFit();$('#exit').hidden=true;$('#name').value=S.name;delete document.body.dataset.sec;hud();renderPick();renderTally();renderStreak();renderDaily();if(window.TLP_PRESENCE)TLP_PRESENCE.setActivity('On the chapter map · '+(PATHS_CFG[PATH]?PATHS_CFG[PATH].n:''));
+ // The map shows the five story sections only. Mastery is a bonus section and
+ // is reached from the Bonus page, so it is never numbered or counted here.
+ const MS=mainSecs(),kd=MS.filter(s=>done(s.boss)).length;
+ $('#chs').innerHTML=`<div class="guard">${MS.map(s=>`<div class="gd ${done(s.boss)?'dead':''}">${bossBot(done(s.boss)?'dead k'+s.id:'sil','--s:5px;--ec:'+BC[s.id])}<small>${done(s.boss)?'defeated':'watching'}</small></div>`).join('')}<div class="gtxt"><b>${MS.length-kd} of ${MS.length} guardians alive</b><span>Light restored: ${kd} of ${MS.length}</span></div></div>`+MS.map((s,si)=>`<section class="sec"><h2><span class="hand">Section ${si+1}</span> ${s.t}</h2><p class="sd">${s.d}</p><div class="chs">${[...s.ch,s.boss].map(chCard).join('')}</div></section>`).join('')}
 const bi=()=>BOSSES[S.ci],bkey=()=>S.ci===3?'tlp-boss':'tlp-boss'+S.ci;
-function bossRound(k){if(!k){let o=null;try{o=JSON.parse(localStorage.getItem(bkey())||'null')}catch(e){}B=o&&o.hp>0&&o.me>0?o:(introPending=true,{r:0,hp:100,me:DH(),max:DH(),mem:[]})}Object.assign(lv(),bi().rounds[B.r])}
+/* -----------------------------------------------------------------------------
+   GUARDIAN CLOCK
+   From Grades 7-10 and on every difficulty except Beginner, guardians have a
+   countdown. When it reaches zero the guardian takes a heart and the clock
+   resets. Time left when the guardian falls adds to the points. The clock is
+   paused while a cutscene, dialog or the menu is open, so reading is never
+   punished.
+   -------------------------------------------------------------------------- */
+let bossT=null,bossEnd=0;
+function bossTimerOn(){return PATH!=='g16'&&DIFF!=='beg'}
+function bossSecs(){return Math.round(({beg:150,int:120,pro:90}[DIFF]||120)*(hardMode()?.55:1))}
+function bossPaused(){try{return !!(document.hidden||$('#cine')||$('#menu')&&!$('#menu').hidden||document.querySelector('.tlpm:not([hidden])')||bossWait)}catch(e){return false}}
+function bossRemaining(){if(!bossTimerOn()||!bossEnd)return 0;return Math.max(0,(bossEnd-Date.now())/1000)}
+function stopBossClock(){if(bossT)clearInterval(bossT);bossT=null;bossEnd=0;const el=$('#btime');if(el)el.textContent=''}
+function startBossClock(){
+ stopBossClock();
+ if(!bossTimerOn()||!(lv()&&lv().boss))return;
+ bossEnd=Date.now()+bossSecs()*1000;
+ const tick=()=>{
+  if(!bossT)return;
+  if(bossPaused()){bossEnd+=500;return}
+  const left=Math.max(0,Math.ceil((bossEnd-Date.now())/1000)),el=$('#btime');
+  if(el){el.textContent=left+'s left';el.classList.toggle('low',left<=15)}
+  if(left<=0&&!(B.hp<=0||B.me<=0)){
+   B.me--;B.lost=(B.lost||0)+1;bossDraw();snd('err');
+   msg('<b>Time ran out.</b> The guardian took one of your hearts. '+Math.max(0,B.me)+' left.','bad');
+   if(B.me<=0){stopBossClock();defeatScene();return}
+   bossEnd=Date.now()+bossSecs()*1000;
+  }
+ };
+ bossT=setInterval(tick,500);tick();
+}
+function bossRound(k){if(!k){let o=null;try{o=JSON.parse(localStorage.getItem(bkey())||'null')}catch(e){}B=o&&o.hp>0&&o.me>0?o:(introPending=true,{r:0,hp:100,me:DH(),max:DH(),mem:[],lost:0})}Object.assign(lv(),bi().rounds[B.r])}
 function bossDraw(brk,pre){try{if(B.hp<=0||B.me<=0)localStorage.removeItem(bkey());else localStorage.setItem(bkey(),JSON.stringify(B))}catch(e){}
- $('#boss').innerHTML=`${bossBot('k'+bi().k,'--s:7px','bb')}<div class="nm"><b>${bi().name}</b><small>Round ${Math.min(B.r+1,4)} of 4 · ${Math.max(B.hp,0)} / 100 HP</small><div class="hpb"><i style="width:${Math.max(B.hp,0)}%"></i></div><div class="tnt" id="tnt">${tauntT}</div></div><div><div class="lab" style="margin:0 0 4px">Your HP</div><span class="hrt" id="hearts">${hearts(B.me+(pre?1:0),brk)}</span></div><div class="mw"><div class="lab" style="margin:0 0 4px">${nice(bi().name)} remembers</div><div class="mcs">${B.mem.length?B.mem.map(m=>`<span class="mc" title="Round ${m.r}: ${m.t}"><b>R${m.r}</b> ${m.t}</span>`).join(''):'<span class="mc">nothing yet</span>'}</div></div><button class="btn sm ghost" id="snd">Sound: ${mute?'off':'on'}</button>`;
+ $('#boss').innerHTML=`${bossBot('k'+bi().k,'--s:7px','bb')}<div class="nm"><b>${bi().name}</b><small>Round ${Math.min(B.r+1,4)} of 4 · ${Math.max(B.hp,0)} / 100 HP</small>${bossTimerOn()?'<span class="btime" id="btime"></span>':''}<div class="hpb"><i style="width:${Math.max(B.hp,0)}%"></i></div><div class="tnt" id="tnt">${tauntT}</div></div><div><div class="lab" style="margin:0 0 4px">Your HP</div><span class="hrt" id="hearts">${hearts(B.me+(pre?1:0),brk)}</span></div><div class="mw"><div class="lab" style="margin:0 0 4px">${nice(bi().name)} remembers</div><div class="mcs">${B.mem.length?B.mem.map(m=>`<span class="mc" title="Round ${m.r}: ${m.t}"><b>R${m.r}</b> ${m.t}</span>`).join(''):'<span class="mc">nothing yet</span>'}</div></div><button class="btn sm ghost" id="snd">Sound: ${mute?'off':'on'}</button>`;
  $('#snd').onclick=toggleMute;hudFit()}
-function bossUI(){const on=!!lv().boss;$('#boss').hidden=!on;if(on){tauntT=bi().taunts[B.r]||'';bossDraw();if(introPending){introPending=false;bossIntro()}}else hudFit()}
+function bossUI(){const on=!!lv().boss;$('#boss').hidden=!on;try{window.TLP_MUSIC&&TLP_MUSIC.setTheme(on?'boss':PATH)}catch(e){}if(on){tauntT=bi().taunts[B.r]||'';bossDraw();if(introPending){introPending=false;bossIntro()}}else hudFit()}
 function bossIntro(){snd('intro');cine(`<div class="stage"><div class="intro-bot">${bossBot('k'+bi().k,'--s:16px')}</div><h2 class="ctitle">${bi().name}</h2><p class="csub">${bi().intro} It has 100 HP and it <b>remembers every attack that lands</b>. Use the same attack twice and it strikes back and breaks one of your hearts. There are 4 rounds, so be creative and use everything you have learned.</p><button class="btn" id="cgo">Fight!</button></div>`,'c-intro');$('#cgo').onclick=()=>{snd('hit');uncine()}}
-async function bossHit(){bossWait=true;try{const n=count(S.script);B.mem.push({r:B.r+1,g:sig(S.script),t:S.script.map(tx).join('; ')});try{localStorage.removeItem('tlp-draft')}catch(e){}
+async function bossHit(){bossWait=true;const left=bossRemaining();stopBossClock();try{const n=count(S.script);B.mem.push({r:B.r+1,g:sig(S.script),t:S.script.map(tx).join('; ')});try{localStorage.removeItem('tlp-draft')}catch(e){}
  await fly(bot,$('#bb'),'#6ae8ff',460);snd('hit');dmg('−25',$('#bb'));B.hp-=25;bot.classList.add('win');sparks();bossDraw();$('#bb').classList.add('hurt');
- if(B.hp<=0){const st=Math.max(1,Math.round(B.me*3/(B.max||3))),k=key(S.ci,0),bk=bi().k;S.prog[k]=Math.max(S.prog[k]||0,st);save();hud();msg('The guardian is defeated!');await sleep(700);await winScene(bk);await badgeScene(bk);checkAch();finish(st,n);return}
+ if(B.hp<=0){const st=Math.max(1,Math.round(B.me*3/(B.max||3))),k=key(S.ci,0),bk=bi().k;S.prog[k]=Math.max(S.prog[k]||0,st);completeLevel(k,st,{timeLeft:left,hardcore:hardMode(),noHit:(B.lost||0)===0,ms:S.runT0?Date.now()-S.runT0:0});save();hud();dailyFromWin(st,S.lastRunPts);msg('The guardian is defeated!');await sleep(700);await winScene(bk);await badgeScene(bk);checkAch();finish(st,n);return}
  taunt(['Ow! I will remember that.','You got me. Not again though.','Nearly there... for you.'][Math.min(B.r,2)]);
  await new Promise(r=>showToast('<b>Direct hit! −25 HP.</b> The guardian memorises this attack. If you use it again, it will hit back.<br>What each block did:'+whyList(),'','Next round ▶',r));
  B.r++;play(S.ci,0,1)}finally{bossWait=false}}
-function defeatScene(){snd('lose');vig();cine(`<div class="stage"><div class="bighearts">${[0,1,2].map(()=>'<span class="h"><i>♥</i><i>♥</i></span>').join('')}</div><div class="cb">${bossBot('laugh k'+bi().k,'--s:12px')}</div><h2 class="ctitle">You were defeated</h2><p class="csub">${nice(bi().name)} remembered every move you made. Read its memory next time and try something it has never seen.</p><div class="bar" style="justify-content:center"><button class="btn" id="cagain">Fight again</button><button class="btn ghost" id="cmenu">Back to menu</button></div></div>`,'c-lose');
+function defeatScene(){stopBossClock();snd('lose');vig();cine(`<div class="stage"><div class="bighearts">${[0,1,2].map(()=>'<span class="h"><i>♥</i><i>♥</i></span>').join('')}</div><div class="cb">${bossBot('laugh k'+bi().k,'--s:12px')}</div><h2 class="ctitle">You were defeated</h2><p class="csub">${nice(bi().name)} remembered every move you made. Read its memory next time and try something it has never seen.</p><div class="bar" style="justify-content:center"><button class="btn" id="cagain">Fight again</button><button class="btn ghost" id="cmenu">Back to menu</button></div></div>`,'c-lose');
  const hs=document.querySelectorAll('#cine .h');hs.forEach((h,i)=>setTimeout(()=>{h.classList.add('brk');snd('crack')},500+i*650));
  $('#cagain').onclick=()=>{try{localStorage.removeItem(bkey())}catch(e){}uncine();play(S.ci,0)};$('#cmenu').onclick=()=>{uncine();menu()}}
 function winScene(k){let skip=false;return new Promise(res=>{const end=()=>{skip=true;uncine();setLight();res()};
- const others=SEC.map((_,i)=>i).filter(i=>i!==k),sz=[9,13,8,10,11];
- const small=others.map((j,n)=>`<div class="sw${n+1}">${bossBot(j<k?'dead k'+SEC[j].id:'sil','--s:'+sz[n]+'px;--ec:'+BC[SEC[j].id])}</div>`).join('');
+ // The main ceremony counts the five story guardians. The Origin gets its own
+ // short finish, so the story is never left waiting for an optional boss.
+ const bonus=!!(SEC[k]&&SEC[k].bonus),cast=bonus?SEC:mainSecs();
+ const others=cast.map((_,i)=>i).filter(i=>i!==k),sz=[9,13,8,10,11];
+ const small=others.map((j,n)=>`<div class="sw${n+1}">${bossBot(j<k?'dead k'+cast[j].id:'sil','--s:'+sz[n]+'px;--ec:'+BC[cast[j].id])}</div>`).join('');
  const c=cine(`<button class="cskip" id="cskip">Skip</button><div class="stage">${small}<div style="height:90px"></div><div id="cb" class="cb">${bossBot('hurt k'+k,'--s:15px')}</div><h2 id="ct" class="ctitle"></h2><div id="cl" class="clines"></div><button class="btn" id="cgo" hidden>Continue</button></div>`,'c-win');
  $('#cskip').onclick=end;$('#cgo').onclick=end;
  const Z=async ms=>{await sleep(ms);if(skip)throw 0};
  (async()=>{try{
   snd('boom');vig('rgba(255,255,255,.9)');
   for(let i=0;i<18;i++){const f=document.createElement('i');f.className='frag';c.querySelector('.stage').appendChild(f);const a=Math.random()*6.28,d=140+Math.random()*180;f.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d+60}px) rotate(${Math.random()*540}deg)`,opacity:0}],{duration:1100,easing:'ease-out'}).onfinish=()=>f.remove()}
-  await Z(750);$('#cb').innerHTML=bossBot('dead k'+k,'--s:15px');$('#ct').textContent=['FIRST','SECOND','THIRD','FOURTH','FIFTH','FINAL'][k]+' GUARDIAN DEFEATED';snd('win');await Z(2600);
-  c.classList.add('dark');snd('ominous');await Z(1400);
-  for(const s of ['.sw1','.sw2','.sw3','.sw4','.sw5']){c.querySelector(s).classList.add('on');await Z(1000)}
-  const R=SEC.length-1-k,L=$('#cl'),lines=k<SEC.length-1?[[nice(bi().name)+' is down.',1500],['But it was only the '+['first','second','third','fourth','fifth'][k]+'.',1700],[R+' more '+(R>1?'are':'is')+' awake...',1800]]:[['The last guardian is down.',1500],['The darkness is breaking...',1700],['The light is back.',1800]];
-  for(const [t,ms] of lines){const p=document.createElement('p');p.textContent=t;L.appendChild(p);await Z(ms)}
-  if(k<SEC.length-1)L.insertAdjacentHTML('beforeend','<small>the light grows a little brighter</small>');else{c.classList.remove('dark');c.classList.add('dawn')}
+  await Z(750);$('#cb').innerHTML=bossBot('dead k'+k,'--s:15px');$('#ct').textContent=bonus?'BONUS GUARDIAN DEFEATED':['FIRST','SECOND','THIRD','FOURTH','FIFTH'][k]+' GUARDIAN DEFEATED';snd('win');await Z(2600);
+  if(bonus){
+   const L=$('#cl');for(const [t,ms] of [[nice(bi().name)+' is down.',1300],['Every mission in the protocol is complete.',1500]]){const p=document.createElement('p');p.textContent=t;L.appendChild(p);await Z(ms)}
+  }else{
+   c.classList.add('dark');snd('ominous');await Z(1400);
+   for(const s of ['.sw1','.sw2','.sw3','.sw4','.sw5']){c.querySelector(s).classList.add('on');await Z(1000)}
+   const total=mainSecs().length,R=total-1-k,L=$('#cl'),lines=k<total-1?[[nice(bi().name)+' is down.',1500],['But it was only the '+['first','second','third','fourth','fifth'][k]+'.',1700],[R+' more '+(R>1?'are':'is')+' awake...',1800]]:[['The last guardian is down.',1500],['The darkness is breaking...',1700],['The light is back.',1800]];
+   for(const [t,ms] of lines){const p=document.createElement('p');p.textContent=t;L.appendChild(p);await Z(ms)}
+   if(k<total-1)L.insertAdjacentHTML('beforeend','<small>the light grows a little brighter</small>');else{c.classList.remove('dark');c.classList.add('dawn')}
+  }
   setLight();$('#cgo').hidden=false}catch(e){}})()})}
 function badgeScene(k){return new Promise(res=>{let b=[];try{b=JSON.parse(localStorage.getItem('tlp-badges')||'[]')}catch(e){}if(!b.includes(k)){b.push(k);try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}
  const x=BAD[SEC[k]?SEC[k].id:k];snd('b'+((SEC[k]?SEC[k].id:k)+1));cine(`<div class="stage"><div class="bwrap ${x.cls}"><i class="rays"></i><i class="ring"></i><i class="ring r2"></i><div class="bico bhead">${bossBot('k'+BOSSES[(SEC[k]||SEC0[k]).boss].k,'--s:8px')}</div></div><h2 class="ctitle">Badge earned!</h2><p class="csub"><b>${x.t}</b><br>${nice(bi().name)} defeated</p><button class="btn" id="cgo">Awesome!</button></div>`,'c-badge');
@@ -621,17 +1041,36 @@ function badgeScene(k){return new Promise(res=>{let b=[];try{b=JSON.parse(localS
    ACH lists every badge and its test. checkAch() queues new ones and runQ()/
    popAch() show them one at a time so popups never overlap a boss fight.
    -------------------------------------------------------------------------- */
+/* Robot faces are drawn with the same CSS robot the guardians use, so badges
+   look like they belong to the game instead of a set of emoji. */
+const botIco=(k,cls)=>bossBot(cls||('k'+k),'--s:3px');
+const streakDays=()=>{try{return TLP_STREAK.get().best||0}catch(e){return 0}};
 const ACH=[
  {t:'Boot Sequence',ico:'<i class=ic-bolt></i>',need:100,an:'x1'},{t:'Warming Up',ico:'<i class=ic-flame></i>',need:300,an:'x2'},{t:'Bit by Bit',ico:'<i class=ic-puzzle></i>',need:600,an:'x3'},{t:'Circuit Runner',ico:'<i class=ic-bolt></i>',need:1000,an:'x4'},{t:'Logic Spark',ico:'<i class=ic-bulb></i>',need:1500,an:'x5'},{t:'Code Weaver',ico:'<i class=ic-puzzle></i>',need:2500,an:'x6'},{t:'Debugger',ico:'<i class=ic-bug></i>',need:4000,an:'x7'},{t:'Protocol Hacker',ico:'<i class=ic-shield></i>',need:6000,an:'x8'},{t:'System Architect',ico:'<i class=ic-shield></i>',need:9000,an:'x9'},
  {t:'Perfectionist',ico:'<i class=ic-star></i>',d:'Get 3 stars on 10 missions',f:()=>Object.values(S.prog).filter(v=>v>=3).length>=10,an:'x10'},
  {t:'Chapter Closer',ico:'<i class=ic-book></i>',d:'Finish 5 chapters',f:()=>ORDER.filter(c=>CH[c].L.every((_,l)=>S.prog[key(c,l)])).length>=5,an:'x11'},
- {t:'Guardian Hunter',ico:'<i class=ic-target></i>',d:'Defeat 2 guardians',f:()=>SEC.filter(s=>done(s.boss)).length>=2,an:'x12'}];
+ {t:'Guardian Hunter',ico:'<i class=ic-target></i>',d:'Defeat 2 guardians',f:()=>SEC.filter(s=>done(s.boss)).length>=2,an:'x12'},
+ /* --- new goals: streaks, clean runs, hardcore, habits, co-op --- */
+ {t:'Streak Starter',ico:botIco(1),d:'Play 3 days in a row',f:()=>streakDays()>=3,an:'x13',rar:'common'},
+ {t:'Week Signal',ico:botIco(3,'k3'),d:'Keep a 7 day streak',f:()=>streakDays()>=7,an:'x14',rar:'rare'},
+ {t:'Month of Logic',ico:botIco(9,'k9'),d:'Keep a 30 day streak',f:()=>streakDays()>=30,an:'x15',rar:'rare'},
+ {t:'Century Circuit',ico:botIco(14,'k14'),d:'Keep a 100 day streak',f:()=>streakDays()>=100,an:'x16',rar:'epic'},
+ {t:'Protocol Keeper',ico:botIco(29,'k29'),d:'Keep a 365 day streak',f:()=>streakDays()>=365,an:'x17',rar:'legendary'},
+ {t:'First Try',ico:botIco(4,'k4'),d:'Clear a mission on your first attempt',f:()=>Object.values(runsAll()).some(r=>r.first),an:'x18',rar:'common'},
+ {t:'Untouchable',ico:botIco(19,'k19'),d:'Beat a guardian without losing a heart',f:()=>Object.values(runsAll()).some(r=>r.noHit),an:'x19',rar:'epic'},
+ {t:'Hardcore Protocol',ico:botIco(24,'k24'),d:'Clear a mission with hardcore rules on',f:()=>Object.values(runsAll()).some(r=>r.hard),an:'x20',rar:'epic'},
+ {t:'Daily Protocol',ico:botIco(2,'k2'),d:'Claim all three daily missions in one day',f:()=>{try{const d=dailyState();return d.ids.every(id=>d.claimed.includes(id))}catch(e){return false}},an:'x13',rar:'rare'},
+ {t:'Quick Circuit',ico:botIco(5,'k5'),d:'Finish a mission in under 20 seconds',f:()=>Object.values(runsAll()).some(r=>r.bestTime&&r.bestTime<20000),an:'x18',rar:'rare'},
+ {t:'Night Shift',ico:botIco(6,'k6'),d:'Play between midnight and 4 in the morning',f:()=>{const h=new Date().getHours();return h<4},an:'x13',rar:'common'},
+ {t:'Team Signal',ico:botIco(7,'k7'),d:'Finish a co-op mission with a friend',f:()=>{try{return localStorage.getItem('tlp-coop-done')==='1'}catch(e){return false}},an:'x14',rar:'rare'}
+];
 ACH.forEach(a=>{if(a.need){a.d='Reach '+a.need+' score';a.f=()=>score()>=a.need;a.req='Requires '+a.need+' score'}else a.req='Requires: '+a.d});
 const ach=()=>{try{return JSON.parse(localStorage.getItem('tlp-ach')||'[]')}catch(e){return[]}},badges=()=>{try{return JSON.parse(localStorage.getItem('tlp-badges')||'[]')}catch(e){return[]}};
 let achQ=[],achBusy=false;
 function checkAch(silent){const have=ach(),got=ACH.filter(a=>!have.includes(a.t)&&a.f());if(!got.length)return;try{localStorage.setItem('tlp-ach',JSON.stringify(have.concat(got.map(a=>a.t))))}catch(e){}if(!silent){got.forEach(a=>achQ.push(a));runQ()}}
 function runQ(){if(achBusy||!achQ.length)return;achBusy=true;popAch(achQ.shift());setTimeout(()=>{achBusy=false;runQ()},4300)}
-function popAch(a){snd('ach');const e=document.createElement('div');e.className='achp';e.innerHTML=`<div class="aico ${a.an}">${a.ico}</div><div><small>Achievement unlocked</small><b>${a.t}</b><span>${a.d}</span></div>`;$('#achs').appendChild(e);setTimeout(()=>e.classList.add('out'),3700);setTimeout(()=>e.remove(),4300)}
+const RARNAME={common:'Common',rare:'Rare',epic:'Epic',legendary:'Legendary'};
+function popAch(a){snd('ach');const e=document.createElement('div');e.className='achp'+(a.rar?' rar-'+a.rar:'');const tag=a.rar?RARNAME[a.rar]+' achievement':'Achievement unlocked';e.innerHTML=`<div class="aico ${a.an}">${a.ico}</div><div><small>${tag}</small><b>${a.t}</b><span>${a.d}</span></div>`;$('#achs').appendChild(e);setTimeout(()=>e.classList.add('out'),3700);setTimeout(()=>e.remove(),4300)}
 /* -----------------------------------------------------------------------------
   13. BLOCK LIBRARY
    The reference sheet explains every block type, grouped by tab. It reads the
@@ -641,7 +1080,7 @@ function openLib(tab){
   tab=tab||'ach';const have=ach(),bg=badges();
   let content = '';
   if (tab==='ach') {
-    content = `<div class="lgrid">${ACH.map(a=>{const u=have.includes(a.t);return `<div class="lc ${u?'':'lk'}"><div class="aico ${u?a.an:''}">${u?a.ico:'<i class=ic-lock></i>'}</div><b>${u?a.t:'Locked'}</b><span>${u?a.d:a.req}</span></div>`}).join('')}</div>`;
+    content = `<div class="lgrid">${ACH.map(a=>{const u=have.includes(a.t);return `<div class="lc ${u?'':'lk'} rar-${a.rar||'common'}"><div class="aico ${u?a.an:''}">${u?a.ico:'<i class=ic-lock></i>'}</div><b>${u?a.t:'Locked'}${a.rar?'<em class="rar">'+RARNAME[a.rar]+'</em>':''}</b><span>${u?a.d:a.req}</span></div>`}).join('')}</div>`;
   } else if (tab==='bd') {
     content = `<div class="lgrid">${SEC.map(sx=>{const i=sx.id,b=BAD[i],u=bg.includes(i),nm=BOSSES[sx.boss].name;return `<div class="lc big ${u?'':'lk'}"><div class="bwrap mini ${u?b.cls:''}"><div class="bico ${u?'bhead':''}">${u?bossBot('k'+BOSSES[sx.boss].k,'--s:4px'):'<i class=ic-lock></i>'}</div></div><b>${u?b.t:'Locked'}</b><span>${u?'Earned by defeating '+nm:'Requires: defeat '+nm}</span></div>`}).join('')}</div>`;
   } else if (tab==='legacy') {
@@ -707,10 +1146,11 @@ const PATHS_CFG={
 };
 try{PATH=localStorage.getItem('tlp-path')||'g710'}catch(e){}
 if(!PATHS_CFG[PATH])PATH='g710';
-function setPath(p){try{PATH=p}catch(e){}applyHidden();
- if(!PATHS_CFG[p] || p === PATH) return;
- try{save()}catch(e){}
+function setPath(p){
+ if(!PATHS_CFG[p])return;
+ if(p===PATH){applyHidden();applyPathVisuals();updateHudLearner();return}
  PATH=p;
+ try{save()}catch(e){}
  try{localStorage.setItem('tlp-path',p)}catch(e){}
  try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}')}catch(e){S.prog={}}
  applyPathVisuals();
@@ -720,14 +1160,84 @@ function setPath(p){try{PATH=p}catch(e){}applyHidden();
  updateHudLearner();
  if(!$('#game').hidden&&!lv().boss){
   const L=lv(),c=S.ci;
-  $('#learn').innerHTML=`<span class="hand">${CH[c].n} · ${CH[c].t}</span><span class="diff">${L.df}</span><h2>${L.t}</h2><p>${L.learn}</p><div class="mis"><b>Mission:</b> ${L.mis}</div><ul class="goals" id="goals"></ul><button class="btn ghost sm" id="nar">Narrate lesson</button>`;
+  $('#learn').innerHTML=lessonCard(L,c);mountLesson(c);
   $('#nar').onclick=narrate;goals();
+  if(pref('guide',true)&&!lv().boss)setTimeout(coachInit,0);
  }
  syncCurrentToCloud();
 }
 const DIFFS={beg:{n:'Beginner',d:'New to coding. A friendly look, a tip on every mission, extra room for stars and 5 hearts in boss fights.'},int:{n:'Intermediate',d:'Some experience. The standard game: balanced hints, stars and 3 hearts in boss fights.'},pro:{n:'Professional',d:'Experienced. A terminal look, hidden cell numbers, a block limit, one hint per mission and only 2 hearts in boss fights.'}};
+
+/* -----------------------------------------------------------------------------
+   14b. LEARNER SETTINGS AND COMFORT FEATURES
+   One small JSON blob per learner (or guest) stores the choices made in the
+   Settings window: guided steps, extra animations, break reminders and the
+   adult AFK surprise. Keeping it local means no server change is needed.
+   -------------------------------------------------------------------------- */
+function settingsKey(){
+ let id='guest';
+ try{const l=TLP_AUTH.getActiveLearner();id=(l&&l.id)||'guest'}catch(e){}
+ return 'tlp-settings:'+id;
+}
+function settingsAll(){try{return JSON.parse(localStorage.getItem(settingsKey())||'{}')}catch(e){return{}}}
+function pref(k,def){const v=settingsAll()[k];return v===undefined?def:v}
+function setPref(k,v){const p=settingsAll();p[k]=v;try{localStorage.setItem(settingsKey(),JSON.stringify(p))}catch(e){}applyPrefs()}
+// Kid mode is the extra-animation layer. It is on by default on Grades 1–6 and
+// turns itself off when the visitor asks for reduced visual effects.
+function kidMode(){return PATH==='g16'&&pref('kidfx',true)&&!(window.TLP&&TLP.FX.get())}
+function applyPrefs(){
+ document.body.classList.toggle('kid-fx',kidMode());
+ // Hardcore is a visible badge on the header, so the player always knows the
+ // stricter rules are active before a mission starts.
+ document.body.classList.toggle('hardcore',hardMode());
+ // The shared idle prompt reads these two values. Only the adult path on
+ // Intermediate/Professional gets the jumpscare, and only after several minutes.
+ if(!window.TLP_AFK)window.TLP_AFK={};
+ window.TLP_AFK.ms=DIFF==='pro'?180000:240000;
+ window.TLP_AFK.enabled=()=>PATH==='adult'&&(DIFF==='int'||DIFF==='pro')&&pref('afk',true);
+ window.TLP_AFK.disable=()=>setPref('afk',false);
+}
+
+/* Break reminders for the youngest players: one friendly nudge every 15
+   minutes of visible play. The counter only moves while the tab is visible. */
+let breakMin=0,breakT=null;
+function startBreakClock(){
+ if(breakT)return;
+ breakT=setInterval(()=>{
+  if(document.hidden)return;
+  if(!kidMode()||!pref('breaks',true)){breakMin=0;return}
+  if($('#brk')||$('#cine')||document.querySelector('.tlpm:not([hidden])'))return;
+  if(++breakMin>=breakEvery()){breakMin=0;showBreak()}
+ },60000);
+}
+function breakEvery(){const n=Number(pref('breakmin',15));return [10,15,20,30].includes(n)?n:15}
+function showBreak(){
+ if($('#brk'))return;
+ const every=breakEvery();
+ const p=document.createElement('div');p.id='brk';p.className='tlpm';
+ p.innerHTML='<div class="tlpm-pan breakpan" role="dialog" aria-modal="true" aria-labelledby="brkT"><div class="breakbot" aria-hidden="true">⭐</div><h2 id="brkT">Time for a quick break!</h2><p>You have been solving puzzles for '+every+' minutes. Stand up, stretch your arms, look out of the window and drink some water. Your robot will wait for you.</p><div class="tlpm-row"><button class="tlpm-btn pri" id="brkOk" type="button">I am back</button><button class="tlpm-btn" id="brkOff" type="button">Do not remind me</button></div></div>';
+ document.body.appendChild(p);
+ const ok=$('#brkOk'),off=$('#brkOff');
+ if(ok)ok.onclick=()=>{p.remove();snd('chime')};
+ if(off)off.onclick=()=>{setPref('breaks',false);p.remove()};
+}
+
+const KID_PRAISE=['You are a star!','Brilliant work!','High five!','Amazing thinking!','You did it!','Superb!'];
+function kidPraise(){return KID_PRAISE[Math.floor(Math.random()*KID_PRAISE.length)]}
+function kidBurst(){
+ if(!kidMode())return;
+ const host=$('#pan')||document.body,r=host.getBoundingClientRect();
+ for(let i=0;i<22;i++){
+  const s=document.createElement('span');s.className='kidspark';
+  s.textContent=['⭐','🌟','💫','❤️','✨'][i%5];
+  s.style.cssText=`left:${r.left+r.width/2+(Math.random()-.5)*240}px;top:${r.top+Math.random()*80}px`;
+  document.body.appendChild(s);
+  const a=Math.random()*6.28,d=60+Math.random()*160;
+  s.animate([{transform:'translate(0,0) scale(.6)',opacity:0},{transform:'translate(0,-10px) scale(1)',opacity:1,offset:.15},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) rotate(${Math.random()*360}deg)`,opacity:0}],{duration:1400+Math.random()*500,easing:'ease-out'}).onfinish=()=>s.remove();
+ }
+}
 try{DIFF=localStorage.getItem('tlp-diff')||'int'}catch(e){}
-const DH=()=>(DIFF==='beg'?5:DIFF==='pro'?2:3)+({g16:2,g710:1}[PATH]||0),PB=()=>(DIFF==='beg'?2:0)+({g16:2,g710:1}[PATH]||0);
+const DH=()=>hardMode()?1:((DIFF==='beg'?5:DIFF==='pro'?2:3)+({g16:2,g710:1}[PATH]||0)),PB=()=>(DIFF==='beg'?2:0)+({g16:2,g710:1}[PATH]||0);
 /* -----------------------------------------------------------------------------
   15. PLAYER TALLY AND CLOUD PROFILE
    regPlayer() keeps a local list of names for the home tally. When a learner is
@@ -740,9 +1250,12 @@ function applyPathVisuals(){
  const p=PATH||'g710';
  document.body.classList.add('path-'+p);
  bfxUpdate();
+ try{applyPrefs()}catch(e){}
+ // Age picks the soundtrack; a boss fight overrides it until the fight ends.
+ try{window.TLP_MUSIC&&TLP_MUSIC.setTheme(PATH)}catch(e){}
 }
-function applyDiff(){document.body.classList.remove('d-beg','d-int','d-pro');if(DIFF)document.body.classList.add('d-'+DIFF);try{cvUpdate()}catch(e){}}
-function bonusState(){try{const l=TLP_AUTH.getActiveLearner();const ok=!!((l&&(l.completed_diffs||[]).length)||(SEC.length&&SEC.every(x=>done(x.boss))));const b=$('#bonusLink');if(b){if(!b._h){b._h=1;b.addEventListener('click',e=>{if(b.classList.contains('lockedx')){e.preventDefault();msg('The Bonus sections unlock after you finish the whole game.','bad')}})}b.classList.toggle('lockedx',!ok);b.title=ok?'Open the Bonus sections':'Unlocks after you finish the whole game';b.setAttribute('aria-disabled',!ok);}}catch(e){}}
+function applyDiff(){document.body.classList.remove('d-beg','d-int','d-pro');if(DIFF)document.body.classList.add('d-'+DIFF);try{applyPrefs()}catch(e){}try{cvUpdate()}catch(e){}}
+function bonusState(){try{const l=TLP_AUTH.getActiveLearner();const ok=!!window.__adminPreview||!!((l&&(l.completed_diffs||[]).length)||(mainSecs().length&&mainSecs().every(x=>done(x.boss))));const b=$('#bonusLink');if(b){if(!b._h){b._h=1;b.addEventListener('click',e=>{if(b.classList.contains('lockedx')){e.preventDefault();msg('The Bonus sections unlock after you finish the main story.','bad')}})}b.classList.toggle('lockedx',!ok);b.title=ok?'Open the Bonus sections':'Unlocks after you finish the main story';b.setAttribute('aria-disabled',!ok);}}catch(e){}}
 function updateHudLearner(){try{bonusState()}catch(e){}
  const pn=$('#pn');if(pn)pn.textContent=S.name||'Player';
  const badge=$('#pathBadge');if(badge&&PATHS_CFG[PATH]){badge.textContent=PATHS_CFG[PATH].n;badge.title=PATHS_CFG[PATH].age+' · '+PATHS_CFG[PATH].d}
@@ -750,11 +1263,15 @@ function updateHudLearner(){try{bonusState()}catch(e){}
  if(acc&&window.TLP_AUTH){
   const user=window.TLP_AUTH.getCurrentUser();
   if(user){
-   acc.textContent=user.role==='parent'?'Parent Area':user.displayName;
+   // Keep the button label stable so it still reads as a navigation control.
+   // The signed-in name already lives in the "Playing as" block next to it.
+   acc.textContent=user.role==='parent'?'Parent Area':'Account';
    acc.href=user.role==='parent'?'parent.html':'auth.html';
+   acc.title='Signed in as '+user.displayName+' — account and sync';
   }else{
    acc.textContent='Account';
    acc.href='auth.html';
+   acc.title='Account and sync';
   }
  }
 }
@@ -771,8 +1288,13 @@ function diffCards(){return Object.entries(DIFFS).map(([k,v])=>`<button class="d
 
 function openAdminPreview(){let m=$('#apm');
  if(!m){m=document.createElement('div');m.id='apm';m.className='tlpm';m.hidden=true;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)m.hidden=true});document.addEventListener('keydown',e=>{if(e.key==='Escape')m.hidden=true})}
- m.innerHTML=`<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="apt"><button class="tlpm-x" type="button" id="apx" aria-label="Close"><i class=ic-close></i></button><h2 id="apt">Admin preview</h2><p class="s">Open any chapter or level directly to inspect the lesson and test right and wrong answers. Nothing here is saved to any learner. Path shown: ${PATHS_CFG[PATH].n}, ${DIFFS[DIFF].n}.</p><div style="max-height:52vh;overflow:auto">${ORDER.map(c=>`<div style="margin:8px 0"><b>${CH[c].n||''} ${CH[c].t}</b><div class="tlpm-row" style="justify-content:flex-start;margin-top:6px">${CH[c].L.map((_,li)=>`<button class="tlpm-btn" data-c="${c}" data-l="${li}" type="button">Level ${li+1}</button>`).join('')}</div></div>`).join('')}</div><div class="tlpm-row" style="justify-content:flex-start">${SEC.map(x=>`<button class="tlpm-btn" data-badge="${x.id}" type="button">Badge ${x.id+1}</button>`).join('')}</div></div>`;
+ m.innerHTML=`<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="apt"><button class="tlpm-x" type="button" id="apx" aria-label="Close"><i class=ic-close></i></button><h2 id="apt">Admin preview</h2><p class="s">Open any chapter or level, under any age version and difficulty. Nothing here is saved to a learner.</p>
+ <div class="lab">Age version</div><div class="tlpm-row" style="justify-content:flex-start;flex-wrap:wrap">${Object.entries(PATHS_CFG).map(([k,v])=>`<button class="tlpm-btn${PATH===k?' pri':''}" data-path="${k}" type="button">${v.n}</button>`).join('')}</div>
+ <div class="lab">Difficulty</div><div class="tlpm-row" style="justify-content:flex-start;flex-wrap:wrap">${Object.entries(DIFFS).map(([k,v])=>`<button class="tlpm-btn${DIFF===k?' pri':''}" data-d="${k}" type="button">${v.n}</button>`).join('')}</div>
+ <div>${ORDER.map(c=>`<div style="margin:8px 0"><b>${CH[c].n||''} ${CH[c].t}</b><div class="tlpm-row" style="justify-content:flex-start;margin-top:6px">${CH[c].L.map((_,li)=>`<button class="tlpm-btn" data-c="${c}" data-l="${li}" type="button">Level ${li+1}</button>`).join('')}</div></div>`).join('')}</div><div class="tlpm-row" style="justify-content:flex-start">${SEC.map(x=>`<button class="tlpm-btn" data-badge="${x.id}" type="button">Badge ${x.id+1}</button>`).join('')}</div></div>`;
  m.hidden=false;$('#apx').onclick=()=>{m.hidden=true};
+ m.querySelectorAll('button[data-path]').forEach(b=>b.onclick=()=>{setPath(b.dataset.path);applyHidden();if(!$('#menu').hidden)menu();openAdminPreview()});
+ m.querySelectorAll('button[data-d]').forEach(b=>b.onclick=()=>{setDiff(b.dataset.d);openAdminPreview()});
  m.querySelectorAll('button[data-c]').forEach(b=>b.onclick=()=>{m.hidden=true;play(+b.dataset.c,+b.dataset.l)});
  m.querySelectorAll('button[data-badge]').forEach(b=>b.onclick=()=>{m.hidden=true;try{badgeScene(+b.dataset.badge)}catch(e){}})}
 function renderPick(){const el=$('#pick');if(!el)return;
@@ -782,11 +1304,13 @@ function renderPick(){const el=$('#pick');if(!el)return;
 const ladderOk=l=>{const dn=(l&&l.completed_diffs)||[],st=(l&&(l.start_diff))||DIFF;return d=>d===st||dn.includes(d)||(d==='int'&&dn.includes('beg'))||(d==='pro'&&dn.includes('int'))||dn.includes('pro')};
 function openDiffSettings(){let m=$('#dsm');
  if(!m){m=document.createElement('div');m.id='dsm';m.className='tlpm';m.hidden=true;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)m.hidden=true});document.addEventListener('keydown',e=>{if(e.key==='Escape')m.hidden=true})}
- const l=window.TLP_AUTH&&TLP_AUTH.getActiveLearner();const ok=ladderOk(l);let pend=null;
- m.innerHTML=`<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="dst"><button class="tlpm-x" type="button" id="dsx" aria-label="Close"><i class=ic-close></i></button><h2 id="dst">Difficulty settings</h2><p class="s">Finishing one difficulty unlocks the next. A difficulty that is still locked can be chosen, but doing so restarts this learner's progress.</p>${['beg','int','pro'].map(d=>`<button class="dsopt" data-d="${d}" type="button"><b>${DIFFS[d].n}</b><span>${DIFFS[d].d}</span><em>${d===DIFF?'Current':ok(d)?'Available. Your progress is kept.':'Locked. Switching restarts your progress.'}</em></button>`).join('')}<div id="dsconf" hidden><div class="warnx">Warning: switching to <b id="dsname"></b> permanently resets this learner's progress, stars and leaderboard entries, because it is a different difficulty. Type <b>RESET MY PROGRESS</b> to continue.</div><input id="dstxt" autocomplete="off" aria-label="Confirmation sentence"><div class="tlpm-row"><button class="tlpm-btn" id="dscancel" type="button">Cancel</button><button class="tlpm-btn pri" id="dsgo" type="button" disabled>Reset and switch</button></div></div><p class="tlpm-note" id="dsmsg" role="status" aria-live="polite"></p></div>`;
+ const admin=!!window.__adminPreview;
+ const l=window.TLP_AUTH&&TLP_AUTH.getActiveLearner();const ok=admin?(()=>true):ladderOk(l);let pend=null;
+ m.innerHTML=`<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="dst"><button class="tlpm-x" type="button" id="dsx" aria-label="Close"><i class=ic-close></i></button><h2 id="dst">Difficulty</h2><p class="s">${admin?'Preview only. Switching here does not change any learner account.':'Finish one difficulty to unlock the next. Picking a locked one starts this learner over.'}</p>${['beg','int','pro'].map(d=>`<button class="dsopt" data-d="${d}" type="button"><b>${DIFFS[d].n}</b><span>${DIFFS[d].d}</span><em>${d===DIFF?'Current':admin?'Preview. Nothing is saved.':ok(d)?'Keeps your progress.':'Locked. Starts over.'}</em></button>`).join('')}<div id="dsconf" hidden><div class="warnx">Changing to <b id="dsname"></b> wipes this learner's progress, stars and leaderboard entries. Type <b>RESET MY PROGRESS</b> to go ahead.</div><input id="dstxt" autocomplete="off" aria-label="Confirmation sentence"><div class="tlpm-row"><button class="tlpm-btn" id="dscancel" type="button">Cancel</button><button class="tlpm-btn pri" id="dsgo" type="button" disabled>Reset and change</button></div></div><p class="tlpm-note" id="dsmsg" role="status" aria-live="polite"></p></div>`;
  m.hidden=false;const msg=t=>{$('#dsmsg').textContent=t};
  $('#dsx').onclick=()=>{m.hidden=true};
  m.querySelectorAll('.dsopt').forEach(b=>b.onclick=async()=>{const d=b.dataset.d;if(d===DIFF)return;msg('');
+  if(admin){setDiff(d);m.hidden=true;return}
   if(!l||l.isGuest||!TLP_AUTH.isCloudConfigured()){setDiff(d);m.hidden=true;return}
   if(ok(d)){try{msg('Switching...');await TLP_AUTH.switchDifficulty(l.id,d);location.reload()}catch(e){msg(e.message)}}
   else{pend=d;$('#dsname').textContent=DIFFS[d].n;$('#dsconf').hidden=false;$('#dstxt').value='';$('#dsgo').disabled=true;$('#dstxt').focus()}});
@@ -794,6 +1318,40 @@ function openDiffSettings(){let m=$('#dsm');
  $('#dscancel').onclick=()=>{$('#dsconf').hidden=true;pend=null};
  $('#dsgo').onclick=async()=>{try{msg('Resetting...');await TLP_AUTH.switchDifficulty(l.id,pend,'RESET MY PROGRESS');
    try{Object.keys(localStorage).filter(k=>k.indexOf(l.id)>=0).forEach(k=>localStorage.removeItem(k))}catch(e){}location.reload()}catch(e){msg(e.message)}}}
+/* Settings window: comfort and guidance choices that do not belong with the
+   difficulty ladder. Every checkbox writes one key into the learner's local
+   settings blob and takes effect immediately. */
+function openSettings(){
+ let m=$('#stm');
+ if(!m){m=document.createElement('div');m.id='stm';m.className='tlpm';m.hidden=true;document.body.appendChild(m);m.addEventListener('click',e=>{if(e.target===m)m.hidden=true});document.addEventListener('keydown',e=>{if(e.key==='Escape')m.hidden=true})}
+ const row=(id,on,title,desc)=>'<label class="setrow" for="'+id+'"><span><b>'+title+'</b><small>'+desc+'</small></span><input type="checkbox" id="'+id+'"'+(on?' checked':'')+'></label>';
+ const music=window.TLP_MUSIC?row('setMusic',TLP_MUSIC.isEnabled(),'Music','Background music. It changes with your age and gets faster in co-op.'):'';
+ const hard=PATH==='g1112'||PATH==='adult'?row('setHard',hardMode(),'Hardcore mode','No hints, fewer blocks, faster guardians. 1.5× score.'):'';
+ m.innerHTML='<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="stt"><button class="tlpm-x" type="button" id="stx" aria-label="Close"><i class=ic-close></i></button><h2 id="stt">Settings</h2><p class="s">Saved on this device for this learner.</p>'+
+  '<div class="setlab">Volume</div>'+(window.TLP_VOL?TLP_VOL.ui():'')+
+  '<div class="setlab">Game</div>'+
+  row('setGuide',pref('guide',true),'Guided steps','A tip list on every mission.')+
+  row('setKid',pref('kidfx',PATH==='g16'),'Extra animations','More stars and celebrations.')+
+  row('setBreaks',pref('breaks',PATH==='g16'),'Break reminders','A reminder to stretch and drink water.')+
+  '<label class="setrow" for="setBreakMin"><span><b>Break every</b><small>How often the reminder appears.</small></span><select id="setBreakMin">'+[10,15,20,30].map(m=>'<option value="'+m+'"'+(m===breakEvery()?' selected':'')+'>'+m+' min</option>').join('')+'</select></label>'+
+  row('setAfk',pref('afk',true),'Idle surprise',PATH==='g16'?'A playful robot pop-up if you stop for a while.':'A short scare if you stop playing for too long.')+
+  music+hard+
+  '<div class="tlpm-row"><button class="tlpm-btn" id="setDiff" type="button">Difficulty</button><button class="tlpm-btn" id="setStory" type="button">Opening story</button><button class="tlpm-btn" id="setTour" type="button">How to play</button><button class="tlpm-btn pri" id="setClose" type="button">Close</button></div></div>';
+ m.hidden=false;
+ {const pan=m.querySelector('.tlpm-pan');if(pan)pan.scrollTop=0}
+ $('#stx').onclick=()=>{m.hidden=true};
+ $('#setClose').onclick=()=>{m.hidden=true};
+ $('#setDiff').onclick=()=>{m.hidden=true;openDiffSettings()};
+ $('#setStory').onclick=()=>{m.hidden=true;try{storyScenes(TLP_STORY.opening(PATH),()=>TLP_STORY.mark('intro'))}catch(e){}};
+ $('#setTour').onclick=()=>{m.hidden=true;runTour(true)};
+ const wire=(id,key)=>{const el=$('#'+id);if(el)el.onchange=()=>setPref(key,el.checked)};
+ wire('setGuide','guide');wire('setKid','kidfx');wire('setBreaks','breaks');wire('setAfk','afk');
+ const bm=$('#setBreakMin');if(bm)bm.onchange=()=>{setPref('breakmin',Number(bm.value));breakMin=0};
+ if(window.TLP_VOL)TLP_VOL.wire(m,kind=>snd(kind));
+ const mus=$('#setMusic');if(mus)mus.onchange=()=>{TLP_MUSIC.setEnabled(mus.checked);snd('chime')};
+ wire('setHard','hard');
+ {const sh=$('#setHard');if(sh)sh.onchange=()=>{setPref('hard',sh.checked);if(sh.checked)document.querySelectorAll('.coach').forEach(x=>x.remove())}}
+}
 async function difficultyCelebration(next){
  try{const l=TLP_AUTH.getActiveLearner();if(l&&!l.isGuest){const r=await TLP_AUTH.markDifficultyCompleted(l.id,DIFF);l.completed_diffs=r}}catch(e){}
  const t=(DIFF==='beg'?'You finished the game on Beginner. Intermediate is now unlocked.':DIFF==='int'?'You finished the game on Intermediate. Professional is now unlocked.':'Congratulations, you finished the game as a Professional. If you want to go back and try Beginner and Intermediate, you can do that from the difficulty settings.')+' The Bonus sections are now unlocked from the top bar.';
@@ -805,6 +1363,9 @@ function pickModal(){
  document.querySelectorAll('#m-diffs .dp').forEach(b=>b.onclick=()=>{setDiff(b.dataset.d);document.querySelectorAll('#m-diffs .dp').forEach(x=>x.classList.toggle('on',x===b));snd('chime')});
  const b=$('#m-start');if(b)b.onclick=()=>{if(!DIFF)setDiff('int');snd('win');uncine();storyOpening()}}
 $('#name').addEventListener('change',regPlayer);
+const setBtn=$('#setOpen');if(setBtn)setBtn.onclick=openSettings;
+// The shared effects toggle can switch kid mode off, so mirror that change here.
+window.addEventListener('tlp-fx-change',()=>{try{applyPrefs()}catch(e){}});
 applyHidden();applyDiff();renderTally();loadRemote();
 {const P=players();if(P[S.name])lastReg=S.name}
 /* path and difficulty come from the signed-in learner, so no picker is shown here */
@@ -823,7 +1384,7 @@ const B6=[
  RD('The Origin · Round 4: Finishing blow','<b>Final blow.</b> Find the biggest item, explain it with a note, and combine everything you know.','Walk to the biggest number in the list and add a note. Pass both tests.',[{vars:{list:[2,8,4]},goal:8},{vars:{list:[7,1,3]},goal:7}],7,{txt:'use pick, repeat, if, calculate and a note with text.',f:s=>has(s,'pick')&&has(s,'rep')&&has(s,'if')&&has(s,'calc')&&any(s,b=>b.t==='note'&&b.val.trim().length>2)},['Remember the best so far.','If x is bigger, copy it into best.','Repeat 3: change i, pick x, if x > best then calculate best = x + 0. Move best. Add a note.'],'snake',{vars:{list:[2,8,4],i:0,x:0,best:0}})];
 BOSSES[24]={k:4,name:'THE BYTE',rounds:B5,taunts:['Zero. One. Zero. One.','Count me if you can.','I flip, you fall.','The vault stays shut.'],intro:'It lives in the vault of ones and zeros.'};
 BOSSES[29]={k:5,name:'THE ORIGIN',rounds:B6,taunts:['I was the first bug.','Search me. Debug me. You cannot.','Everything leads back to me.','This is where it began.'],intro:'The first bug, the one every other guardian came from.'};
-const _snd=snd;snd=function(k){if(k!=='b5'&&k!=='b6')return _snd(k);if(mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime,T=(f,d,w,v,s)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=w;o.frequency.setValueAtTime(f,t+s);g.gain.setValueAtTime(v,t+s);g.gain.exponentialRampToValueAtTime(.001,t+s+d);o.connect(g);g.connect(AC.destination);o.start(t+s);o.stop(t+s+d)};
+const _snd=snd;snd=function(k){if(k!=='b5'&&k!=='b6')return _snd(k);if(mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime,fxv=window.TLP_VOL?TLP_VOL.factor('fx'):1;if(fxv<=0)return;const T=(f,d,w,v,s)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=w;o.frequency.setValueAtTime(f,t+s);g.gain.setValueAtTime(v*fxv,t+s);g.gain.exponentialRampToValueAtTime(.001,t+s+d);o.connect(g);g.connect(AC.destination);o.start(t+s);o.stop(t+s+d)};
  if(k==='b5')[262,330,392,523,659,784,1047].forEach((f,i)=>T(f,.18,'square',.07,i*.07));else{[196,247,294,392].forEach(f=>T(f,2,'sawtooth',.05,0));[523,659,784,1047,1319,1568].forEach((f,i)=>T(f,.7,'triangle',.08,.4+i*.12))}}catch(e){}};
 const _render=render;render=function(){_render.apply(this,arguments);cvUpdate()};
 /* -----------------------------------------------------------------------------
@@ -850,11 +1411,73 @@ function setDiff(d){
   menu();
   syncCurrentToCloud();
 }
-function coachInit(){const L0=$('#learn');if(!L0||document.querySelector('.coach'))return;const h=lv().hints||[];let n=1;
- const box=document.createElement('div');box.className='coach';box.innerHTML='<div class="cface"><span class="bface" data-m="ok"><i class="ant"></i><i class="eye"></i><i class="eye"></i></span></div><div class="cbody"><b>Coach says:</b><ol class="csteps"></ol><button class="btn sm" id="cnext">Show me the next step</button></div>';document.body.appendChild(box);
+function coachInit(){if(!pref('guide',true)||hardMode())return;const L0=$('#learn');if(!L0||document.querySelector('.coach'))return;const h=lv().hints||[];let n=1;
+ const box=document.createElement('div');box.className='coach';box.innerHTML='<div class="cface"><span class="bface" data-m="ok"><i class="ant"></i><i class="eye"></i><i class="eye"></i></span></div><div class="cbody"><b>Coach says:</b><ol class="csteps"></ol><button class="btn sm" id="cnext">Show me the next step</button><button class="coach-off" id="coff" type="button">Don\'t show tips</button></div>';document.body.appendChild(box);
  const ol=box.querySelector('.csteps'),nx=box.querySelector('#cnext'),add=()=>{if(n>h.length)return;const li=document.createElement('li');li.textContent=h[n-1];ol.appendChild(li);n++;if(n>h.length)nx.hidden=true;snd('tick')};
  const intro=document.createElement('li');intro.innerHTML='Read the mission above. Then drag the <b>glowing</b> blocks into your script and press Run.';ol.appendChild(intro);add();nx.onclick=add;
+ const off=box.querySelector('#coff');if(off)off.onclick=()=>{setPref('guide',false);document.querySelectorAll('.coach').forEach(x=>x.remove());msg('Guided steps are off. You can turn them back on in Settings.','hint')};
  const txt=h.join(' ').toLowerCase();document.querySelectorAll('#pal .blk').forEach(p=>{const t=[...p.classList].find(c=>NAMES[c]);if(t&&txt.includes(NAMES[t].split(' ')[0].toLowerCase()))p.classList.add('glow')})}
+/* -----------------------------------------------------------------------------
+   First-run tour
+   Four steps point at the block list, the script, Run and Hint. It plays once
+   on this device; Settings can replay it. It never changes a level or a score.
+   -------------------------------------------------------------------------- */
+const tourSeen=()=>{try{return localStorage.getItem('tlp-tour')==='1'}catch(e){return true}};
+function runTour(force){
+ if(document.querySelector('.tour'))return;
+ if(!force&&(tourSeen()||window.__adminPreview||!$('#game')||$('#game').hidden))return;
+ if(!$('#pal')||!$('#area')||!$('#run')||!$('#hint'))return;
+ const steps=[
+  {sel:'#pal',t:'Your blocks',d:'These are the moves you can use. Tap one to add it to the end, or hold and drag it where you want it. On a computer you can drag with the mouse too.'},
+  {sel:'#area',t:'Your script',d:'Your plan lives here. The robot runs it from top to bottom, one block at a time.'},
+  {sel:'#run',t:'Run',d:'Press Run to watch the robot try your plan. If it gets it wrong, change one block and run again. Nothing breaks.'},
+  {sel:'#hint',t:'Stuck?',d:'Hint gives you one nudge. The Coach on the left walks you through the steps, one at a time.'}
+ ];
+ let i=0;
+ const last=()=>i===steps.length-1;
+ const ov=document.createElement('div');ov.className='tour';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');ov.setAttribute('aria-labelledby','tourT');
+ ov.innerHTML='<div class="tour-hole" aria-hidden="true"></div><div class="tour-card"><span class="tk" id="tourK"></span><h3 id="tourT"></h3><p id="tourD"></p><div class="tour-bar"><button class="tour-skip" id="tourSkip" type="button">Skip</button><span class="tour-dots" id="tourDots" aria-hidden="true"></span><span class="tour-btns"><button class="btn ghost sm" id="tourBack" type="button">Back</button><button class="btn sm" id="tourNext" type="button">Next</button></span></div></div>';
+ document.body.appendChild(ov);
+ const hole=ov.querySelector('.tour-hole'),card=ov.querySelector('.tour-card');
+ const measure=()=>{
+  const st=steps[i],el=$(st.sel);if(!el)return;
+  const r=el.getBoundingClientRect();
+  hole.style.left=(r.left-8)+'px';hole.style.top=(r.top-8)+'px';
+  hole.style.width=(r.width+16)+'px';hole.style.height=(r.height+16)+'px';
+  $('#tourK').textContent='Step '+(i+1)+' of '+steps.length;
+  $('#tourT').textContent=st.t;$('#tourD').textContent=st.d;
+  $('#tourDots').innerHTML=steps.map((_,n)=>'<i class="'+(n===i?'on':'')+'"></i>').join('');
+  $('#tourBack').disabled=i===0;
+  $('#tourNext').textContent=last()?'Start playing':'Next';
+  const h=card.offsetHeight,w=card.offsetWidth;
+  let top=r.bottom+14;
+  if(top+h>innerHeight-10)top=r.top-h-14;
+  top=Math.min(Math.max(10,top),Math.max(10,innerHeight-h-10));
+  card.style.left=Math.min(Math.max(8,r.left+r.width/2-w/2),innerWidth-w-8)+'px';
+  card.style.top=top+'px';
+ };
+ const show=()=>{
+  const el=$(steps[i].sel);if(!el)return;
+  if(el.getBoundingClientRect().top<10||el.getBoundingClientRect().bottom>innerHeight-10)el.scrollIntoView({block:'center'});
+  card.style.visibility='hidden';measure();card.style.visibility='';
+ };
+ const close=()=>{try{localStorage.setItem('tlp-tour','1')}catch(e){}ov.remove();document.removeEventListener('keydown',key);window.removeEventListener('resize',show);window.removeEventListener('scroll',measure)};
+ const next=()=>{if(last())close();else{i++;show()}};
+ ov.querySelector('#tourNext').onclick=next;
+ ov.querySelector('#tourBack').onclick=()=>{if(i>0){i--;show()}};
+ ov.querySelector('#tourSkip').onclick=close;
+ const key=e=>{
+  if(e.key==='Escape'){e.preventDefault();close();return}
+  if(e.key!=='Tab')return;
+  const f=[...ov.querySelectorAll('button')].filter(b=>!b.disabled);
+  const k=f.indexOf(document.activeElement);
+  e.preventDefault();f[(k+(e.shiftKey?-1:1)+f.length)%f.length].focus();
+ };
+ document.addEventListener('keydown',key);
+ window.addEventListener('resize',show);
+ window.addEventListener('scroll',measure,{passive:true});
+ show();setTimeout(()=>ov.querySelector('#tourNext').focus(),60);
+}
 puff=function(x,y,n){
   if(still)return;
   for(let i=0;i<(n||6);i++){
@@ -874,6 +1497,15 @@ puff=function(x,y,n){
   }
 };
 cheer=function(){const r=bot.getBoundingClientRect();for(let i=0;i<7;i++)setTimeout(()=>puff(r.left+r.width/2,r.top,14),i*150)};
+// Tapping the robot is a small reward, not a command: it only shows a short
+// bubble and a puff, and never edits the script or the run.
+if(bot)bot.addEventListener('click',()=>{
+ if(!kidMode())return;
+ const r=bot.getBoundingClientRect();puff(r.left+r.width/2,r.top,8);snd('tick');
+ $$('.bub').forEach(x=>x.remove());
+ const u=document.createElement('div');u.className='bub';u.textContent=kidPraise();bot.appendChild(u);
+ setTimeout(()=>u.remove(),1600);
+});
 function bfxUpdate(){
   let e=$('#bfx');
   if(PATH!=='g16'){if(e)e.remove();return}
@@ -898,19 +1530,29 @@ async function initGameSession(){
       await window.TLP_AUTH.init();
       const u=window.TLP_AUTH.getCurrentUser();
       if(window.TLP_AUTH.isCloudConfigured()){
-        if(!u){location.replace('auth.html');return}
-        if(u.role==='parent'){location.replace('parent.html');return}
-        if(u.isAdmin){window.__adminPreview=true}
+        // Guests can still play: their progress stays on this device and the
+        // account page is offered from the header when they want it saved.
+        // Parent and Educator accounts belong in their own dashboard, but the
+        // owner account is also a parent and must be able to preview the game.
+        if(u&&u.role==='parent'&&!u.isAdmin){location.replace('parent.html');return}
+        if(u&&u.isAdmin){window.__adminPreview=true}
       }
       const l=window.TLP_AUTH.getActiveLearner();
-      if(l){
+      // The administrator previews every age version and difficulty, so it does
+      // not inherit the path or the ladder of whichever learner is selected.
+      if(l && !window.__adminPreview){
         const lp=l.assigned_path||l.assignedPath, ld=l.current_diff||l.currentDiff;
-        if(l.name && l.name !== 'Player') S.name = l.name;
         if(lp && PATHS_CFG[lp]) PATH = lp;
         if(ld && ['beg','int','pro'].includes(ld)){ DIFF = ld; __D = DIFF; }
       }
+      // A signed-in learner is already known by the name on the account. Use
+      // that name everywhere and hide the "Your name" box instead of asking.
+      const accountName=window.__adminPreview?(u&&u.displayName)||'':(l&&!l.isGuest&&l.name)||(u&&u.displayName)||'';
+      if(accountName){S.name=String(accountName).trim().slice(0,32)||'Player';try{localStorage.setItem('tlp-name',S.name)}catch(e){}}
+      const who=document.querySelector('.who');
+      if(who&&u&&u.role==='learner')who.hidden=true;
       try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}')}catch(e){S.prog={}}
-      if(window.TLP_AUTH.isCloudConfigured() && l && !l.isGuest){
+      if(window.TLP_AUTH.isCloudConfigured() && l && !l.isGuest && !window.__adminPreview){
         try{
           const cloudBundle = await window.TLP_AUTH.getProgressBundle(l.id, PATH, DIFF);
           if(cloudBundle && cloudBundle.prog && Object.keys(cloudBundle.prog).length > Object.keys(S.prog).length){
@@ -925,10 +1567,20 @@ async function initGameSession(){
   applyHidden();
   applyDiff();
   applyPathVisuals();
+  applyPrefs();
+  startBreakClock();
   updateHudLearner();
   renderPick();
+  streakCheck();
   menu();
   if(window.__adminPreview){const ap=$('#adminPrev');if(ap)ap.hidden=false}
+  // A Bonus page link opens the chosen Mastery mission directly. It only works
+  // once the five story sections are finished, or inside the admin preview.
+  const want=Number(new URLSearchParams(location.search).get('bonus')||0);
+  if(want&&SEC.some(s=>s.bonus&&(s.ch.includes(want)||s.boss===want))&&(window.__adminPreview||mainSecs().every(s=>done(s.boss)))){
+    try{history.replaceState(null,'',location.pathname)}catch(e){}
+    setTimeout(()=>{if(!$('#sc-body'))play(want,0)},80);
+  }
   if(!Object.keys(S.prog).length&&!window.__adminPreview)setTimeout(()=>{try{if(!$('#cine'))storyOpening()}catch(e){}},500);
 }
 
@@ -951,8 +1603,72 @@ initGameSession();
   track.addEventListener('keydown',e=>{if(e.target!==track)return;if(e.key==='ArrowLeft'){e.preventDefault();go(idx()-1)}else if(e.key==='ArrowRight'){e.preventDefault();go(idx()+1)}});
   nav.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'){go(idx()-1)}else if(e.key==='ArrowRight'){go(idx()+1)}});
   // open on the first section that still has an undefeated guardian
-  let start=0;try{start=Math.min(secs.length-1,SEC.filter(s=>done(s.boss)).length)}catch(e){}
+  let start=0;try{start=Math.min(secs.length-1,mainSecs().filter(s=>done(s.boss)).length)}catch(e){}
   track.style.scrollBehavior='auto';requestAnimationFrame(()=>{track.scrollLeft=start*(track.clientWidth+16);upd();track.style.scrollBehavior=''});upd();busy=false}
  new MutationObserver(()=>{if(!busy&&!chs.querySelector('.hs-track'))build()}).observe(chs,{childList:true});build();
  window.addEventListener('resize',()=>{const t=chs.querySelector('.hs-track');if(t)t.dispatchEvent(new Event('scroll'))});
+})();
+
+/* -----------------------------------------------------------------------------
+   COMMAND CONSOLE
+   A small terminal dock for players who like the console feel. It only reads
+   state and calls the same buttons the interface already uses, so no command
+   can grant progress, stars or scores.
+   -------------------------------------------------------------------------- */
+(function initConsole(){
+ const btn=document.getElementById('conBtn');if(!btn)return;
+ let el=null,out=null,inp=null;const hist=[];let hi=-1;
+ function line(txt,cls){if(!out)return;const d=document.createElement('div');d.className='tcon-line'+(cls?' '+cls:'');d.textContent=txt;out.appendChild(d);out.scrollTop=out.scrollHeight}
+ function build(){
+  if(el)return;
+  el=document.createElement('div');el.id='tcon';el.className='tcon';el.hidden=true;
+  el.innerHTML='<div class="tcon-head"><span class="tcon-dots" aria-hidden="true"><i></i><i></i><i></i></span><b>R-067 console</b><button type="button" class="tcon-x" aria-label="Close console">×</button></div><div class="tcon-out" id="tconOut" aria-live="polite"></div><div class="tcon-chips">'+['help','status','stars','streak','hint','glitch'].map(c=>'<button type="button" data-cmd="'+c+'">'+c+'</button>').join('')+'</div><form class="tcon-in"><span aria-hidden="true">&gt;</span><input id="tconIn" autocomplete="off" spellcheck="false" aria-label="Console command"></form>';
+  document.body.appendChild(el);
+  out=el.querySelector('#tconOut');inp=el.querySelector('#tconIn');
+  el.querySelector('.tcon-x').onclick=close;
+  el.querySelector('.tcon-chips').onclick=e=>{const b=e.target.closest('[data-cmd]');if(b)run(b.dataset.cmd)};
+  el.querySelector('form').onsubmit=e=>{e.preventDefault();run(inp.value);inp.value=''};
+  inp.addEventListener('keydown',e=>{
+   if(e.key==='Enter'){e.preventDefault();run(inp.value);inp.value='';return}
+   if(e.key==='ArrowUp'){e.preventDefault();if(hist.length){hi=hi<0?hist.length-1:Math.max(0,hi-1);inp.value=hist[hi]||''}}
+   if(e.key==='ArrowDown'){e.preventDefault();if(hist.length){hi=hi<0?hist.length:Math.min(hist.length,hi+1);inp.value=hi>=hist.length?'':hist[hi]}}
+   if(e.key==='Tab'){e.preventDefault();const m=Object.keys(CMDS).filter(c=>c.indexOf(inp.value.trim())===0);if(m.length===1)inp.value=m[0]+' '}
+  });
+  line('R-067 console ready. Type help for commands.','tcon-dim');
+ }
+ function open(){build();el.hidden=false;btn.setAttribute('aria-expanded','true');setTimeout(()=>inp&&inp.focus(),0)}
+ function close(){if(!el)return;el.hidden=true;btn.setAttribute('aria-expanded','false')}
+ function toggle(){el&&!el.hidden?close():open()}
+ const CMDS={
+  help(){line('help           this list');line('status         name, path, difficulty, score');line('stars          stars earned');line('streak         current and best streak');line('hint           use one hint in the current mission');line('menu           back to the chapter map');line('story          replay the opening');line('friends        open the friend list');line('coop           open the co-op lobby');line('music on|off   background music');line('sound          sound on or off');line('glitch         a small display glitch');line('clear          clear this console')},
+  status(){const l=window.TLP_AUTH&&TLP_AUTH.getActiveLearner&&TLP_AUTH.getActiveLearner();line('Player: '+S.name+(l&&l.player_id?' ('+l.player_id+')':''));line('Path: '+(PATHS_CFG[PATH]?PATHS_CFG[PATH].n:PATH));line('Difficulty: '+(DIFFS[DIFF]?DIFFS[DIFF].n:DIFF));line('Score: '+score());line('Missions with a star: '+Object.values(S.prog).filter(v=>Number(v)>0).length)},
+  whoami(){const l=window.TLP_AUTH&&TLP_AUTH.getActiveLearner&&TLP_AUTH.getActiveLearner();line(l&&l.player_id?'You are '+S.name+', Player ID '+l.player_id+'.':'You are '+S.name+' on this device.')},
+  score(){line('Total score: '+score())},
+  stars(){const n=Object.values(S.prog).reduce((a,v)=>a+Math.min(3,Number(v)||0),0);line('Stars: '+n)},
+  streak(){const s=window.TLP_STREAK&&TLP_STREAK.get?TLP_STREAK.get():null;if(!s)return line('Streak data is not available.','tcon-bad');line('Streak: '+s.count+' day'+(s.count===1?'':'s')+'. Best: '+s.best+'.');line(s.next?'Next reward in '+s.left+' day'+(s.left===1?'':'s')+': '+s.next.name:'All milestones earned.')},
+  hint(){if(document.getElementById('game').hidden)return line('Open a mission first.','tcon-bad');const b=document.getElementById('hint');if(!b)return line('No hint button in this mission.','tcon-bad');b.click();line('Hint requested.','tcon-ok')},
+  menu(){close();menu()},
+  story(){try{storyScenes(TLP_STORY.opening(PATH),()=>TLP_STORY.mark('intro'));line('Replaying the opening.','tcon-ok')}catch(e){line('Story is not available here.','tcon-bad')}},
+  friends(){location.href='friends.html'},
+  coop(){location.href='coop.html'},
+  music(a){if(!window.TLP_MUSIC)return line('Music is not available here.','tcon-bad');const on=String(a[0]||'').toLowerCase()!=='off';TLP_MUSIC.setEnabled(on);line('Music '+(on?'on':'off')+'.','tcon-ok')},
+  sound(){toggleMute();line('Sound '+(mute?'off':'on')+'.','tcon-ok')},
+  glitch(){document.body.classList.add('zap');setTimeout(()=>document.body.classList.remove('zap'),420);line('Display glitch fired.','tcon-ok')},
+  clear(){out.innerHTML=''}
+ };
+ function run(raw){
+  const text=String(raw||'').trim();if(!text)return;
+  line('> '+text,'tcon-you');hist.push(text);hi=-1;
+  const parts=text.split(/\s+/),key=parts[0].toLowerCase(),args=parts.slice(1);
+  if(CMDS[key]){try{CMDS[key](args)}catch(e){line('Error: '+(e&&e.message||e),'tcon-bad')}}
+  else line('Unknown command: '+key+'. Type help.','tcon-bad');
+ }
+ btn.setAttribute('aria-expanded','false');
+ btn.onclick=toggle;
+ document.addEventListener('keydown',e=>{
+  const tag=(document.activeElement&&document.activeElement.tagName)||'';
+  if(e.key==='Escape'&&el&&!el.hidden){close();return}
+  if(e.key==='`'&&!/INPUT|TEXTAREA|SELECT/.test(tag)){e.preventDefault();toggle()}
+ });
+ window.TLP_CONSOLE={open:open,close:close,run:run};
 })();

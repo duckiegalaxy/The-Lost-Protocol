@@ -39,3 +39,30 @@ table.rank th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color
 .scroll-x{overflow-x:auto}
 .fld label{display:block;margin:12px 0 4px;font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
 .msg2{min-height:1.3em;margin-top:10px;font-size:14px}
+
+/* ---------------------------------------------------------------------------
+   SEARCH, DAILY GRADE AND REPORT
+   The grade badge is the only colour-coded element on the card; green means a
+   strong session, red means the learner has been away for a few days.
+   --------------------------------------------------------------------------- */
+.ptools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 6px}
+.psearch{flex:1 1 280px;display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--mut)}
+.psearch:focus-within{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 18%,transparent)}
+.psearch input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:15px var(--sans);outline:none}
+.lhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.grade{flex:0 0 auto;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font:800 22px var(--serif);border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.grade.gA{color:#0b0f14;background:#8fe3a0;border-color:transparent}
+.grade.gB{color:#0b0f14;background:#9fd8ff;border-color:transparent}
+.grade.gC{color:#0b0f14;background:#ffd166;border-color:transparent}
+.grade.gD{color:#ffd7de;background:#33121a;border-color:#ff6b7f}
+.chip.today{border-color:var(--a);color:var(--a)}
+.digest{display:grid;gap:3px;margin:10px 0;padding:10px 12px;border-left:3px solid var(--a);border-radius:0 10px 10px 0;background:rgba(255,255,255,.03);font-size:13px;color:var(--mut)}
+.digest b{font:700 13px var(--sans);color:var(--fg)}
+.digest span:last-child{color:var(--fg)}
+@media print{
+ header,footer,.bar2 .row2,.ptools,#addBtn,.row2{display:none!important}
+ .edu{margin:0;max-width:none}
+ .grid{grid-template-columns:1fr 1fr}
+ .lc2{break-inside:avoid;border-color:#999}
+ .digest{background:#f2f2f2;border-color:#444;color:#222}
+}

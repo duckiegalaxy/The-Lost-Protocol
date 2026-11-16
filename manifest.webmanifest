@@ -1,0 +1,23 @@
+{
+  "name": "The Lost Protocol",
+  "short_name": "Lost Protocol",
+  "description": "A puzzle game that teaches you to think like a programmer.",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#080d16",
+  "theme_color": "#080d16",
+  "categories": ["education", "games", "puzzle"],
+  "icons": [
+    { "src": "assets/brand/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/brand/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "assets/brand/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Play", "short_name": "Play", "url": "webgame.html", "icons": [{ "src": "assets/brand/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Leaderboards", "short_name": "Boards", "url": "leaderboard.html", "icons": [{ "src": "assets/brand/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Parent and Educator", "short_name": "Parents", "url": "parent.html", "icons": [{ "src": "assets/brand/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

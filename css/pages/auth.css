@@ -1,9 +1,11 @@
 /* =============================================================================
    ACCOUNT PAGE  (auth.html)
 
-   Two-column editorial layout: a fixed title column on the left, and a stack of
-   panels on the right that swap between "signed in", "sign in / register",
-   "request a reset link" and "choose a new password".
+   One centered column. The heading introduces the task, then a single card
+   holds whichever view is needed: sign in / create account, the signed-in
+   summary, the reset request or the new-password form. Only one of those is
+   ever visible, and fields that do not apply to the chosen account type are
+   hidden by the script.
 
    Everything here is page-local. The shared tokens (--bg, --fg, --a, --line,
    --serif, --sans) and the site header, buttons and alerts outside this page
@@ -13,37 +15,32 @@
 /* --- Page frame ----------------------------------------------------------- */
 
 .acct {
-  max-width: 1000px;
-  margin: 40px auto 84px;
+  max-width: 620px;
+  margin: 42px auto 88px;
   position: relative;
   z-index: 5;
-  display: grid;
-  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
-  gap: 30px 46px;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-/* The message strip and every panel belong to the right column, so the title
-   column keeps its width while views change underneath it. */
 .acct .alert,
 .acct .card2 {
-  grid-column: 2;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* --- Title column --------------------------------------------------------- */
+/* --- Title ---------------------------------------------------------------- */
 
 .acct-head {
-  grid-column: 1;
-  grid-row: 1 / span 3;
-  position: sticky;
-  top: 96px;
-  padding-top: 4px;
+  text-align: center;
+  padding: 4px 0 10px;
 }
 
 /* Short accent rule above the heading, a quiet nod to the game's terminal
    styling without adding another box to the page. */
 .acct-head h1 {
-  font-size: clamp(32px, 4.6vw, 48px);
+  font-size: clamp(32px, 4.6vw, 46px);
   line-height: 1.05;
   margin: 0 0 10px;
   letter-spacing: -.01em;
@@ -54,25 +51,38 @@
   display: block;
   width: 46px;
   height: 3px;
-  margin-bottom: 18px;
+  margin: 0 auto 18px;
   border-radius: 2px;
   background: linear-gradient(90deg, var(--a), var(--b));
 }
 
 .acct-head .lead {
   color: var(--mut);
-  margin: 0;
-  max-width: 34ch;
+  margin: 0 auto;
+  max-width: 46ch;
 }
 
 /* --- Panels --------------------------------------------------------------- */
 
 .card2 {
+  position: relative;
+  overflow: hidden;
   border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 26px 26px 24px;
-  background: color-mix(in srgb, var(--bg) 74%, transparent);
+  border-radius: 20px;
+  padding: 28px 28px 26px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, .18);
   transition: border-color .25s ease;
+}
+
+/* A hairline of accent colour along the top edge marks the active panel. */
+.card2::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--a), var(--b), transparent);
+  opacity: .65;
 }
 
 /* A panel that contains the field currently being typed in gets a slightly
@@ -425,21 +435,12 @@
 
 @media (max-width: 900px) {
   .acct {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 18px;
-    margin-top: 26px;
+    margin-top: 24px;
+    gap: 14px;
   }
 
   .acct-head {
-    grid-column: 1;
-    grid-row: auto;
-    position: static;
-    padding-top: 0;
-  }
-
-  .acct .alert,
-  .acct .card2 {
-    grid-column: 1;
+    padding: 0 0 6px;
   }
 
   .acct-head .lead {
@@ -460,4 +461,38 @@
   .seg button {
     flex-basis: 100%;
   }
+}
+
+/* --- Password strength meter ---------------------------------------------
+   Four small bars under the password field. The data-score attribute (0-4)
+   is set by js/pages/auth.js; everything visual lives here. */
+
+.pwbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin: 8px 0 6px;
+}
+
+.pwbar i {
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg, #f3efe8) 16%, transparent);
+  transition: background .25s ease;
+}
+
+.pwbar[data-score="1"] i:nth-child(1) { background: #ef7a8c; }
+.pwbar[data-score="2"] i:nth-child(-n+2) { background: #e8a23a; }
+.pwbar[data-score="3"] i:nth-child(-n+3) { background: #35c9e8; }
+.pwbar[data-score="4"] i { background: #3ddc84; }
+
+.pwhint {
+  margin: 0 0 14px;
+  min-height: 1.2em;
+  font: 500 12.5px/1.45 var(--sans, system-ui, sans-serif);
+  color: color-mix(in srgb, var(--fg, #f3efe8) 62%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwbar i { transition: none; }
 }

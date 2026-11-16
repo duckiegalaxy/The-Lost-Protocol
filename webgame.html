@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="assets/brand/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#080d16">
 <title>The Lost Protocol · Play</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -10,13 +16,39 @@
 <script src="js/tlp-auth.js"></script>
 <script src="js/story.js"></script>
 <script src="js/tlp-common.js"></script>
+<script src="js/tlp-presence.js"></script>
+<script src="js/streak.js"></script>
+<script src="js/music.js"></script>
 <link rel="stylesheet" href="css/pages/webgame.css">
+<link rel="stylesheet" href="css/pages/explainers.css">
 </head>
-<body>
+<body data-music="g710" data-activity="Playing the game">
 <div id="dim"></div><div id="achs"></div>
 <div class="wrap">
-  <div class="top"><a class="logo" href="index.html">The Lost Protocol</a><div class="tools" id="themes"><small>mood:</small></div>
-    <div class="hud"><span>Player <b id="pn">Player</b></span><span id="pathBadge" class="diff">Grades 7–10</span><a class="btn ghost sm" id="accountLink" href="auth.html" title="Account and sync">Account</a><a class="btn ghost sm" href="leaderboard.html">Leaderboards</a><a class="btn ghost sm" href="coop.html">Co-op</a><a class="btn ghost sm" id="bonusLink" href="bonus.html">Bonus sections</a><button class="btn ghost sm" id="bugOpen" type="button">Report a bug</button><button class="btn ghost sm" id="fx" type="button" aria-pressed="false">Reduce visual effects: off</button><span>Score <b id="sc">0</b></span><button class="btn ghost sm" id="libb">Library</button><button class="btn ghost sm" id="sndg" title="Sound on/off"><i class=ic-volume></i></button><button class="btn ghost sm" id="adminPrev" type="button" hidden>Admin preview</button><button class="btn ghost" id="exit" hidden>Exit to menu</button></div></div>
+  <div class="top"><a class="logo" href="index.html">The Lost Protocol</a>
+    <div class="tools" id="themes"><small>mood:</small></div>
+    <div class="hud">
+      <div class="hud-who"><span class="hud-eyebrow">Playing as</span><b id="pn">Player</b><span id="pathBadge" class="diff">Grades 7–10</span></div>
+      <nav class="hud-nav" aria-label="Game pages">
+        <a class="btn ghost sm" id="accountLink" href="auth.html" title="Account and sync">Account</a>
+        <a class="btn ghost sm" href="leaderboard.html">Leaderboards</a>
+        <a class="btn ghost sm" href="coop.html">Co-op</a>
+      </nav>
+      <div class="hud-tools">
+        <a class="btn ghost sm" id="bonusLink" href="bonus.html">Bonus</a>
+        <button class="btn ghost sm" id="setOpen" type="button">Settings</button>
+        <button class="btn ghost sm" id="bugOpen" type="button">Report</button>
+        <button class="btn ghost sm" id="fx" type="button" aria-pressed="false">Effects: off</button>
+        <button class="btn ghost sm" id="libb">Library</button>
+        <button class="btn ghost sm" id="friendsBtn" type="button">Friends</button>
+        <button class="btn ghost sm" id="conBtn" type="button" aria-expanded="false" aria-controls="tcon" title="Command console (backtick)">Console</button>
+        <button class="btn ghost sm" id="sndg" type="button" title="Sound and music on or off" aria-label="Sound and music on or off"><i class=ic-volume></i></button>
+        <button class="btn ghost sm" id="adminPrev" type="button" hidden>Admin preview</button>
+      </div>
+      <div class="hud-score" title="Your score"><span>Score</span><b id="sc">0</b></div>
+      <button class="btn sm" id="exit" hidden>Exit to menu</button>
+    </div>
+  </div>
 
   <div id="menu">
     <div class="hero"><span class="hand">web edition</span><h1>Restore the protocol.</h1>
@@ -24,6 +56,7 @@
     <div class="how"><span>1. Read the short lesson</span><span>2. Drag blocks into your script</span><span>3. Press Run and watch the robot</span></div>
     <div class="who"><span class="hand">Your name:</span><input id="name" maxlength="14" value="Player" aria-label="Your name"></div>
     <div id="pick"></div><div id="tally"></div>
+    <div class="dashrow"><div id="streak"></div><div id="daily"></div></div>
 <div class="chs" id="chs"></div>
   </div>
 
@@ -43,6 +76,7 @@
         <div><div class="lab">Your script</div><div class="zone" id="area" data-z="root"></div></div>
       </div>
       <div class="bar bar-top"><button class="btn" id="run">Run ▶</button><button class="btn ghost" id="reset">Reset</button><button class="btn ghost" id="hint">Hint</button></div>
+      <p class="touchnote">Tap a block to add it. Hold a block to move it, and drop it on the block list to remove it.</p>
     </div></div>
   </div>
 </div>
@@ -50,6 +84,7 @@
 <div id="toast" hidden></div>
 <div class="modal" id="res" hidden><div class="pan" id="pan"></div></div>
 
+<script src="js/explainers.js"></script>
 <script src="js/pages/webgame.js"></script>
 </body>
 </html>

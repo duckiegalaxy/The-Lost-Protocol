@@ -1,0 +1,43 @@
+/* =============================================================================
+   FRIENDS PAGE STYLES  (friends.html)
+   -----------------------------------------------------------------------------
+   Self card, add-friend form and the friend grid. Online cards glow with the
+   accent colour; offline cards stay quiet. All colours come from css/style.css.
+   ============================================================================= */
+.fr{max-width:980px;margin:30px auto 70px;position:relative;z-index:5}
+.fr h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.fr .lead{color:var(--mut);margin:0 0 18px;max-width:72ch;line-height:1.55}
+.pn{border:1px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}
+.pn h2{margin:0 0 8px;font:800 22px var(--serif)}
+.pn .m{color:var(--mut);font-size:13px;line-height:1.5;margin:8px 0 0}
+.row3{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg4{min-height:1.3em;margin:8px 0 0;font-size:13px}
+.self{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(140deg,color-mix(in srgb,var(--a) 10%,transparent),transparent 65%)}
+.self small{font:700 10px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.self h2{margin:2px 0 0}
+.self .m{margin:6px 0 0}
+.selfact{text-align:right;display:flex;flex-direction:column;gap:4px}
+.selfact b{font:700 15px var(--sans);color:var(--a)}
+.frhead{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.frgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:12px}
+.fcard{position:relative;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:13px;background:rgba(255,255,255,.02)}
+.fcard.on{border-color:color-mix(in srgb,var(--a) 55%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 20%,transparent),0 10px 30px -20px var(--a)}
+.fava{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font:800 18px var(--serif);background:color-mix(in srgb,var(--a) 16%,transparent);color:var(--a);border:1px solid color-mix(in srgb,var(--a) 35%,transparent)}
+.fcard:not(.on) .fava{background:rgba(255,255,255,.05);color:var(--mut);border-color:var(--line)}
+.fwho{min-width:0}
+.fwho b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fwho small{display:block;font-size:11px;letter-spacing:.06em;color:var(--mut)}
+.fdot{font:700 9px var(--sans);letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--mut);white-space:nowrap}
+.fcard.on .fdot{border-color:var(--a);color:var(--a)}
+.fdot i{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:5px;vertical-align:1px}
+.fcard.on .fdot i{box-shadow:0 0 8px var(--a)}
+.fact{grid-column:1/-1;margin:0;font-size:12px;color:var(--mut);line-height:1.4;min-height:1.2em}
+.fcard .row3{grid-column:1/-1;margin-top:2px}
+.fcard .btn{flex:1 1 110px}
+.fcard .danger{border-color:#ef7a8c;color:#ef7a8c}
+.frnote{color:var(--mut);font-size:12px;line-height:1.6;max-width:75ch;margin:16px 0 0}
+@media (max-width:620px){
+  .self{flex-direction:column;align-items:flex-start}
+  .selfact{text-align:left}
+  .frgrid{grid-template-columns:1fr}
+}

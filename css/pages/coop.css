@@ -23,6 +23,8 @@
 .code{font:800 30px var(--sans);letter-spacing:.2em;padding:6px 14px;border:1px dashed var(--a);border-radius:12px}
 .pill2{display:inline-block;padding:3px 10px;border:1px solid var(--line);border-radius:999px;font:700 12px var(--sans)}
 .pill2.on{border-color:#3ddc84;color:#3ddc84}
+.gateacts{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.gateacts .btn{min-height:46px}
 .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:14px}
 .lane{border:1px solid var(--line);border-radius:14px;padding:12px}
 .lane.mine{border-color:var(--a)}
@@ -44,3 +46,74 @@ table.st td.ok{color:#3ddc84;font-weight:700}table.st td.no{color:#ef7a8c}
 .row3.inner-line{align-items:flex-end;border-top:1px solid var(--line);padding-top:10px}
 .pn.mt{margin-top:14px}
 .scroll-x{overflow-x:auto;margin-top:10px}
+
+/* --- Result explanation --------------------------------------------------- */
+.res-hero{display:flex;align-items:baseline;flex-wrap:wrap;gap:10px 14px;margin:6px 0 4px}
+.res-score{font:italic 800 clamp(40px,9vw,62px)/1 var(--serif);color:var(--a)}
+.res-of{font:700 12px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.res-sub{color:var(--mut);font-size:14px;margin:4px 0 10px}
+.res-team{color:var(--mut);font-size:14px;margin:0 0 6px}
+#resBody h3{margin:20px 0 6px;font:800 18px var(--serif)}
+.why,.miss,.tips{margin:6px 0 0;padding-left:20px;display:grid;gap:8px;font-size:14.5px;line-height:1.55}
+.why b,.miss b{color:var(--fg)}
+.miss span{color:#ef7a8c;font-weight:700}
+.res-good{color:#3ddc84;font-weight:600;margin:6px 0}
+@media(max-width:560px){.res-hero{gap:8px}.res-score{font-size:44px}}
+
+/* --- Practice levels ------------------------------------------------------ */
+.prac{display:grid;gap:8px;margin-top:10px}
+.pracrow{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+.pracrow b{display:block;font-size:15px}
+.pracrow small{display:block;font-size:12px;color:var(--mut);margin-top:2px}
+.pracrow .btn{flex:none;min-width:96px}
+
+/* --- Teammate preview (PiP) ------------------------------------------------ */
+.pip{position:fixed;top:76px;right:14px;width:252px;max-width:calc(100vw - 16px);z-index:60;border:1px solid color-mix(in srgb,var(--a) 55%,transparent);border-radius:14px;background:rgba(8,13,22,.96);box-shadow:0 18px 44px -20px #000;overflow:hidden;font-family:var(--sans)}
+.piphead{display:flex;align-items:center;gap:7px;padding:8px 10px;background:color-mix(in srgb,var(--a) 14%,transparent);cursor:grab;touch-action:none;user-select:none}
+.pipdot{width:7px;height:7px;border-radius:50%;background:#889;flex:none}
+.pipdot.on{background:#3ddc84;box-shadow:0 0 8px #3ddc84}
+.piphead b{flex:1;min-width:0;font:700 12px var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pipact{font:700 9px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
+.pipbtn{flex:none;width:24px;height:24px;border-radius:8px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px/1 var(--sans);cursor:pointer}
+.pipbtn:hover{border-color:var(--a);color:var(--a)}
+.pipbody{max-height:148px;overflow:auto;padding:8px 10px 10px}
+.pipbody .m{margin:0 0 4px;font-size:12px;color:var(--mut);line-height:1.4}
+.pipbody ol.prog{font-size:12px;line-height:1.5;padding-left:18px;margin:4px 0}
+.pip.min{width:210px}
+.pip.min .pipbody{display:none}
+.pip.open{left:50%!important;top:50%!important;right:auto!important;transform:translate(-50%,-50%);width:min(680px,94vw);max-width:94vw}
+.pip.open .pipbody{max-height:min(70vh,560px)}
+.pip.open .piphead{cursor:default}
+.pip.dragging .piphead{cursor:grabbing}
+
+/* -----------------------------------------------------------------------------
+   PHONES
+   The floating preview covers too much of a narrow screen, so on phones it
+   becomes a normal card above the lane instead of a fixed panel. The test and
+   submit buttons also move into a bar fixed to the bottom of the screen, which
+   keeps them reachable while the page is scrolled.
+   -------------------------------------------------------------------------- */
+@media (max-width:760px){
+  .pip{position:static;width:auto;max-width:none;margin:0 0 12px;box-shadow:none}
+  .pip.min{width:auto}
+  .pip .piphead{cursor:default;touch-action:auto}
+  .pip.open{transform:none;width:auto;max-width:none}
+  .pip.open .pipbody{max-height:240px}
+}
+@media (max-width:640px){
+  .actbar{position:fixed;left:0;right:0;bottom:0;z-index:70;margin:0;gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px));background:rgba(8,13,22,.97);border-top:1px solid var(--line);backdrop-filter:blur(10px)}
+  .actbar .btn{flex:1 1 0;min-height:48px;padding:0 14px;font-size:15px}
+  body.in-mission .co{padding-bottom:96px}
+}
+
+/* Touch screens: keep every co-op control at a comfortable finger size. */
+@media (pointer:coarse){
+  .co .btn{min-height:46px}
+  .co .btn.sm{min-height:40px}
+  .chat button{min-height:44px}
+  ol.prog li button{min-height:40px;padding:0 12px}
+  .pipbtn{width:34px;height:34px}
+  .pracrow .btn{min-height:46px}
+}
+
+

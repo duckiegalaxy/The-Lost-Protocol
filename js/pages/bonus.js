@@ -34,10 +34,10 @@ const pkey = () => 'tlp-bonus-' + learnerId;
 function loadLocal() { try { const p = JSON.parse(localStorage.getItem(pkey()) || 'null'); if (p && p.done) prog = p; } catch (e) {} }
 async function saveProg() {
   try { localStorage.setItem(pkey(), JSON.stringify(prog)); } catch (e) {}
-  try { if (A().isCloudConfigured() && learnerId !== 'local') await A().supabase.from('bonus_progress').upsert({ learner_id: learnerId, data: prog }); } catch (e) {}
+  try { if (A().isCloudConfigured() && learnerId !== 'local' && learnerId !== 'admin-preview') await A().supabase.from('bonus_progress').upsert({ learner_id: learnerId, data: prog }); } catch (e) {}
 }
 async function loadCloud() {
-  try { if (!A().isCloudConfigured() || learnerId === 'local') return; const { data } = await A().supabase.from('bonus_progress').select('data').eq('learner_id', learnerId).maybeSingle();
+  try { if (!A().isCloudConfigured() || learnerId === 'local' || learnerId === 'admin-preview') return; const { data } = await A().supabase.from('bonus_progress').select('data').eq('learner_id', learnerId).maybeSingle();
     if (data && data.data) { prog.ach = [...new Set([...(prog.ach || []), ...(data.data.ach || [])])]; prog.done = Object.assign({}, data.data.done, prog.done); } } catch (e) {}
 }
 
@@ -66,7 +66,7 @@ const ALG_ICONS = {
   insertion: '<svg viewBox="0 0 56 48"><rect x="4" y="22" width="9" height="14"/><rect x="16" y="22" width="9" height="14"/><rect x="40" y="22" width="9" height="14"/><rect x="28" y="6" width="9" height="14"/><path d="M33 22V28"/></svg>'
 };
 const ACHS = [];
-const PUZ_SHAPE = ['NOT', 'AND', 'NOT', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR', 'AND', 'XNOR'];
+const PUZ_SHAPE = ['NOT', 'AND', 'NOT', 'OR', 'XOR', 'NAND', 'NOR', 'XNOR', 'AND', 'XNOR', 'AND', 'XOR', 'OR', 'XNOR', 'XNOR', 'AND'];
 function achSvg(a) { return a.svg; }
 function unlock(id) {
   if (prog.ach.includes(id)) return; prog.ach.push(id);
@@ -76,7 +76,7 @@ function unlock(id) {
     p.innerHTML = '<div><div class="an' + (a.n % 4) + '">' + a.svg + '</div><h2 style="margin:10px 0 4px;font:800 26px var(--serif)">Achievement unlocked</h2><p style="font-size:20px;margin:0">' + esc(a.t) + '</p><p style="opacity:.8;margin:6px 0 16px">' + esc(a.d) + '</p><button class="bb pri" type="button">Continue</button></div>';
     document.body.appendChild(p); p.querySelector('button').onclick = () => p.remove(); p.querySelector('button').focus(); playSong(a.n);
   }
-  renderAch();
+  renderAch(); renderProg();
 }
 
 /* ================= LOGIC GATE WORKSHOP ================= */
@@ -96,7 +96,13 @@ const PUZZLES = [
   { t: 'Neither', n: 2, f: (a, b) => (a | b) ? 0 : 1, goal: 'The bulb must be ON only when both switches are OFF.', how: 'It is the opposite of the OR puzzle.', hints: ['Only the first row (both OFF) should be ON.', 'It is OR followed by an inversion.', 'Use a NOR gate, or an OR followed by a NOT.'], why: 'NOR is also universal, like NAND.' },
   { t: 'Same state', n: 2, f: (a, b) => (a ^ b) ? 0 : 1, goal: 'The bulb must be ON when both switches match (both ON or both OFF).', how: 'It is the opposite of "exactly one".', hints: ['Rows 1 and 4 of the truth table should be ON.', 'It is XOR followed by an inversion.', 'Use an XNOR gate, or XOR followed by NOT.'], why: 'XNOR compares two bits and tells you whether they are equal, which is how computers check equality.' },
   { t: 'Majority vote', n: 3, f: (a, b, c) => (a + b + c) >= 2 ? 1 : 0, goal: 'With three switches, the bulb must be ON when at least two are ON.', how: 'Combine several gates. Many solutions exist.', hints: ['Split it into the pairs: A with B, A with C, B with C.', 'Each pair needs both ON (AND). The bulb should be ON if any pair succeeds (OR).', 'Three AND gates (A,B), (A,C), (B,C), then combine them with OR gates.'], why: 'Real systems use majority voting so one faulty sensor cannot decide the outcome.' },
-  { t: 'Safety interlock', n: 3, f: (a, b, c) => ((a & (b ? 0 : 1)) | c) ? 1 : 0, goal: 'The bulb must be ON when switch C is ON, or when A is ON while B is OFF.', how: 'Break it into two parts joined by OR.', hints: ['Part one is "A and not B". Part two is just C.', 'Invert B with a NOT, then combine with A using AND.', 'Feed the AND result and C into an OR gate that drives the bulb.'], why: 'Machines combine conditions like this: a safety guard (B) overrides a button (A), while an emergency switch (C) always works.' }
+  { t: 'Safety interlock', n: 3, f: (a, b, c) => ((a & (b ? 0 : 1)) | c) ? 1 : 0, goal: 'The bulb must be ON when switch C is ON, or when A is ON while B is OFF.', how: 'Break it into two parts joined by OR.', hints: ['Part one is "A and not B". Part two is just C.', 'Invert B with a NOT, then combine with A using AND.', 'Feed the AND result and C into an OR gate that drives the bulb.'], why: 'Machines combine conditions like this: a safety guard (B) overrides a button (A), while an emergency switch (C) always works.' },
+  { t: 'Two keys or a bell', n: 3, f: (a, b, c) => ((a & b) | c) ? 1 : 0, goal: 'The bulb must be ON when A and B are both ON, or when C is ON.', how: 'Build "A and B" first, then join that result with C using OR.', hints: ['One AND gate handles A and B; the rest is a second condition.', 'C works alone, so it joins the result through an OR gate.', 'Wire A and B into AND, then feed that output and C into OR. Its output goes to the bulb.'], why: 'This is a priority override: two guards must agree, but the emergency switch works on its own.' },
+  { t: 'Exactly one of three', n: 3, f: (a, b, c) => (a + b + c) === 1 ? 1 : 0, goal: 'The bulb must be ON when exactly one of the three switches is ON.', how: 'Look for the odd switch out. Several small gates can do it.', hints: ['Two ON switches must give OFF, and three ON must also give OFF.', 'XOR gives ON when its two inputs differ. Chain two XOR gates.', 'XOR A with B, then XOR that result with C. Check the table: only the three rows with a single ON should be lit.'], why: 'Chained XOR adds bits without carrying, so it detects an odd number of ON signals.' },
+  { t: 'Two pairs', n: 4, f: (a, b, c, d) => ((a | b) & (c | d)) ? 1 : 0, goal: 'The bulb must be ON when at least one of A or B is ON AND at least one of C or D is ON.', how: 'Each pair needs its own OR gate, and the two results meet in an AND gate.', hints: ['Split the switches into the pairs A,B and C,D.', 'Each pair only needs one switch ON, so use OR inside each pair.', 'OR A with B, OR C with D, then send both OR outputs into an AND gate.'], why: 'Grouping conditions into pairs keeps a big rule readable, exactly how programmers break a long condition into smaller ones.' },
+  { t: 'Even parity', n: 4, f: (a, b, c, d) => (a + b + c + d) % 2 === 0 ? 1 : 0, goal: 'The bulb must be ON when an even number of switches are ON (zero, two or four).', how: 'Compare the switches in pairs, then combine the two comparisons.', hints: ['An even count means the first pair and the second pair must agree in a certain way.', 'XNOR is ON when its two inputs are the same. Use it on A,B and on C,D.', 'XNOR A with B, XNOR C with D, then XNOR those two results. Four zeros, two ON or four ON all light the bulb.'], why: 'Parity bits let computers detect a single flipped bit: if the count of ON bits stops being even, the data was damaged.' },
+  { t: 'Bigger number', n: 4, f: (a, b, c, d) => ((a * 2 + b) > (c * 2 + d)) ? 1 : 0, goal: 'Treat A and B as a 2-bit number (A is worth 2, B is worth 1). Do the same for C and D. The bulb must be ON when the first number is bigger.', how: 'First compare the highest bits. If they differ, that decides it; otherwise compare the low bits.', hints: ['A and C are worth 2; B and D are worth 1.', 'If A is ON and C is OFF, the first number is already bigger. If A is OFF and C is ON, it is smaller.', 'Build: (A AND NOT C) OR (A XNOR C AND B AND NOT D). Test all sixteen rows in the table.'], why: 'Comparators inside a processor decide which number is larger exactly this way: most significant bit first.' },
+  { t: 'Guard and one helper', n: 3, f: (a, b, c) => (a & (b | c)) ? 1 : 0, goal: 'The bulb must be ON only when A is ON and at least one of B or C is also ON.', how: 'A is the guard. B and C are helpers that join through OR.', hints: ['A must always be ON, so it is one side of an AND gate.', 'B or C alone is enough, so combine them with OR.', 'OR B with C, then AND that result with A. The AND output drives the bulb.'], why: 'This is the shape of many login checks: a valid account AND (a password OR a recovery code).' }
 ];
 let comps = [], wires = [], pend = null, selC = null, selW = null, nid = 1, pidx = 0, hintLv = 0, explorerBuilt = false;
 const NIN = (t) => t === 'SW' ? 0 : (t === 'NOT' || t === 'LAMP') ? 1 : 2;
@@ -123,7 +129,7 @@ function drawCircuit() {
   wires.forEach((w, i) => { const a = comps.find((c) => c.id === w.from), b = comps.find((c) => c.id === w.to); if (!a || !b) return; const x1 = a.x + 56, y1 = a.y + (a.t === 'SW' || a.t === 'LAMP' ? 24 : 24), x2 = b.x, y2 = b.y + PORT_Y(b.t, w.port);
     h += '<path class="wire ' + (ev.vals[w.from] ? 'on' : '') + (selW === i ? ' sel' : '') + '" data-w="' + i + '" d="M' + x1 + ' ' + y1 + 'C' + (x1 + 50) + ' ' + y1 + ' ' + (x2 - 50) + ' ' + y2 + ' ' + x2 + ' ' + y2 + '"/>'; });
   comps.forEach((c) => {
-    h += '<g class="comp ' + (selC === c.id ? 'sel' : '') + '" data-id="' + c.id + '" transform="translate(' + c.x + ' ' + c.y + ')">';
+    h += '<g class="comp ' + (selC === c.id ? 'sel' : '') + (ev.vals[c.id] ? ' live' : '') + '" data-id="' + c.id + '" transform="translate(' + c.x + ' ' + c.y + ')">';
     if (c.t === 'SW') h += '<rect class="bd" x="0" y="8" width="56" height="32" rx="16" fill="' + (c.v ? 'var(--a)' : 'transparent') + '" stroke="var(--a)" stroke-width="3"/><circle cx="' + (c.v ? 40 : 16) + '" cy="24" r="11" fill="' + (c.v ? '#111' : 'var(--a)') + '"/><text x="28" y="62" text-anchor="middle" fill="currentColor" font-size="13" font-weight="700">' + esc(swName(c)) + (c.v ? ' ON' : ' OFF') + '</text>';
     else if (c.t === 'LAMP') h += '<circle class="bulb ' + (ev.vals[c.id] ? 'on' : '') + '" cx="28" cy="24" r="20" stroke="var(--a)" stroke-width="3"/><text x="28" y="62" text-anchor="middle" fill="currentColor" font-size="13" font-weight="700">Bulb ' + (ev.vals[c.id] ? 'ON' : 'OFF') + '</text>';
     else h += '<g class="bd" style="stroke:var(--a);stroke-width:3;fill:none;stroke-linejoin:round" transform="translate(0 0)">' + GATE_SHAPES[c.t] + '</g><text x="26" y="28" text-anchor="middle" fill="currentColor" font-size="11" font-weight="800">' + c.t + '</text>';
@@ -155,18 +161,20 @@ function renderTruth() {
    -------------------------------------------------------------------------- */
 function checkPuzzle() {
   const p = PUZZLES[pidx], rows = tableFor(), fb = $('#gfb'), sws = comps.filter((c) => c.t === 'SW').length, gates = comps.filter((c) => !['SW', 'LAMP'].includes(c.t)).length;
-  const say = (m, ok) => { fb.textContent = m; fb.className = 'fb ' + (ok ? 'good' : 'bad'); };
+  const say = (m, ok) => { fb.textContent = m; fb.className = 'fb ' + (ok ? 'good' : 'bad'); if (ok) { tone(660, 0, .1); tone(880, .12, .18); } else { buzz(); tone(150, 0, .14, 'square'); } };
   if (!rows) return say('This puzzle needs ' + p.n + ' switch' + (p.n > 1 ? 'es' : '') + ' and exactly one bulb.', false);
   if (sws !== p.n) return say('Use exactly ' + p.n + ' switch' + (p.n > 1 ? 'es' : '') + ' for this puzzle.', false);
   const wired = wires.some((w) => comps.find((c) => c.id === w.to && c.t === 'LAMP')); if (!wired) return say('The bulb is not connected yet. Connect something to its input circle.', false);
   const bad = rows.filter((r) => (r.out ? 1 : 0) !== (p.f(...r.ins) ? 1 : 0)); if (bad.length) { const r = bad[0]; return say('Not yet: when ' + r.ins.map((v, i) => 'ABCD'[i] + '=' + v).join(', ') + ' your bulb is ' + (r.out ? 'ON' : 'OFF') + ', but it should be ' + (p.f(...r.ins) ? 'ON' : 'OFF') + '. The red rows in the table show every mismatch.', false); }
   if (p.n > 1 && gates === 0) return say('The table matches, but a circuit with no gates cannot solve this. Check your wiring.', false);
-  say('Correct! ' + p.why, true); prog.done['gate' + pidx] = 1; unlock('gate' + pidx); saveProg(); if (pidx === PUZZLES.length - 1 || PUZZLES.every((_, i) => prog.done['gate' + i])) {}
+  say('Correct! ' + p.why, true); prog.done['gate' + pidx] = 1; unlock('gate' + pidx); saveProg(); renderProg();
   $('#gnext').hidden = pidx >= PUZZLES.length - 1;
 }
+/* A wrong answer shakes the board itself, which reads faster than the message. */
+function buzz(){const cv=$('#cv');if(!cv)return;cv.classList.remove('shake');void cv.getBoundingClientRect();cv.classList.add('shake');setTimeout(()=>cv.classList.remove('shake'),500)}
 function loadPuzzle(i) {
   pidx = Math.max(0, Math.min(PUZZLES.length - 1, i)); hintLv = 0; comps = []; wires = []; nid = 1; pend = null; selC = null; selW = null; const p = PUZZLES[pidx];
-  for (let k = 0; k < p.n; k++) addComp('SW', 40, 40 + k * 110); addComp('LAMP', 640, 150);
+  for (let k = 0; k < p.n; k++) addComp('SW', 40, 40 + k * 82); addComp('LAMP', 640, 150);
   $('#pTitle').textContent = 'Puzzle ' + (pidx + 1) + ' of ' + PUZZLES.length + ': ' + p.t; $('#pGoal').textContent = p.goal; $('#pHow').textContent = p.how; $('#ghint').textContent = ''; $('#gfb').textContent = ''; $('#gnext').hidden = true;
   $('#gprev').disabled = pidx === 0; drawCircuit();
 }
@@ -218,7 +226,7 @@ const ALGS = [
   { id: 'selection', name: 'Selection Sort', sorted: null, real: 'Sorting a hand of packages by priority: find the most urgent one, put it first, then find the most urgent among the rest, and so on.', how: 'Find the smallest item in the unsorted part and swap it into the first unsorted position. The sorted part grows by one. Repeat for the rest.', when: 'Use it when swaps are costly, since it makes at most one swap per round.', limit: 'It always scans the whole unsorted part, so it is slow on long lists even if they are almost sorted.', hints: ['Selection sort picks the smallest remaining item each round.', 'Only the items that are not yet sorted (the ones without a green outline) are candidates.', 'Compare all the unsorted values and find the smallest one.', 'Click the smallest value among the unsorted items. It will then be moved to the front of the unsorted part.'] },
   { id: 'insertion', name: 'Insertion Sort', sorted: null, real: 'Sorting playing cards in your hand: you take each new card and slide it into the correct place among the cards you already hold.', how: 'Treat the first item as a sorted group. Take the next item and insert it into the right place in the sorted group. Repeat until every item has been inserted.', when: 'It is quick on small or nearly sorted lists.', limit: 'On a long, badly ordered list it needs many moves.', hints: ['Insertion sort keeps a sorted group on the left and inserts one new item at a time.', 'The highlighted item is the "card in your hand". Compare it with the sorted items.', 'Find the first sorted item that is bigger than your card. Your card goes just before it.', 'Click the gap between the last sorted item that is smaller than your card and the next bigger one.'] }
 ];
-let curAlg = 0, st = null, watch = null, wTimer = null, hintN = 0;
+let curAlg = 0, curTier = 'n', st = null, watch = null, wTimer = null, hintN = 0;
 const labelBox = (v, i, cls, idx) => '<button type="button" class="bx ' + (cls || '') + '" data-i="' + i + '" aria-label="Position ' + (i + 1) + (cls && cls.includes('hid') ? ', hidden' : ', value ' + v) + '">' + v + '<small>' + (i + 1) + '</small></button>';
 
 /* ---- step generators for the animated demonstration (each step is a full snapshot) ---- */
@@ -243,10 +251,10 @@ function stepWatch(d) { watch.i = Math.max(0, Math.min(watch.steps.length - 1, w
 function togglePlay() { if (wTimer) { clearInterval(wTimer); wTimer = null; $('#wPlay').textContent = 'Play'; return; } if (watch.i >= watch.steps.length - 1) watch.i = 0; $('#wPlay').textContent = 'Pause'; wTimer = setInterval(() => { if (watch.i >= watch.steps.length - 1) { clearInterval(wTimer); wTimer = null; $('#wPlay').textContent = 'Play'; return; } stepWatch(1); }, +$('#wSpeed').value); }
 
 /* ---- hands-on activities (you perform the algorithm; mistakes get specific feedback) ---- */
-function newTry(challenge) {
-  const A0 = ALGS[curAlg], id = A0.id, ch = !!challenge; hintN = 0; $('#tHint').textContent = '';
-  let arr; if (A0.sorted === false) arr = shuffle(uniq(ch ? 12 : 8, 10, 99)); else if (A0.sorted) arr = uniq(ch ? 15 : (id === 'jump' ? 12 : 11), 5, 99).sort((a, b) => a - b); else arr = shuffle(uniq(ch ? 7 : 6, 10, 60));
-  st = { id, ch, arr, orig: arr.slice(), done: false, checks: 0, swaps: 0, revealed: new Set(), target: A0.sorted === null ? null : arr[rnd(arr.length)] };
+function newTry(tier) {
+  const A0 = ALGS[curAlg], id = A0.id; curTier = tier || 'n'; const ch = curTier === 'c'; hintN = 0; $('#tHint').textContent = '';
+  let arr; if (A0.sorted === false) arr = shuffle(uniq(ch ? 12 : curTier === 's' ? 6 : 8, 10, 99)); else if (A0.sorted) arr = uniq(ch ? 15 : (id === 'jump' ? (curTier === 's' ? 9 : 12) : (curTier === 's' ? 8 : 11)), 5, 99).sort((a, b) => a - b); else arr = shuffle(uniq(ch ? 7 : curTier === 's' ? 5 : 6, 10, 60));
+  st = { id, ch, tier: curTier, arr, orig: arr.slice(), done: false, checks: 0, swaps: 0, revealed: new Set(), target: A0.sorted === null ? null : arr[rnd(arr.length)] };
   if (ch && A0.sorted !== null) st.mode = 'freeSearch'; else if (ch) st.mode = 'freeSort';
   if (id === 'linear') st.next = 0;
   if (id === 'binary') { st.lo = 0; st.hi = arr.length - 1; st.phase = 'pick'; st.lastMid = -1; }
@@ -279,8 +287,8 @@ function finishTry() {
   else cmp = ' You made ' + s.swaps + ' swap' + (s.swaps === 1 ? '' : 's') + ' to sort ' + n + ' items.';
   fbk('Well done!' + cmp, true);
   $('#tSum').hidden = false; $('#tSum').innerHTML = '<h3>Summary: ' + A0.name + '</h3><p><b>What you used:</b> ' + esc(A0.how) + '</p><p><b>Where it is useful:</b> ' + esc(A0.when) + '</p><p><b>Limitation:</b> ' + esc(A0.limit) + '</p>';
-  if (!s.ch) { prog.done['alg-' + A0.id] = 1; unlock('alg-' + A0.id); } else { prog.done['alg-ch-' + A0.id] = 1; saveProg(); }
-  saveProg(); if (ALGS.every((a) => prog.done['alg-' + a.id]) && PUZZLES.every((_, i) => prog.done['gate' + i])) unlock('master');
+  if (s.tier === 'c') { prog.done['alg-ch-' + A0.id] = 1; } else { prog.done['alg-' + A0.id] = 1; unlock('alg-' + A0.id); }
+  saveProg(); renderProg(); if (ALGS.every((a) => prog.done['alg-' + a.id]) && PUZZLES.every((_, i) => prog.done['gate' + i])) unlock('master');
 }
 function onTryClick(e) {
   const s = st; if (!s || s.done) return; const A0 = ALGS[curAlg], id = s.id;
@@ -303,24 +311,54 @@ function onTryClick(e) {
     if (s.revealed.has(i)) return; if (i !== s.blk) return fbk('In the block, check items one by one in order. The next position is ' + (s.blk + 1) + '.', false); s.revealed.add(i); s.checks++; s.blk++; if (s.arr[i] === s.target) return finishTry(); fbk(s.arr[i] + ' is not the target. Check the next one.', true); return drawTry(); }
   if (id === 'selection') { const rest = s.arr.slice(s.k), mn = Math.min(...rest); if (i < s.k) return fbk('That item is already sorted. Pick from the unsorted items.', false); if (s.arr[i] !== mn) return fbk(s.arr[i] + ' is not the smallest of the unsorted items. Look for a smaller value among them.', false); const j = s.arr.indexOf(mn, s.k); if (j !== s.k) { [s.arr[s.k], s.arr[j]] = [s.arr[j], s.arr[s.k]]; s.swaps++; } s.k++; fbk('Correct: ' + mn + ' is the smallest remaining and now sits in position ' + s.k + '.', true); if (s.k >= s.arr.length - 1) return finishTry(); return drawTry(); }
 }
+/* ---- "Which algorithm?" drill: five situations drawn from eight ---- */
+const QUIZ = [
+  { q: 'A sorted list holds 2,000 student IDs and you need to find one ID.', a: 'binary', why: 'The list is already sorted, so each check can throw away half of what remains. About 11 checks beat 2,000.' },
+  { q: 'A drawer holds 8 unsorted charging cables and you want the USB-C one.', a: 'linear', why: 'With only eight unsorted items, looking at them one by one is the simplest and fastest choice.' },
+  { q: 'A sorted archive sits on a tape drive, and rewinding is very slow. Skip ahead in blocks, then read only the last block.', a: 'jump', why: 'Jump search moves forward in steps and never needs to rewind far, which suits a tape.' },
+  { q: 'Students must be lined up by height, and you may only swap two students standing next to each other.', a: 'bubble', why: 'Bubble sort only ever swaps neighbours, which is exactly the rule you were given.' },
+  { q: 'Writing to a memory chip is expensive. Sort 40 records using as few swaps as possible, with at most one swap per round.', a: 'selection', why: 'Selection sort makes at most one swap per round, so it writes far less than the other sorts.' },
+  { q: 'Playing cards arrive one at a time and must join a hand that is already in order.', a: 'insertion', why: 'Insertion sort takes each new item and slides it into its place in the sorted part.' },
+  { q: 'A sorted contact list has one new name added in the wrong spot; the rest is already in order.', a: 'insertion', why: 'Insertion sort is quick on a nearly sorted list: one item moves and everything else stays put.' },
+  { q: 'You guess a number from 1 to 100 and are told "higher" or "lower" after every guess.', a: 'binary', why: 'Each answer removes half the remaining numbers, which is binary search in disguise.' }
+];
+let quizRun = null;
+function startQuiz() { quizRun = { list: shuffle(QUIZ).slice(0, 5), i: 0, score: 0, answered: false, pick: null }; drawQuiz(); }
+function drawQuiz() {
+  const q = quizRun, box = $('#quizBox'); if (!q || !box) return;
+  if (q.i >= q.list.length) {
+    box.innerHTML = '<div class="qend"><b>' + q.score + ' / 5</b><p class="mm">' + (q.score === 5 ? 'Every situation matched the right algorithm.' : q.score >= 3 ? 'Good instincts. Read the explanations again and try for five.' : 'The situations are worth re-reading: each one points at a clear best choice.') + '</p><button class="bb pri" id="qAgain" type="button">Play again</button></div>';
+    $('#qAgain').onclick = startQuiz;
+    if (q.score === 5) unlock('quiz');
+    return;
+  }
+  const it = q.list[q.i], right = ALGS.find((a) => a.id === it.a);
+  box.innerHTML = '<div class="qmeta"><span>Question ' + (q.i + 1) + ' of ' + q.list.length + '</span><span>Score ' + q.score + '</span></div><p class="quizq">' + esc(it.q) + '</p><div class="qopts">' + ALGS.map((a) => '<button type="button" data-q="' + a.id + '"' + (q.answered ? ' disabled' : '') + '>' + esc(a.name) + '</button>').join('') + '</div><p class="fb ' + (q.answered ? (q.pick === it.a ? 'good' : 'bad') : '') + '" role="status" aria-live="polite">' + (q.answered ? '<b>' + esc(right.name) + ':</b> ' + esc(it.why) : '') + '</p>' + (q.answered ? '<div class="ctl"><button class="bb pri" id="qNext" type="button">' + (q.i === q.list.length - 1 ? 'See my score' : 'Next situation') + '</button></div>' : '');
+  if (q.answered) {
+    box.querySelectorAll('.qopts button').forEach((b) => { if (b.dataset.q === it.a) b.classList.add('right'); else if (b.dataset.q === q.pick) b.classList.add('wrong'); });
+    $('#qNext').onclick = () => { q.i++; q.answered = false; q.pick = null; drawQuiz(); };
+  } else box.querySelectorAll('.qopts button').forEach((b) => b.onclick = () => { q.pick = b.dataset.q; q.answered = true; if (q.pick === it.a) { q.score++; tone(660, 0, .1); tone(880, .12, .18); } else tone(150, 0, .14, 'square'); drawQuiz(); });
+}
 function buildAlg() {
   const el = $('#pAlg'); if (el.dataset.b) return; el.dataset.b = 1;
   el.innerHTML = '<div class="bp"><div class="nt" id="algNav" role="tablist" aria-label="Algorithms"></div><div id="algInfo"></div></div>' +
     '<div class="bp"><h2>1. Watch it work</h2><p id="wGoal"></p><div class="arr" id="wArr" aria-live="off"></div><p class="fb" id="wNote" aria-live="polite"></p><div class="ctl"><button class="bb" id="wBack" type="button">Step back</button><button class="bb" id="wFwd" type="button">Step forward</button><button class="bb pri" id="wPlay" type="button">Play</button><button class="bb" id="wReset" type="button">Replay</button><button class="bb sm" id="wNew" type="button">New example</button><label class="mm">Speed <select id="wSpeed"><option value="1500">Slow</option><option value="900" selected>Normal</option><option value="450">Fast</option></select></label></div></div>' +
-    '<div class="bp"><h2>2. Now you do it</h2><p><b id="tGoal"></b></p><div class="arr" id="tArr"></div><div class="ctl" id="tCtl"></div><p class="mm" id="tStat"></p><p class="fb" id="tFb" role="status" aria-live="polite"></p><p class="fb" id="tHint"></p><div class="ctl"><button class="bb" id="tHbtn" type="button">Give me a hint</button><button class="bb" id="tNew" type="button">New puzzle</button><button class="bb" id="tChal" type="button">Optional challenge</button><button class="bb sm" id="tListen" type="button">Listen to the explanation</button></div><div id="tSum" class="bp" hidden></div></div>';
+    '<div class="bp"><h2>2. Now you do it</h2><p><b id="tGoal"></b></p><div class="arr" id="tArr"></div><div class="ctl" id="tCtl"></div><p class="mm" id="tStat"></p><p class="fb" id="tFb" role="status" aria-live="polite"></p><p class="fb" id="tHint"></p><div class="ctl"><button class="bb" id="tHbtn" type="button">Give me a hint</button><button class="bb" id="tNew" type="button">New puzzle</button><span class="tiers" id="tTier" role="group" aria-label="Exercise size"><button type="button" data-tier="s" aria-pressed="false">Small</button><button type="button" data-tier="n" class="on" aria-pressed="true">Normal</button><button type="button" data-tier="c" aria-pressed="false">Challenge</button></span><button class="bb sm" id="tListen" type="button">Listen to the explanation</button></div><div id="tSum" class="bp" hidden></div></div>' +
+    '<div class="bp"><h2>3. Which algorithm?</h2><p class="mm">Five situations, one choice each. Pick the algorithm you would reach for, then read why.</p><div id="quizBox"></div></div>';
   $('#algNav').innerHTML = ALGS.map((a, i) => '<button role="tab" type="button" data-a="' + i + '" aria-selected="' + (i === curAlg) + '">' + a.name + '</button>').join('');
   $('#algNav').querySelectorAll('button').forEach((b) => b.onclick = () => { curAlg = +b.dataset.a; $('#algNav').querySelectorAll('button').forEach((o) => o.setAttribute('aria-selected', o === b)); loadAlg(); });
   $('#wBack').onclick = () => stepWatch(-1); $('#wFwd').onclick = () => stepWatch(1); $('#wPlay').onclick = togglePlay; $('#wReset').onclick = () => { watch.i = 0; clearInterval(wTimer); wTimer = null; $('#wPlay').textContent = 'Play'; renderWatch(); }; $('#wNew').onclick = newWatch;
-  $('#tNew').onclick = () => { $('#tSum').hidden = true; fbk('', true); newTry(false); }; $('#tChal').onclick = () => { $('#tSum').hidden = true; fbk('', true); newTry(true); };
+  $('#tNew').onclick = () => { $('#tSum').hidden = true; fbk('', true); newTry(curTier); };
+  $('#tTier').querySelectorAll('button').forEach((b) => b.onclick = () => { curTier = b.dataset.tier; $('#tTier').querySelectorAll('button').forEach((o) => { o.classList.toggle('on', o === b); o.setAttribute('aria-pressed', o === b); }); $('#tSum').hidden = true; fbk('', true); newTry(curTier); });
   $('#tHbtn').onclick = () => { const A0 = ALGS[curAlg]; hintN = Math.min(4, hintN + 1); $('#tHint').textContent = 'Hint ' + hintN + ' of 4: ' + A0.hints[hintN - 1]; };
   $('#tListen').onclick = () => { const A0 = ALGS[curAlg]; TLP.Voice.speak(A0.name + '. ' + A0.real + ' ' + A0.how); };
   $('#pAlg').addEventListener('click', (e) => { if (e.target.closest('#tArr,#tCtl')) onTryClick(e); });
-  loadAlg();
+  loadAlg(); startQuiz();
 }
 function loadAlg() {
   const A0 = ALGS[curAlg]; clearInterval(wTimer); wTimer = null;
   $('#algInfo').innerHTML = '<h2>' + A0.name + '</h2><p><b>A real-world problem:</b> ' + esc(A0.real) + '</p><p><b>How it works:</b> ' + esc(A0.how) + '</p><p><b>When it is useful:</b> ' + esc(A0.when) + '</p><p><b>Its limitation:</b> ' + esc(A0.limit) + '</p>';
-  $('#tSum').hidden = true; fbk('', true); newWatch(); newTry(false);
+  $('#tSum').hidden = true; fbk('', true); newWatch(); newTry(curTier);
 }
 
 /* ================= achievements ================= */
@@ -328,10 +366,43 @@ function buildAchList() {
   PUZZLES.forEach((p, i) => ACHS.push({ id: 'gate' + i, n: i, t: p.t, d: 'Solved logic gate puzzle ' + (i + 1) + '.', svg: '<svg viewBox="0 0 56 48">' + GATE_SHAPES[PUZ_SHAPE[i]] + '</svg>' }));
   ALGS.forEach((a, i) => ACHS.push({ id: 'alg-' + a.id, n: 10 + i, t: a.name + ' Expert', d: 'Completed the ' + a.name + ' activity.', svg: ALG_ICONS[a.id] }));
   ACHS.push({ id: 'master', n: 16, t: 'Bonus Lab Master', d: 'Finished every gate puzzle and algorithm activity.', svg: '<svg viewBox="0 0 56 48"><path d="M6 40L6 14L18 26L28 8L38 26L50 14L50 40Z"/></svg>' });
+  ACHS.push({ id: 'quiz', n: 21, t: 'Algorithm Scout', d: 'Answered all five scenario questions in one drill correctly.', svg: '<svg viewBox="0 0 56 48"><path d="M28 42V10"/><path d="M28 14H12L6 22L12 30H28"/><path d="M28 14H44L50 22L44 30H28"/></svg>' });
+}
+/* Progress strip above the tabs. It reuses the same prog.done and prog.ach
+   keys the activities write, so there is no separate counter to drift. */
+function renderProg() {
+  const el = $('#bprog'); if (!el) return;
+  const gates = PUZZLES.filter((_, i) => prog.done['gate' + i]).length;
+  const algs = ALGS.filter((a) => prog.done['alg-' + a.id]).length;
+  const chal = ALGS.filter((a) => prog.done['alg-ch-' + a.id]).length;
+  const ach = ACHS.filter((a) => prog.ach.includes(a.id)).length;
+  const bar = (n, tot) => '<i><em class="' + (n >= tot ? 'full' : '') + '" style="width:' + Math.round((n / tot) * 100) + '%"></em></i>';
+  el.innerHTML =
+    '<div class="bseg"><b>Gate puzzles</b><span>' + gates + ' <small>/ ' + PUZZLES.length + '</small></span>' + bar(gates, PUZZLES.length) + '</div>' +
+    '<div class="bseg"><b>Algorithm runs</b><span>' + algs + ' <small>/ ' + ALGS.length + ' · ' + chal + ' on challenge</small></span>' + bar(algs, ALGS.length) + '</div>' +
+    '<div class="bseg"><b>Achievements</b><span>' + ach + ' <small>/ ' + ACHS.length + '</small></span>' + bar(ach, ACHS.length) + '</div>';
 }
 function renderAch() {
   const el = $('#pAch'); if (!el) return;
   el.innerHTML = '<div class="bp"><h2>Your achievements</h2><p class="mm">These are shown only here. They are separate from your score and do not affect any leaderboard, co-op result or ranking.</p>' + ACHS.map((a) => '<div class="ach ' + (prog.ach.includes(a.id) ? '' : 'lk') + '">' + a.svg + '<br><b>' + esc(prog.ach.includes(a.id) ? a.t : 'Locked') + '</b><br><span class="mm">' + esc(a.d) + '</span></div>').join('') + '</div>';
+}
+
+/* ================= mastery missions =================
+   These are the four extra chapters and the final guardian that used to sit
+   on the chapter map as "Section 6". They now live here, after the five story
+   sections, and open the game directly on the chosen chapter. */
+const MASTERY = [
+  { c: 25, t: 'Debugging', d: 'Find the broken step and repair the program.' },
+  { c: 26, t: 'Searching', d: 'Search through data in a smart order.' },
+  { c: 27, t: 'Finding the Biggest', d: 'Compare a whole list and keep the winner.' },
+  { c: 28, t: 'Optimising', d: 'Do the same job with fewer blocks.' },
+  { c: 29, t: 'The Origin', d: 'The first bug. Use everything you have learned.', boss: 1 }
+];
+function buildMas() {
+  const el = $('#pMas'); if (!el) return;
+  el.innerHTML = '<div class="bp"><h2>Mastery missions</h2><p class="mm">Four extra chapters and one final guardian. They open with this page, after the five story sections. Stars and points count in the game like any mission, but none of this is needed to finish the story.</p><div class="mas">' +
+    MASTERY.map((m) => '<a class="mcard' + (m.boss ? ' boss' : '') + '" href="webgame.html?bonus=' + m.c + '"><span class="tag">' + (m.boss ? 'Bonus guardian' : 'Bonus chapter') + '</span><b>' + esc(m.t) + '</b><span class="mm">' + esc(m.d) + '</span><em>Open mission →</em></a>').join('') +
+    '</div></div>';
 }
 
 /* ================= unlock check and start ================= */
@@ -339,23 +410,33 @@ async function isUnlocked(l, u) {
   if (u && u.isAdmin) return true;
   if (l && (l.completed_diffs || []).length) return true;
   try { const recs = await A().getProgressSummaries([l.id]); const hid = (TLP.HIDDEN[l.assigned_path] || []);
-    const need = TLP.BOSS_CH.filter((c) => !hid.includes(c));
+    // Two workshops and Mastery open together: the five story guardians are
+    // the gate, and the optional Mastery guardian is never required here.
+    const need = TLP.BOSS_CH.filter((c) => !hid.includes(c) && c !== 29);
     return recs.some((r) => need.every((c) => Number((r.prog || {})[c + '-0']) >= 1)); } catch (e) { return false; }
 }
 function tab(n) {
-  ['Gate', 'Alg', 'Ach'].forEach((k) => { $('#t' + k).setAttribute('aria-selected', k === n); $('#p' + k).hidden = k !== n; });
-  if (n === 'Gate') buildGate(); if (n === 'Alg') buildAlg(); if (n === 'Ach') renderAch();
+  ['Gate', 'Alg', 'Mas', 'Ach'].forEach((k) => { $('#t' + k).setAttribute('aria-selected', k === n); $('#p' + k).hidden = k !== n; });
+  renderProg();
+  if (n === 'Gate') buildGate(); if (n === 'Alg') buildAlg(); if (n === 'Mas') buildMas(); if (n === 'Ach') renderAch();
 }
-$('#tGate').onclick = () => tab('Gate'); $('#tAlg').onclick = () => tab('Alg'); $('#tAch').onclick = () => tab('Ach');
+$('#tGate').onclick = () => tab('Gate'); $('#tAlg').onclick = () => tab('Alg'); $('#tMas').onclick = () => tab('Mas'); $('#tAch').onclick = () => tab('Ach');
 window.BONUS = { evalCircuit, genSteps, PUZZLES, ALGS, get comps() { return comps; }, set comps(v) { comps = v; }, get wires() { return wires; }, set wires(v) { wires = v; }, tableFor, onTryClick, newTry, get st() { return st; }, set curAlg(v) { curAlg = v; } };
 (async function boot() {
   const g = $('#gate'); buildAchList();
   try {
     await A().init(); const u = A().getCurrentUser();
     if (A().isCloudConfigured() && !u) { g.hidden = false; g.innerHTML = 'Please <a href="auth.html">sign in</a> to open the Bonus sections.'; return; }
-    if (u && u.role === 'parent') { g.hidden = false; g.innerHTML = 'Parent and Educator accounts do not play. <a href="parent.html">Back to the Parent and Educator area</a>.'; return; }
-    const l = A().getActiveLearner(); if (l && !l.isGuest) learnerId = l.id;
-    if (A().isCloudConfigured() && !(await isUnlocked(l || {}, u))) { g.hidden = false; g.innerHTML = '<h2>Locked</h2><p>The Bonus sections unlock after you finish the whole game, on any difficulty. Keep going: the guardians are waiting. <a href="webgame.html">Back to the game</a></p>'; return; }
+    const admin = !!(u && u.isAdmin);
+    // The owner account is also a parent, but it may inspect every section.
+    if (u && u.role === 'parent' && !admin) { g.hidden = false; g.innerHTML = 'Parent and Educator accounts do not play. <a href="parent.html">Back to the Parent and Educator area</a>.'; return; }
+    const l = A().getActiveLearner(); if (admin) learnerId = 'admin-preview'; else if (l && !l.isGuest) learnerId = l.id;
+    if (A().isCloudConfigured() && !(await isUnlocked(l || {}, u))) { g.hidden = false; g.innerHTML = '<h2>Locked</h2><p>The Bonus areas unlock after you finish the five story sections, on any difficulty. Keep going: the guardians are waiting. <a href="webgame.html">Back to the game</a></p>'; return; }
+    // Grades 1-6 do not have the Mastery chapters in their game, so the tab is
+    // hidden rather than offering links that would not open. The game picks its
+    // chapters from this same saved path, including for guests.
+    let lp = 'g710'; try { lp = localStorage.getItem('tlp-path') || 'g710'; } catch (e) {}
+    if (!admin && lp === 'g16') { $('#tMas').hidden = true; $('#pMas').hidden = true; }
     loadLocal(); await loadCloud(); $('#app').hidden = false; tab('Gate');
   } catch (e) { g.hidden = false; g.textContent = 'Something went wrong: ' + (e && e.message || e); }
 })();

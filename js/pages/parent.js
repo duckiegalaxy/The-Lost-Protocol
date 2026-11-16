@@ -20,7 +20,9 @@ const DN = { beg: 'Beginner', int: 'Intermediate', pro: 'Professional' };
 const DHELP = { beg: 'Beginner: the learner completes Beginner first. Finishing it unlocks Intermediate, then Professional.',
   int: 'Intermediate: finishing it unlocks Professional. Beginner unlocks only after the whole game is finished on Professional.',
   pro: 'Professional: hints are restricted. After finishing, Beginner and Intermediate become available.' };
-const BOSS_KEYS = ['3-0', '9-0', '14-0', '19-0', '24-0', '29-0'];
+// The five story guardians. Mastery (The Origin) is an optional bonus mission
+// and is never counted against a learner's progress.
+const BOSS_KEYS = ['3-0', '9-0', '14-0', '19-0', '24-0'];
 let learners = [], selected = null;
 
 const open = (id) => { $(id).hidden = false; }, close = (id) => { $(id).hidden = true; };
@@ -41,7 +43,78 @@ function summarize(l, recs) {
   const vals = Object.entries(prog).filter(([k, v]) => /^\d+-\d+$/.test(k) && Number(v) >= 1);
   const stars = vals.reduce((a, [, v]) => a + Math.min(3, Number(v)), 0);
   const bosses = BOSS_KEYS.filter((k) => Number(prog[k]) >= 1).length;
-  return { stars, missions: vals.length, bosses, score: stars * 100 };
+  const below = vals.filter(([, v]) => Number(v) < 3).length;
+  return { stars, missions: vals.length, bosses, score: stars * 100, below, lastActive: (cur && cur.updated_at) || null };
+}
+
+/* -----------------------------------------------------------------------------
+   Daily report
+   The cloud keeps one progress row per learner, not a history, so today's work
+   is measured against a small snapshot this browser takes on the first visit of
+   each day. A missing snapshot simply makes today's gain zero; it never invents
+   progress. The grade is deliberately simple and explained in the card.
+   -------------------------------------------------------------------------- */
+const GRADE_WHY = {
+  A: 'A strong session today: 300 or more points, or a guardian defeated.',
+  B: 'Progress today: new stars or missions.',
+  C: 'Active in the last three days, but nothing new today.',
+  D: 'No activity for three days or more.'
+};
+function dayId() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function snapshot(s) { return { score: s.score, stars: s.stars, missions: s.missions, bosses: s.bosses }; }
+function difference(a, b) {
+  const cut = (x, y) => Math.max(0, (Number(x) || 0) - (Number(y) || 0));
+  return { score: cut(a.score, b.score), stars: cut(a.stars, b.stars), missions: cut(a.missions, b.missions), bosses: cut(a.bosses, b.bosses) };
+}
+function dailyDigest(l, s) {
+  const key = 'tlp-digest:' + l.id;
+  let box = null;
+  try { box = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+  const snap = snapshot(s), today = dayId();
+  let delta;
+  if (!box || !box.snap) { box = { day: today, start: snap, snap: snap }; delta = difference(snap, snap); }
+  else if (box.day !== today) { delta = difference(snap, box.snap); box = { day: today, start: snap, snap: snap }; }
+  else { delta = difference(snap, box.start); box.snap = snap; }
+  try { localStorage.setItem(key, JSON.stringify(box)); } catch (e) {}
+  const days = s.lastActive ? Math.floor((Date.now() - new Date(s.lastActive).getTime()) / 86400000) : 99;
+  let grade = 'D';
+  if (delta.score >= 300 || delta.bosses > 0) grade = 'A';
+  else if (delta.score > 0 || delta.stars > 0 || delta.missions > 0) grade = 'B';
+  else if (days <= 2) grade = 'C';
+  return { delta, grade, days };
+}
+function timeAgo(d) {
+  const n = Date.now() - new Date(d).getTime();
+  if (!isFinite(n)) return '';
+  const m = Math.round(n / 60000);
+  if (m < 2) return 'just now';
+  if (m < 60) return m + ' minutes ago';
+  const h = Math.round(m / 60);
+  if (h < 24) return h + ' hour' + (h === 1 ? '' : 's') + ' ago';
+  const dd = Math.round(h / 24);
+  return dd + ' day' + (dd === 1 ? '' : 's') + ' ago';
+}
+function adviceFor(l, s) {
+  const kid = l.assigned_path === 'g16';
+  if (!s.missions) return kid ? 'Start with the first chapter together and read the lesson out loud before building the script.' : 'No missions finished yet. Start with Chapter 1 and read the lesson before building the script.';
+  if (s.below > 0) return 'Replay ' + s.below + ' mission' + (s.below === 1 ? '' : 's') + ' that scored below three stars. Fewer blocks and a first-try clear raise the score fastest.';
+  if (s.bosses < 5) return 'Every finished mission is at three stars. The next guardian is the right step up.';
+  if (l.assigned_path === 'g1112' || l.assigned_path === 'adult') return 'All three stars everywhere. Try the next difficulty, then switch on Hardcore mode for the 1.5x score bonus.';
+  return 'Every mission is at three stars. The Bonus sections and co-op missions are the next challenge.';
+}
+function reportText(l, s) {
+  const g = dailyDigest(l, s);
+  return [
+    'The Lost Protocol - daily report', '',
+    'Learner: ' + l.name + ' (' + l.player_id + ')',
+    'Age group: ' + (PN[l.assigned_path] || '') + ' - ' + (DN[l.current_diff] || ''),
+    'Date: ' + new Date().toLocaleDateString(),
+    'Total score: ' + s.score + ' (today +' + g.delta.score + ')',
+    'Stars: ' + s.stars + ', missions: ' + s.missions + ', guardians: ' + s.bosses + ' of 5',
+    'Grade today: ' + g.grade + ' - ' + GRADE_WHY[g.grade],
+    'What to work on: ' + adviceFor(l, s),
+    'Last activity: ' + (s.lastActive ? new Date(s.lastActive).toLocaleString() : 'none yet')
+  ].join('\n');
 }
 
 /* -----------------------------------------------------------------------------
@@ -58,25 +131,47 @@ function genPw() {
    Load
    Fetches learners for the signed-in educator and renders one card each.
    -------------------------------------------------------------------------- */
+let sums = [];
+function paint() {
+  const q = ($('#pSearch').value || '').trim().toLowerCase();
+  const shown = sums.filter(({ l }) => !q || String(l.name).toLowerCase().includes(q) || String(l.player_id).toLowerCase().includes(q));
+  $('#cnt').textContent = shown.length;
+  $('#cntLbl').textContent = shown.length === 1 ? 'learner' : 'learners';
+  const note = $('#pFindNote');
+  if (note) { note.hidden = !q; note.textContent = q ? shown.length + ' match' + (shown.length === 1 ? '' : 'es') + ' for "' + q + '"' : ''; }
+  if (!shown.length) {
+    $('#list').innerHTML = '<p class="meta">' + (q ? 'No learner matches that search.' : 'No learners yet. Use "Add a learner" to create the first Player ID.') + '</p>';
+    return;
+  }
+  $('#list').innerHTML = shown.map(({ l, s }) => {
+    const g = dailyDigest(l, s);
+    return '<div class="lc2" data-id="' + esc(l.id) + '">' +
+      '<div class="lhead"><div><h3>' + esc(l.name) + '</h3>' +
+      '<div class="pid">' + esc(l.player_id) + ' <button class="btn ghost sm" data-act="copy" type="button">Copy</button></div></div>' +
+      '<span class="grade g' + g.grade + '" title="' + esc(GRADE_WHY[g.grade]) + '">' + g.grade + '</span></div>' +
+      '<div class="meta">' + esc(PN[l.assigned_path] || '') + ' · ' + esc(DN[l.current_diff] || '') + ' · ' + (s.lastActive ? 'last active ' + esc(timeAgo(s.lastActive)) : 'not started') + '</div>' +
+      '<div class="chips"><span class="chip">' + s.stars + ' stars</span><span class="chip">' + s.missions + ' missions</span><span class="chip">' + s.bosses + ' of 5 guardians</span><span class="chip">' + s.score + ' points</span><span class="chip today">+' + g.delta.score + ' today</span></div>' +
+      '<div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="' + s.bosses + '" aria-label="Guardians defeated"><i style="width:' + Math.round(s.bosses / 5 * 100) + '%"></i></div>' +
+      '<div class="digest"><b>Daily report · grade ' + g.grade + '</b><span>' + esc(GRADE_WHY[g.grade]) + '</span><span>' + esc(adviceFor(l, s)) + '</span></div>' +
+      '<div class="row2"><button class="btn ghost sm" data-act="pw" type="button">Reset password</button><button class="btn ghost sm" data-act="del" type="button">Delete</button><button class="btn ghost sm" data-act="mail" type="button">Email report</button><button class="btn ghost sm" data-act="copyrep" type="button">Copy report</button></div></div>';
+  }).join('');
+}
+
 async function load() {
   $('#list').innerHTML = '<p class="meta">Loading...</p>';
   const all = await A().getLearners();
   learners = all.filter((l) => l.parent_user_id === A().getCurrentUser().id);
   const recs = learners.length ? await A().getProgressSummaries(learners.map((l) => l.id)).catch(() => []) : [];
-  $('#cnt').textContent = learners.length; $('#cntLbl').textContent = learners.length === 1 ? 'learner' : 'learners';
-  if (!learners.length) { $('#list').innerHTML = '<p class="meta">No learners yet. Use "Add a learner" to create the first Player ID.</p>'; $('#rankSec').hidden = true; return; }
-  const sums = learners.map((l) => ({ l, s: summarize(l, recs) }));
-  $('#list').innerHTML = sums.map(({ l, s }) =>
-    '<div class="lc2" data-id="' + esc(l.id) + '"><h3>' + esc(l.name) + '</h3>' +
-    '<div class="pid">' + esc(l.player_id) + ' <button class="btn ghost sm" data-act="copy" type="button">Copy</button></div>' +
-    '<div class="meta">' + esc(PN[l.assigned_path] || '') + ' · ' + esc(DN[l.current_diff] || '') + '</div>' +
-    '<div class="chips"><span class="chip">' + s.stars + ' stars</span><span class="chip">' + s.missions + ' missions</span><span class="chip">' + s.bosses + ' of 6 guardians</span><span class="chip">' + s.score + ' points</span></div>' +
-    '<div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="' + s.bosses + '" aria-label="Guardians defeated"><i style="width:' + Math.round(s.bosses / 6 * 100) + '%"></i></div>' +
-    '<div class="row2"><button class="btn ghost sm" data-act="pw" type="button">Reset password</button><button class="btn ghost sm" data-act="del" type="button">Delete</button></div></div>').join('');
+  sums = learners.map((l) => ({ l, s: summarize(l, recs) }));
+  $('#rankSec').hidden = !learners.length;
+  paint();
+  if (!learners.length) return;
   const ranked = sums.slice().sort((a, b) => b.s.score - a.s.score || b.s.stars - a.s.stars);
-  $('#rank').innerHTML = '<thead><tr><th>Rank</th><th>Learner</th><th>Player ID</th><th>Age group</th><th>Points</th><th>Stars</th></tr></thead><tbody>' +
-    ranked.map((x, i) => '<tr><td>' + (i + 1) + '</td><td>' + esc(x.l.name) + '</td><td>' + esc(x.l.player_id) + '</td><td>' + esc(PN[x.l.assigned_path]) + '</td><td>' + x.s.score + '</td><td>' + x.s.stars + '</td></tr>').join('') + '</tbody>';
-  $('#rankSec').hidden = false;
+  $('#rank').innerHTML = '<thead><tr><th>Rank</th><th>Learner</th><th>Player ID</th><th>Age group</th><th>Points</th><th>Stars</th><th>Today</th></tr></thead><tbody>' +
+    ranked.map((x, i) => {
+      const g = dailyDigest(x.l, x.s);
+      return '<tr><td>' + (i + 1) + '</td><td>' + esc(x.l.name) + '</td><td>' + esc(x.l.player_id) + '</td><td>' + esc(PN[x.l.assigned_path]) + '</td><td>' + x.s.score + '</td><td>' + x.s.stars + '</td><td>+' + g.delta.score + '</td></tr>';
+    }).join('') + '</tbody>';
 }
 
 $('#list').addEventListener('click', (e) => {
@@ -86,6 +181,14 @@ $('#list').addEventListener('click', (e) => {
   if (b.dataset.act === 'copy') { try { navigator.clipboard.writeText(l.player_id); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1400); } catch (x) {} }
   if (b.dataset.act === 'pw') { $('#pwWho').textContent = l.name + ' (' + l.player_id + ')'; $('#pwNew').value = ''; $('#pwMsg').textContent = ''; open('#pwM'); }
   if (b.dataset.act === 'del') { $('#delLbl').textContent = 'Type the Player ID ' + l.player_id + ' to confirm'; $('#delTxt').value = ''; $('#delGo').disabled = true; $('#delMsg').textContent = ''; open('#delM'); }
+  const sum = (sums.find((x) => x.l.id === l.id) || {}).s;
+  if (b.dataset.act === 'mail' && sum) {
+    const u = A().getCurrentUser() || {};
+    location.href = 'mailto:' + encodeURIComponent(u.email || '') + '?subject=' + encodeURIComponent('Daily report for ' + l.name + ' (' + l.player_id + ')') + '&body=' + encodeURIComponent(reportText(l, sum));
+  }
+  if (b.dataset.act === 'copyrep' && sum) {
+    try { navigator.clipboard.writeText(reportText(l, sum)); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy report', 1400); } catch (x) {}
+  }
 });
 
 $('#addBtn').onclick = () => { $('#addF').hidden = false; $('#aDone').hidden = true; $('#addF').reset(); $('#aMsg').textContent = ''; $('#aDiffHelp').textContent = DHELP.int; open('#addM'); };
@@ -118,13 +221,16 @@ $('#delGo').onclick = async () => {
   catch (err) { $('#delMsg').textContent = 'Could not delete: ' + err.message; $('#delGo').disabled = false; }
 };
 
+$('#pSearch').addEventListener('input', paint);
+$('#pPrint').onclick = () => window.print();
+
 (async function boot() {
   const g = $('#gate');
   try {
     await A().init();
     const u = A().getCurrentUser();
-    if (!u) { g.hidden = false; g.innerHTML = 'Please <a href="auth.html">sign in</a> with a Parent or Educator account.'; return; }
-    if (u.role !== 'parent') { g.hidden = false; g.innerHTML = 'This area is for Parent and Educator accounts. <a href="' + (u.isAdmin ? 'admin.html' : 'webgame.html') + '">Continue</a>'; return; }
+    if (!u) { g.hidden = false; g.innerHTML = 'Please <a href="auth.html">sign in</a> with a Parent or Educator account. If you are an adult who wants to play the game yourself, create an <a href="auth.html">Adult learner</a> account instead.'; return; }
+    if (u.role !== 'parent') { g.hidden = false; g.innerHTML = 'This area is for Parent and Educator accounts. Adult learners play the game and do not need this area. <a href="' + (u.isAdmin ? 'admin.html' : 'webgame.html') + '">Continue</a>'; return; }
     if (!A().isCloudConfigured()) {
       g.hidden = false;
       g.style.borderColor = 'var(--a)';

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="The Lost Protocol">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0d1626"/>
+      <stop offset=".55" stop-color="#080d16"/>
+      <stop offset="1" stop-color="#04070c"/>
+    </linearGradient>
+    <linearGradient id="cy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7df3ff"/>
+      <stop offset=".55" stop-color="#35c9e8"/>
+      <stop offset="1" stop-color="#1b8fb0"/>
+    </linearGradient>
+    <linearGradient id="rd" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#ff5a72"/>
+      <stop offset="1" stop-color="#d61f3a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#35c9e8" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#35c9e8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <circle cx="256" cy="248" r="212" fill="url(#glow)"/>
+
+  <g stroke="#8fd8e8" stroke-opacity=".08" stroke-width="1.5">
+    <path d="M64 128h384M64 192h384M64 256h384M64 320h384M64 384h384"/>
+    <path d="M128 64v384M192 64v384M256 64v384M320 64v384M384 64v384"/>
+  </g>
+
+  <g fill="none" stroke="url(#cy)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M103.6 168V344L256 432L408.4 344V252"/>
+    <path d="M408.4 204V168L352 135"/>
+  </g>
+
+  <g stroke="#35c9e8" stroke-linecap="round" fill="none">
+    <path d="M323 96l38 22" stroke-width="14" opacity=".9"/>
+    <path d="M128 372v18h18" stroke-width="9" opacity=".55"/>
+    <path d="M370 332h18v18" stroke-width="9" opacity=".55"/>
+    <circle cx="146" cy="308" r="5" fill="#35c9e8" stroke="none" opacity=".7"/>
+  </g>
+
+  <path d="M154 356L360 178" stroke="#05080d" stroke-width="44" stroke-linecap="round" opacity=".9"/>
+  <path d="M154 356L360 178" stroke="url(#rd)" stroke-width="28" stroke-linecap="round"/>
+  <path d="M196 392L402 214" stroke="url(#rd)" stroke-width="9" stroke-linecap="round" opacity=".55"/>
+
+  <circle cx="256" cy="256" r="58" fill="#05080d"/>
+  <circle cx="256" cy="256" r="44" fill="none" stroke="url(#cy)" stroke-width="15"/>
+  <circle cx="256" cy="256" r="14" fill="#8ff7ff"/>
+  <circle cx="251" cy="250" r="5" fill="#ffffff" opacity=".9"/>
+</svg>

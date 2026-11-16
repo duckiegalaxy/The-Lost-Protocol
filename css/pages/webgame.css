@@ -75,6 +75,15 @@ input,select{font:inherit;color:inherit}
 .work{display:grid;grid-template-columns:150px 1fr;gap:14px}@media(max-width:600px){.work{grid-template-columns:1fr}}
 #pal{border:2px dashed transparent;border-radius:12px;padding:4px}#pal.over{border-color:var(--bad)}
 .blk{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;color:#0b0f14;font:700 14px var(--sans);cursor:grab;margin:6px 0;box-shadow:0 3px 0 rgba(0,0,0,.3);animation:pop .3s;transition:transform .2s}
+/* Touch and pen: no native text selection or callout while a block is held.
+   The ghost is the copy that follows the finger during a drag. */
+.blk{touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.blk input,.blk select{-webkit-user-select:auto;user-select:auto}
+.blk.bt-ghost{position:fixed;left:0;top:0;z-index:130;margin:0;pointer-events:none;opacity:.95;max-width:92vw;animation:none;transition:none;box-shadow:0 14px 30px rgba(0,0,0,.5)}
+body.bt-dragging{user-select:none;-webkit-user-select:none}
+body.bt-dragging *{cursor:grabbing!important}
+.touchnote{display:none;color:var(--mut);font-size:13px;line-height:1.5;margin:10px 2px 0}
+@media(pointer:coarse){.touchnote{display:block}}
 .set,.change{background:hsl(calc(var(--h) + 25) 85% 68%)}.move{background:hsl(calc(var(--h) + 100) 80% 70%)}.say{background:hsl(calc(var(--h) + 170) 75% 74%)}.rep{background:hsl(calc(var(--h) + 240) 80% 72%);display:block}
 .blk.run{outline:3px solid var(--fg);transform:scale(1.04)}
 .blk select,.blk input{border:0;border-radius:6px;padding:1px 6px;background:#fff;color:#111;width:auto}.blk input{width:58px}.blk input:disabled{opacity:.4}
@@ -253,25 +262,127 @@ body.path-g16 .bd{box-shadow:0 0 18px color-mix(in srgb,var(--b) 60%,transparent
 body.path-g16 .blk.glow{animation:blkglow 1.4s ease-in-out infinite}
 body.path-g16 .track{border-radius:22px}
 
-/* 2. Grades 7-10 (g710): Cybernetic neon, structured sci-fi, no childish emojis */
-body.path-g710 .card{border-radius:18px;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.35)}
-body.path-g710 .blk{border-radius:10px;box-shadow:0 3px 0 rgba(0,0,0,.35);transition:transform .2s,box-shadow .2s}
-body.path-g710 .blk:hover{transform:translateY(-2px);box-shadow:0 6px 14px color-mix(in srgb,var(--a) 30%,transparent)}
-body.path-g710 .track{border-radius:14px;box-shadow:inset 0 0 18px rgba(0,0,0,.3)}
+/* 2. Grades 7-10 (g710): "Neon signal deck".
+   A dark slate surface ruled with a faint cyan grid, glassy panels with a lit
+   top edge, and blocks that throw a soft coloured glow. No playful shapes:
+   the look is structured sci-fi, not cartoon. */
+body.path-g710{background-color:#070b14;background-image:
+ radial-gradient(1100px 520px at 12% -8%,color-mix(in srgb,var(--a) 20%,transparent),transparent 62%),
+ radial-gradient(900px 480px at 96% 4%,color-mix(in srgb,var(--b) 14%,transparent),transparent 60%),
+ linear-gradient(color-mix(in srgb,var(--a) 9%,transparent) 1px,transparent 1px),
+ linear-gradient(90deg,color-mix(in srgb,var(--a) 9%,transparent) 1px,transparent 1px);
+ background-size:auto,auto,46px 46px,46px 46px;background-attachment:fixed}
+body.path-g710 .top{border-bottom:1px solid color-mix(in srgb,var(--a) 32%,var(--line))}
+body.path-g710 .logo{letter-spacing:.02em;text-shadow:0 0 24px color-mix(in srgb,var(--a) 55%,transparent)}
+body.path-g710 .logo:before{content:"⟨ ";color:var(--a)}
+body.path-g710 .logo:after{content:" ⟩";color:var(--a)}
+body.path-g710 .hero h1{text-shadow:0 0 46px color-mix(in srgb,var(--a) 32%,transparent)}
+body.path-g710 .hud{border-radius:12px;border:1px solid color-mix(in srgb,var(--a) 30%,var(--line));background:linear-gradient(180deg,rgba(12,20,33,.82),rgba(7,12,20,.86));box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 16px 40px rgba(0,0,0,.45),0 0 30px -18px var(--a)}
+body.path-g710 .hud-nav,body.path-g710 .hud-tools{border-left-color:color-mix(in srgb,var(--a) 26%,var(--line))}
+body.path-g710 .hud .btn.sm{border-radius:6px;font-weight:700;letter-spacing:.02em}
+body.path-g710 .hud-score{border-radius:8px;border-color:color-mix(in srgb,var(--a) 55%,transparent);background:color-mix(in srgb,var(--a) 12%,transparent);box-shadow:0 0 20px -9px var(--a)}
+body.path-g710 .hud-score b{text-shadow:0 0 18px color-mix(in srgb,var(--a) 70%,transparent)}
+body.path-g710 .card{position:relative;border-radius:14px;border:1px solid color-mix(in srgb,var(--a) 26%,var(--line));background:linear-gradient(170deg,rgba(13,22,36,.88),rgba(7,12,20,.92));box-shadow:0 20px 46px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.045)}
+body.path-g710 .card:before{content:"";position:absolute;left:20px;right:20px;top:0;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--a),transparent);opacity:.7;pointer-events:none}
+body.path-g710 .learn .hand{font:800 11px var(--sans);letter-spacing:.24em;text-transform:uppercase;color:var(--a)}
+body.path-g710 .learn h2{letter-spacing:-.01em;text-shadow:0 0 34px color-mix(in srgb,var(--a) 28%,transparent)}
+body.path-g710 .learn .mis{border-left:3px solid var(--a);border-radius:6px 12px 12px 6px;background:linear-gradient(100deg,color-mix(in srgb,var(--a) 16%,transparent),color-mix(in srgb,var(--a) 5%,transparent))}
+body.path-g710 .goals li{border-radius:8px;background:rgba(255,255,255,.02)}
+body.path-g710 .goals li.ok{border-color:color-mix(in srgb,var(--ok) 70%,transparent);box-shadow:0 0 18px -7px var(--ok)}
+body.path-g710 .blk{border-radius:7px;font-weight:800;letter-spacing:.01em;box-shadow:0 0 0 1px rgba(0,0,0,.45),0 3px 0 rgba(0,0,0,.38),0 0 18px -7px color-mix(in srgb,var(--a) 70%,transparent);transition:transform .2s,box-shadow .2s}
+body.path-g710 .blk:hover{transform:translateY(-2px);box-shadow:0 0 0 1px rgba(0,0,0,.45),0 6px 16px rgba(0,0,0,.4),0 0 24px -7px var(--a)}
+body.path-g710 .zone{border-radius:10px;border-color:color-mix(in srgb,var(--a) 26%,transparent);background-image:linear-gradient(color-mix(in srgb,var(--a) 6%,transparent) 1px,transparent 1px);background-size:100% 28px}
+body.path-g710 .zone.over{border-color:var(--a);background-color:color-mix(in srgb,var(--a) 7%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 18%,transparent),0 0 36px color-mix(in srgb,var(--a) 26%,transparent)}
+body.path-g710 .btn{border-radius:8px;font-weight:800;letter-spacing:.02em}
+body.path-g710 .btn.ghost{border-color:color-mix(in srgb,var(--a) 30%,var(--line));background:rgba(255,255,255,.02)}
+body.path-g710 .btn:hover{transform:translateY(-2px);box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 60%,transparent),0 12px 30px -16px var(--a)}
+body.path-g710 .track{border-radius:10px;border-color:color-mix(in srgb,var(--a) 30%,var(--line));background:linear-gradient(0deg,color-mix(in srgb,var(--a) 18%,transparent),transparent 72%);box-shadow:inset 0 0 22px rgba(0,0,0,.4),0 0 28px -18px var(--a)}
+body.path-g710 .track i{border-right-color:color-mix(in srgb,var(--a) 16%,var(--line))}
+body.path-g710 .box{border-radius:8px;box-shadow:0 0 16px -7px var(--a)}
+body.path-g710 #msg{border-radius:8px}
+body.path-g710 .sec h2 .hand{font:800 11px var(--sans);letter-spacing:.24em;text-transform:uppercase;color:var(--a);vertical-align:middle}
+body.path-g710 .ch h3:after{content:"";display:block;width:46px;height:2px;margin-top:8px;background:linear-gradient(90deg,var(--a),transparent)}
+body.path-g710 .lb{border-radius:7px;border-color:color-mix(in srgb,var(--a) 16%,var(--line));background:rgba(255,255,255,.02)}
+body.path-g710 .lb:hover:not(:disabled){transform:translateX(4px);border-color:var(--a);box-shadow:0 0 20px -9px var(--a)}
+body.path-g710 .pan{border-radius:14px;border-color:color-mix(in srgb,var(--a) 55%,transparent);box-shadow:0 0 70px -24px var(--a)}
 
-/* 3. Grades 11-12 (g1112): Sleek technical engineering panels, polished transitions */
-body.path-g1112 .card{border-radius:12px;border:1px solid color-mix(in srgb,var(--a) 32%,var(--line));background:color-mix(in srgb,var(--bg) 84%,transparent);box-shadow:inset 0 0 20px rgba(0,0,0,.25)}
-body.path-g1112 .blk{border-radius:6px;font-family:var(--sans);font-weight:600;letter-spacing:.02em;border-left:3px solid var(--a);box-shadow:0 2px 5px rgba(0,0,0,.3)}
-body.path-g1112 .track{border-radius:8px;border-color:color-mix(in srgb,var(--a) 40%,var(--line))}
-body.path-g1112 .diff{font-family:'Courier New',monospace;border-radius:6px}
+/* 3. Grades 11-12 (g1112): "Engineering blueprint".
+   Fine graph paper under a scanned surface, square panels with a dashed inner
+   frame, and monospace labels so the page reads like a technical drawing. */
+body.path-g1112{background-color:#060b12;background-image:
+ repeating-linear-gradient(0deg,rgba(255,255,255,.022) 0 1px,transparent 1px 3px),
+ linear-gradient(color-mix(in srgb,#9fd8ff 8%,transparent) 1px,transparent 1px),
+ linear-gradient(90deg,color-mix(in srgb,#9fd8ff 8%,transparent) 1px,transparent 1px),
+ linear-gradient(color-mix(in srgb,#9fd8ff 4%,transparent) 1px,transparent 1px),
+ linear-gradient(90deg,color-mix(in srgb,#9fd8ff 4%,transparent) 1px,transparent 1px),
+ radial-gradient(900px 520px at 88% -12%,color-mix(in srgb,var(--a) 12%,transparent),transparent 64%);
+ background-size:auto,110px 110px,110px 110px,22px 22px,22px 22px,auto;background-attachment:fixed}
+body.path-g1112 .top{border-bottom:1px solid color-mix(in srgb,var(--a) 22%,var(--line))}
+body.path-g1112 .logo{font:700 19px ui-monospace,SFMono-Regular,Consolas,monospace;font-style:normal;letter-spacing:.08em;text-transform:uppercase}
+body.path-g1112 .hero h1{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-style:normal;font-weight:700;font-size:clamp(32px,6.4vw,62px);letter-spacing:-.03em}
+body.path-g1112 .hand{font:700 10.5px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.3em;text-transform:uppercase;color:var(--mut)}
+body.path-g1112 .lab,body.path-g1112 .diff,body.path-g1112 .hud-eyebrow{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.16em;font-size:10px}
+body.path-g1112 .hud{border-radius:7px;border-color:color-mix(in srgb,var(--a) 26%,var(--line));background:rgba(6,10,16,.8);box-shadow:0 12px 34px rgba(0,0,0,.42)}
+body.path-g1112 .hud-who b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:700;letter-spacing:.02em}
+body.path-g1112 .hud .btn.sm{border-radius:3px;font:600 11.5px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
+body.path-g1112 .hud-score{border-radius:3px;border-color:color-mix(in srgb,var(--a) 60%,transparent);background:transparent}
+body.path-g1112 .hud-score b{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:700}
+body.path-g1112 .card{border-radius:6px;border:1px solid color-mix(in srgb,var(--a) 30%,var(--line));background:color-mix(in srgb,var(--bg) 82%,transparent);box-shadow:inset 0 0 22px rgba(0,0,0,.24),0 16px 40px rgba(0,0,0,.35)}
+body.path-g1112 .card:after{content:"";position:absolute;inset:5px;border:1px dashed color-mix(in srgb,var(--a) 15%,transparent);border-radius:3px;pointer-events:none}
+body.path-g1112 .learn h2{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-weight:700;font-size:26px;letter-spacing:-.02em}
+body.path-g1112 .learn h2:before{content:"";display:inline-block;width:9px;height:9px;margin-right:12px;border:1px solid var(--a);vertical-align:.08em}
+body.path-g1112 .learn .mis{border-radius:4px;border-left:3px solid var(--a);background:linear-gradient(90deg,color-mix(in srgb,var(--a) 11%,transparent),transparent 82%);font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:14px}
+body.path-g1112 .goals li{border-radius:3px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px}
+body.path-g1112 .blk{border-radius:4px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;font-weight:600;letter-spacing:.01em;border-left:4px solid rgba(0,0,0,.35);box-shadow:0 2px 4px rgba(0,0,0,.4)}
+body.path-g1112 .blk:hover{transform:translateY(-1px);box-shadow:0 5px 12px rgba(0,0,0,.45)}
+body.path-g1112 .zone{border-radius:4px;border-color:color-mix(in srgb,var(--a) 26%,transparent);background-image:repeating-linear-gradient(0deg,transparent 0 27px,color-mix(in srgb,var(--a) 12%,transparent) 27px 28px)}
+body.path-g1112 .btn{border-radius:3px;font:600 12.5px ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
+body.path-g1112 .btn:hover{transform:translateY(-1px);box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 55%,transparent)}
+body.path-g1112 .track{border-radius:5px;border-color:color-mix(in srgb,var(--a) 35%,var(--line));background:linear-gradient(0deg,color-mix(in srgb,var(--a) 12%,transparent),transparent 72%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04),inset 0 0 26px rgba(0,0,0,.4)}
+body.path-g1112 .track i{border-right-style:solid;border-right-color:color-mix(in srgb,var(--a) 12%,transparent)}
+body.path-g1112 .sec h2{font-family:var(--sans);font-size:26px;text-transform:uppercase;letter-spacing:.05em}
+body.path-g1112 .ch h3{font-family:var(--sans);font-size:22px;text-transform:uppercase;letter-spacing:.06em}
+body.path-g1112 .lb{border-radius:3px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;letter-spacing:.02em}
+body.path-g1112 .pan{border-radius:6px;border-color:color-mix(in srgb,var(--a) 60%,transparent)}
 
-/* 4. College & Adults (adult): Refined obsidian & cinematic telemetry, zero childish elements */
-body.path-adult{--bg:#070a0f;--line:rgba(255,255,255,.12);--mut:hsl(var(--h) 10% 70%)}
-body.path-adult .card{border-radius:8px;border:1px solid var(--line);background:rgba(10,14,20,.88);backdrop-filter:blur(14px);box-shadow:0 12px 34px rgba(0,0,0,.5)}
-body.path-adult .blk{border-radius:4px;box-shadow:0 2px 4px rgba(0,0,0,.45);font-size:13.5px;border:1px solid rgba(0,0,0,.35)}
-body.path-adult .btn{border-radius:8px;font-weight:600;letter-spacing:.03em}
-body.path-adult .track{border-radius:6px;border-color:rgba(255,255,255,.16)}
+/* 4. College & Adults (adult): "Cinematic obsidian".
+   Near-black glass, hairline dividers, wide letterspaced labels and large
+   serif headings, with slow fades instead of bouncy motion. */
+body.path-adult{--bg:#05070a;--line:rgba(255,255,255,.1);--mut:#9aa3b2;background-color:#05070a;background-image:
+ radial-gradient(1200px 620px at 50% -22%,rgba(255,255,255,.055),transparent 62%),
+ radial-gradient(900px 620px at 92% 112%,color-mix(in srgb,var(--a) 8%,transparent),transparent 64%);
+ background-attachment:fixed}
+body.path-adult .top{border-bottom:1px solid rgba(255,255,255,.08)}
+body.path-adult .logo{font-size:20px;letter-spacing:.02em}
+body.path-adult .hero h1{font-weight:500;letter-spacing:-.02em}
+body.path-adult .hand{font:600 11px var(--sans);letter-spacing:.34em;text-transform:uppercase;color:var(--mut)}
+body.path-adult .hud{border-radius:4px;border:1px solid rgba(255,255,255,.08);background:rgba(8,10,14,.72);box-shadow:none}
+body.path-adult .hud-nav,body.path-adult .hud-tools{border-left-color:rgba(255,255,255,.07)}
+body.path-adult .hud .btn.sm{border-radius:3px;font:600 12px var(--sans);letter-spacing:.05em}
+body.path-adult .hud-score{border-radius:3px;border-color:rgba(255,255,255,.09);background:transparent;padding-left:14px}
+body.path-adult .hud-score b{font-family:var(--serif);font-weight:500;font-size:24px}
+body.path-adult .card{border-radius:5px;border:1px solid rgba(255,255,255,.09);background:rgba(8,10,14,.84);box-shadow:0 26px 60px -34px rgba(0,0,0,.95);animation:cinIn .9s cubic-bezier(.2,.7,.2,1) both}
+body.path-adult .learn{animation:cinIn 1.1s cubic-bezier(.2,.7,.2,1) both}
+body.path-adult .learn h2{font-size:clamp(30px,3.4vw,40px);font-weight:500;letter-spacing:-.015em}
+body.path-adult .learn p{font-size:16.5px;line-height:1.7}
+body.path-adult .learn .mis{border-radius:3px;border-left:2px solid var(--a);background:rgba(255,255,255,.035);color:var(--fg);font-size:15px;letter-spacing:.01em}
+body.path-adult .goals li{border-radius:3px;font-size:14px;background:rgba(255,255,255,.02)}
+body.path-adult .blk{border-radius:3px;font-size:13px;font-weight:600;letter-spacing:.02em;color:#0a0d12;box-shadow:inset 0 1px 0 rgba(255,255,255,.25);filter:saturate(.82)}
+body.path-adult .blk:hover{transform:translateY(-1px);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 10px 24px -16px #000}
+body.path-adult .btn{border-radius:4px;font-weight:600;letter-spacing:.06em;font-size:13px}
+body.path-adult .btn.ghost{border-color:rgba(255,255,255,.14)}
+body.path-adult .btn:hover{transform:none;box-shadow:0 0 0 1px var(--a),0 16px 34px -20px var(--a)}
+body.path-adult .zone{border-radius:4px;border-color:rgba(255,255,255,.12);background:rgba(0,0,0,.24)}
+body.path-adult .track{border-radius:4px;border-color:rgba(255,255,255,.12);background:linear-gradient(0deg,color-mix(in srgb,var(--a) 8%,transparent),transparent 78%);box-shadow:none}
+body.path-adult .bot{transition:left .9s cubic-bezier(.4,.1,.2,1)}
+body.path-adult .sec h2{font-size:34px;font-weight:500;letter-spacing:-.01em}
+body.path-adult .sd{color:var(--mut);font-size:15px;max-width:65ch}
+body.path-adult .ch h3{font-weight:500;font-size:26px}
+body.path-adult .lb{border-radius:3px;font-weight:500;letter-spacing:.02em;font-size:14px}
+body.path-adult .lb:hover:not(:disabled){transform:none;border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.04)}
+body.path-adult .pan{border-radius:6px;border-color:rgba(255,255,255,.14);background:#07090d;box-shadow:0 40px 90px -40px #000}
 body.path-adult h1,body.path-adult h2,body.path-adult h3{font-family:var(--serif);letter-spacing:-.01em}
+@keyframes cinIn{from{opacity:0;transform:translateY(10px);filter:blur(3px)}}
 
 #bfx{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 #bfx i{position:absolute;bottom:-40px;font-style:normal;opacity:.55;animation:floatup linear infinite}
@@ -291,9 +402,71 @@ body.d-beg,body.d-pro{--a:hsl(var(--h) 80% 66%);--b:hsl(calc(var(--h) + 45) 85% 
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition-duration:.01s!important}}
 .hud{flex-wrap:wrap;row-gap:8px;max-width:100%}
 .hud .btn.sm{min-height:40px;padding-top:0;padding-bottom:0;display:inline-flex;align-items:center}
+
+/* Header control bar ---------------------------------------------------------
+   webgame.html groups the HUD into blocks: the player card (.hud-who), the
+   page links (.hud-nav), the small tools (.hud-tools) and the score pill
+   (.hud-score). The whole bar gets its own row under the logo so the buttons
+   never crowd the title, and each block wraps independently on narrow screens. */
+.top{align-items:flex-start;padding:16px 0 14px;margin-bottom:22px;gap:14px}
+.top .tools{margin-left:auto;padding-top:6px}
+.hud{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px;padding:10px 12px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--bg) 74%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.22);font-size:14px;color:var(--mut)}
+.hud-who{display:flex;align-items:center;gap:10px;min-width:0;padding:2px 12px 2px 4px}
+.hud-eyebrow{font:700 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
+.hud-who b{font:800 22px/1.1 var(--serif);color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:30ch}
+.hud-who .diff{margin-left:0}
+.hud-nav,.hud-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.hud-nav,.hud-tools{padding-left:12px;border-left:1px solid var(--line)}
+.hud .btn.sm{min-height:36px;padding:0 14px;font:700 13px var(--sans);border-radius:999px}
+.hud #exit{min-height:36px;padding:0 18px;font:700 13px var(--sans);border-radius:999px}
+.hud-score{margin-left:auto;display:flex;align-items:baseline;gap:8px;padding:5px 16px;border-radius:999px;border:1px solid color-mix(in srgb,var(--a) 45%,var(--line));background:color-mix(in srgb,var(--a) 15%,transparent);color:var(--fg)}
+.hud-score span{font:700 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.hud-score b{font:800 22px/1 var(--serif);color:var(--a);font-variant-numeric:tabular-nums}
+@media(max-width:820px){
+ .hud-who{order:1;flex:1 1 60%;padding:2px 2px 2px 4px}
+ .hud-score{order:2;margin-left:auto}
+ .hud-nav{order:3}
+ .hud-tools{order:4}
+ .hud-nav,.hud-tools{padding-left:0;border-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .hud-nav::-webkit-scrollbar,.hud-tools::-webkit-scrollbar{display:none}
+ .hud-nav .btn.sm,.hud-tools .btn.sm{flex:none}
+ .hud #exit{order:2;margin-left:8px}
+}
+@media(max-width:520px){
+ .hud{padding:8px;gap:6px 8px}
+ .hud-eyebrow,.hud-who .diff{display:none}
+ .hud-who{flex:0 1 auto;gap:8px;padding:2px 0 2px 2px}
+ .hud-who b{font-size:18px;max-width:11ch}
+ .hud-score{padding:4px 10px}
+ .hud-score span{display:none}
+ .hud-score b{font-size:19px}
+ .hud-score b:before{content:"★ ";color:var(--b)}
+ .hud .btn.sm{padding:0 10px;font-size:12px;min-height:34px}
+ .hud #exit{padding:0 12px}
+}
+
+/* Narration button: it reads "Stop narration" while speech is playing. The
+   pressed state needs its own look because the ghost style is transparent. */
+#nar{margin:10px 0 4px;transition:background .25s,color .25s,box-shadow .25s}
+#nar[aria-pressed="true"]{background:var(--b);border-color:var(--b);color:var(--ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--b) 22%,transparent);animation:narpulse 1.8s ease-in-out infinite}
+@keyframes narpulse{50%{box-shadow:0 0 0 8px color-mix(in srgb,var(--b) 10%,transparent)}}
+
+/* Chapter-intro banner: one photograph per section, drifting slowly so
+   the card feels alive while the learner reads the lesson. */
+.sec-art{position:relative;margin:0 0 16px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(135deg,color-mix(in srgb,var(--a) 18%,transparent),color-mix(in srgb,var(--b) 14%,transparent))}
+.sec-art img{display:block;width:100%;aspect-ratio:2.1;object-fit:cover;transform:scale(1.12);filter:saturate(.95) brightness(.88) contrast(1.02);animation:secDrift 28s ease-in-out infinite alternate}
+.sec-art:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 42%,color-mix(in srgb,var(--bg) 62%,transparent));pointer-events:none}
+@keyframes secDrift{from{transform:scale(1.12) translate3d(-1.5%,1%,0)}to{transform:scale(1.16) translate3d(1.5%,-1.2%,0)}}
+body.path-g16 .sec-art{border-radius:22px;border-width:2px}
+body.path-g1112 .sec-art{border-radius:4px}
+body.path-adult .sec-art{border-radius:3px;border-color:rgba(255,255,255,.1)}
+body.path-adult .sec-art img{filter:saturate(.8) brightness(.78) contrast(1.05)}
 body.path-g16{font-size:1.06em}
 body:has(#res:not([hidden])) .coach,body:has(#cine) .coach{display:none}
-.coach{position:fixed!important;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(680px,94vw);max-height:28vh;overflow:auto;z-index:35;margin:0!important;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.coach{position:fixed!important;left:50%;transform:translateX(-50%);bottom:calc(10px + env(safe-area-inset-bottom,0px));width:min(680px,94vw);max-height:28vh;overflow:auto;z-index:35;margin:0!important;box-shadow:0 6px 24px rgba(0,0,0,.28);background:color-mix(in srgb,var(--bg) 94%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+/* While the Coach is open it sits over the bottom of the page, so the page
+   keeps a matching amount of empty space underneath and nothing is lost. */
+body:has(.coach) .wrap{padding-bottom:calc(30vh + 40px)}
 .psum{border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:6px 0}.psum b{display:block;font:800 18px var(--serif)}.psum span{display:block;margin:4px 0 8px;font-size:14px;color:var(--mut);line-height:1.45}
 .dsopt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:transparent;color:inherit;font:inherit;cursor:pointer}.dsopt b{display:block;font:800 17px var(--serif)}.dsopt span{display:block;font-size:14px;color:var(--mut);margin:3px 0}.dsopt em{font-style:normal;font-size:13px;font-weight:700}
 .warnx{border:1px solid #ef7a8c;border-radius:12px;padding:10px 12px;margin:12px 0 8px;line-height:1.45}
@@ -314,3 +487,341 @@ body.path-adult .spark{display:none}
 #chs .hs-track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;gap:16px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding-bottom:6px}
 #chs .hs-track>.sec{flex:0 0 100%;min-width:0;scroll-snap-align:start;box-sizing:border-box}
 #chs .hs-track:focus-visible{outline:2px solid var(--a);outline-offset:4px}
+
+/* =========================================================================
+   SETTINGS WINDOW
+   The Settings panel is built from .setrow labels: a title and a sentence on
+   the left, one switch on the right. The switch is a styled checkbox whose
+   knob is painted with a radial gradient, so it keeps working without any
+   extra markup or JavaScript.
+   ========================================================================= */
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:10px 0;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--bg) 60%,transparent);cursor:pointer;transition:border-color .2s,background .2s}
+/* The shared dialog styles letter-space every label for the small form fields.
+   Settings rows are sentences, so they opt out and keep normal case. */
+.tlpm-pan .setrow{display:flex;margin:10px 0;font:inherit;letter-spacing:normal;text-transform:none;color:inherit}
+.tlpm-pan .setrow small{letter-spacing:normal;text-transform:none;color:var(--mut)}
+.setrow span{display:grid;gap:2px;min-width:0}
+.setrow b{font:800 15px var(--sans)}
+.setrow small{color:var(--mut);font-size:13px;line-height:1.45}
+.setrow input{appearance:none;-webkit-appearance:none;flex:none;width:54px;height:32px;margin:0;border-radius:999px;border:1px solid var(--line);background:radial-gradient(circle at 17px 50%,var(--mut) 0 11px,transparent 12px),color-mix(in srgb,var(--bg) 72%,#000);cursor:pointer;transition:background .22s,border-color .22s,box-shadow .22s}
+.setrow input:checked{background:radial-gradient(circle at calc(100% - 17px) 50%,#fff 0 11px,transparent 12px),var(--a);border-color:var(--a);box-shadow:0 0 0 4px color-mix(in srgb,var(--a) 16%,transparent)}
+.setrow input:focus-visible{outline:2px solid var(--a);outline-offset:3px}
+.setrow:hover{border-color:color-mix(in srgb,var(--a) 45%,var(--line))}
+.setrow:has(input:checked){border-color:color-mix(in srgb,var(--a) 50%,var(--line));background:color-mix(in srgb,var(--a) 8%,transparent)}
+body.path-g16 .setrow{border-radius:20px}
+body.path-g16 .setrow input{width:60px;height:36px;background:radial-gradient(circle at 19px 50%,var(--mut) 0 13px,transparent 14px),color-mix(in srgb,var(--bg) 72%,#000)}
+body.path-g16 .setrow input:checked{background:radial-gradient(circle at calc(100% - 19px) 50%,#fff 0 13px,transparent 14px),var(--a)}
+/* Small section label inside the Settings window ("Volume", "Game"). */
+.setlab{margin:18px 0 6px;font:800 11.5px var(--sans);letter-spacing:.11em;text-transform:uppercase;color:var(--mut)}
+.setlab:first-of-type{margin-top:8px}
+/* The volume rows are built by TLP_VOL.ui() and shared with the site panel;
+   keep their focus ring and spacing tidy inside this dialog. */
+.tlpm-pan .volrow{margin:0}
+.tlpm-pan .volrow .volhead{letter-spacing:normal;text-transform:none;color:inherit}
+.coach-off{min-height:34px;margin-left:8px;padding:0 10px;border:0;border-radius:999px;background:transparent;color:var(--mut);font:600 12px var(--sans);text-decoration:underline;cursor:pointer}
+.coach-off:hover{color:var(--fg)}
+
+/* =========================================================================
+   FIRST-RUN TOUR
+   The hole is one element with a very wide shadow, so the rest of the page
+   darkens and only the current control stays lit.
+   ========================================================================= */
+.tour{position:fixed;inset:0;z-index:140}
+.tour-hole{position:fixed;border-radius:16px;pointer-events:none;box-shadow:0 0 0 9999px rgba(4,8,14,.74),0 0 0 2px var(--a),0 0 28px color-mix(in srgb,var(--a) 55%,transparent);transition:left .22s ease,top .22s ease,width .22s ease,height .22s ease}
+.tour-card{position:fixed;width:min(360px,calc(100vw - 20px));padding:16px 16px 12px;border:1px solid color-mix(in srgb,var(--a) 60%,var(--line));border-radius:16px;background:var(--bg);box-shadow:0 22px 50px rgba(0,0,0,.55);animation:pop .25s}
+.tour-card .tk{font:700 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--a)}
+.tour-card h3{margin:4px 0 6px;font-size:20px;font-style:italic}
+.tour-card p{margin:0 0 12px;color:var(--mut);font-size:14px;line-height:1.55}
+.tour-bar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tour-btns{display:flex;gap:6px}
+.tour-skip{min-height:36px;padding:0 6px;border:0;background:none;color:var(--mut);font:600 13px var(--sans);text-decoration:underline;cursor:pointer}
+.tour-skip:hover{color:var(--fg)}
+.tour-dots{display:flex;gap:5px}
+.tour-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.tour-dots i.on{background:var(--a);box-shadow:0 0 8px var(--a)}
+@media(prefers-reduced-motion:reduce){.tour-card{animation:none}.tour-hole{transition:none}}
+
+/* =========================================================================
+   BREAK REMINDER (youngest players only)
+   A deliberately gentle card: a big star, one short message and two clear
+   choices. It sits above the game but never inside it, so the script is kept.
+   ========================================================================= */
+.breakpan{text-align:center;border-width:2px;border-color:color-mix(in srgb,var(--a) 65%,var(--line));background:linear-gradient(180deg,color-mix(in srgb,var(--a) 14%,var(--bg)),var(--bg) 46%)}
+.breakpan h2{margin:8px 0}
+.breakpan p{max-width:40ch;margin:0 auto 6px;color:var(--mut)}
+.breakbot{font-size:clamp(54px,12vw,80px);line-height:1;filter:drop-shadow(0 10px 22px color-mix(in srgb,var(--b) 45%,transparent));animation:brkBob 2.2s ease-in-out infinite}
+.breakpan .tlpm-row{justify-content:center}
+body.path-g16 .breakpan .tlpm-btn{min-height:52px;font-size:16px}
+@keyframes brkBob{50%{transform:translateY(-10px) rotate(-6deg)}}
+
+/* =========================================================================
+   KID MODE
+   body.kid-fx is switched on by the game for Grades 1-6 when extra effects are
+   allowed. It layers celebration on top of the path theme without touching any
+   gameplay element: no block, goal or button changes meaning.
+   ========================================================================= */
+.kidpraise{margin:10px 0 4px;font:800 clamp(19px,4vw,25px)/1.2 var(--sans);background:linear-gradient(90deg,#ffd36a,#ff8fcf,#7ad9ff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:kidPraise .7s cubic-bezier(.2,1.4,.4,1),rainbow 5s linear infinite}
+.kidspark{position:fixed;z-index:130;font-size:24px;line-height:1;pointer-events:none;will-change:transform,opacity}
+@keyframes kidPraise{from{transform:scale(.6) rotate(-6deg);opacity:0}}
+body.kid-fx .card{animation:kidGlow 4.5s ease-in-out infinite}
+body.kid-fx .learn .mis{border:2px dashed color-mix(in srgb,var(--b) 45%,transparent);border-radius:18px;background:linear-gradient(100deg,color-mix(in srgb,var(--a) 22%,transparent),color-mix(in srgb,var(--b) 16%,transparent))}
+body.kid-fx .chip{animation:kidChip 1.5s ease-in-out infinite}
+body.kid-fx .track i.vis{animation:kidTile 1.1s ease-in-out infinite}
+body.kid-fx .box:not(.pop){animation:kidBox 3.2s ease-in-out infinite}
+body.kid-fx .goals li.ok{animation:kidPop .55s}
+body.kid-fx .stars{animation:kidStars .9s cubic-bezier(.2,1.4,.4,1)}
+body.kid-fx #pan{overflow:hidden}
+body.kid-fx #pan:before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:linear-gradient(90deg,#ffd36a,#ff8fcf,#7ad9ff,#7dffb2,#ffd36a);background-size:200% 100%;animation:rainbow 4s linear infinite}
+body.kid-fx #pan{position:relative}
+body.kid-fx .bub{background:linear-gradient(90deg,#ffd36a,#ff8fcf);font-size:15px}
+body.kid-fx .btn:hover{transform:translateY(-2px) rotate(-1.5deg)}
+body.kid-fx .coach{border-width:3px;border-radius:28px}
+@keyframes kidGlow{50%{box-shadow:0 10px 36px rgba(0,0,0,.28),0 0 26px color-mix(in srgb,var(--b) 26%,transparent)}}
+@keyframes kidChip{50%{transform:translateY(-8px) rotate(-10deg) scale(1.12)}}
+@keyframes kidTile{50%{background:color-mix(in srgb,var(--b) 34%,transparent)}}
+@keyframes kidBox{50%{transform:translateY(-3px)}}
+@keyframes kidPop{0%{transform:scale(.85)}55%{transform:scale(1.06)}100%{transform:none}}
+@keyframes kidStars{0%{transform:scale(.4) rotate(-12deg);opacity:0}60%{transform:scale(1.15) rotate(4deg)}100%{transform:none}}
+html.reduce-fx body.kid-fx *,html.reduce-fx .kidspark{animation:none!important}
+
+/* =========================================================================
+   INTERMEDIATE AND ADVANCED POLISH
+   The surface gets quieter and more precise as the learner advances: soft
+   depth on Intermediate, engineering hairlines on Grades 11-12, a cinematic
+   frame on the adult path, and a terminal accent on Professional.
+   ========================================================================= */
+body.d-int .card{border-color:color-mix(in srgb,var(--a) 22%,var(--line));box-shadow:0 10px 30px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);transition:border-color .25s,box-shadow .25s}
+body.d-int .card:hover{border-color:color-mix(in srgb,var(--a) 42%,var(--line))}
+body.d-int .top{border-bottom-color:color-mix(in srgb,var(--a) 32%,var(--line))}
+body.d-int .track{box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 22%,transparent),0 16px 40px rgba(0,0,0,.3)}
+body.path-g1112 .card,body.path-adult .card{position:relative;overflow:hidden}
+body.path-g1112 .card:before,body.path-adult .card:before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a) 75%,transparent),transparent);pointer-events:none}
+body.path-adult .card:after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);pointer-events:none}
+body.d-pro .hud{border-color:color-mix(in srgb,var(--a) 40%,var(--line));box-shadow:0 0 22px color-mix(in srgb,var(--a) 12%,transparent)}
+body.d-pro .hud-score{background:color-mix(in srgb,var(--a) 12%,transparent);border-color:color-mix(in srgb,var(--a) 55%,var(--line))}
+body.d-pro .learn h2:before{content:"// ";color:var(--a);opacity:.7}
+body.d-pro .learn .mis{border-radius:3px;border-left:3px solid var(--a);font-family:'JetBrains Mono','Courier New',monospace;font-size:14px}
+body.d-pro .goals li{border-radius:3px}
+body.d-pro #msg{border-radius:3px;border-left:3px solid var(--line)}
+body.d-pro #msg.bad{border-left-color:var(--bad)}
+body.d-pro #msg.hint{border-left-color:var(--b)}
+body.d-pro .track i:first-child:after{content:"INIT";letter-spacing:.16em}
+/* Section 5 (Bits and Bytes) and the optional Mastery section get a subtly
+   premium frame, so late chapters feel like a different tier of the game. */
+body[data-sec="4"] .card,body[data-sec="5"] .card{border-color:color-mix(in srgb,var(--b) 26%,var(--line))}
+body[data-sec="5"] .card{box-shadow:0 0 0 1px color-mix(in srgb,var(--b) 22%,transparent),0 18px 44px rgba(0,0,0,.34)}
+body[data-sec="5"] .hud{border-color:color-mix(in srgb,var(--b) 35%,var(--line))}
+body[data-sec="3"] .learn .mis,body[data-sec="4"] .learn .mis,body[data-sec="5"] .learn .mis{box-shadow:inset 3px 0 0 var(--b),0 0 24px color-mix(in srgb,var(--b) 18%,transparent)}
+@media(prefers-reduced-motion:reduce){
+ .breakbot,.setrow input,.kidpraise{animation:none!important}
+}
+
+/* ---------------------------------------------------------------------------
+   MENU DASH: streak card and daily missions sit side by side under the tally.
+   The streak styles live in js/streak.js so other pages share them.
+   --------------------------------------------------------------------------- */
+.dashrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:14px;margin:16px 0 4px}
+.dashrow:empty{display:none}
+@media(max-width:760px){.dashrow{grid-template-columns:1fr}}
+.daily{border:1px solid var(--line);border-radius:16px;padding:12px 14px;background:linear-gradient(160deg,rgba(255,255,255,.035),transparent);font-family:var(--sans,system-ui,sans-serif)}
+.dhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:9px}
+.dhead b{font-size:15px}
+.dhead span{font-size:11px;color:var(--mut);letter-spacing:.04em}
+.dlist{display:grid;gap:8px}
+.dmi{display:grid;grid-template-columns:1fr 74px;grid-template-areas:"t c" "b b";gap:4px 10px;align-items:center;padding:8px 10px;border-radius:11px;background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06)}
+.dmt{grid-area:t;display:flex;flex-direction:column;gap:1px;min-width:0}
+.dmt b{font-size:13px}
+.dmt span{font-size:11px;color:var(--mut)}
+.dbar{grid-area:b;height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.dbar i{display:block;height:100%;border-radius:99px;background:var(--a);box-shadow:0 0 10px color-mix(in srgb,var(--a) 60%,transparent);transition:width .4s ease}
+.dmi.done .dbar i{background:var(--b)}
+.dclaim{grid-area:c;justify-self:end;min-height:30px;padding:0 12px;border-radius:99px;border:1px solid transparent;background:var(--a);color:var(--ink);font:700 12px var(--sans,system-ui,sans-serif);cursor:pointer}
+.dclaim.got{background:transparent;border-color:color-mix(in srgb,var(--b) 60%,transparent);color:var(--b)}
+.dclaim.wait{background:transparent;border-color:var(--line);color:var(--mut);cursor:default}
+.dfoot{margin-top:9px;font-size:11px;color:var(--mut)}
+/* guardian countdown */
+.btime{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:99px;border:1px solid color-mix(in srgb,var(--a) 45%,transparent);font:700 11px var(--sans,system-ui,sans-serif);letter-spacing:.06em;color:var(--a)}
+.btime.low{color:#ff6b7f;border-color:#ff6b7f;animation:btPulse .7s ease-in-out infinite alternate}
+@keyframes btPulse{to{box-shadow:0 0 14px #ff6b7f66}}
+/* hardcore marker in the header */
+body.hardcore #pathBadge{background:#ff4d6d;color:#0b0f14;border-color:transparent}
+body.hardcore #pathBadge:after{content:" · HARDCORE"}
+html.reduce-fx .btime.low{animation:none}
+/* Achievement rarity. Plain score badges stay neutral; the new habit, streak
+   and hardcore badges show a colour so a rare unlock reads differently. */
+.achp.rar-rare{border-color:#59c3ff;box-shadow:0 10px 36px rgba(0,0,0,.35),0 0 0 1px #59c3ff55,0 0 24px #59c3ff2e}
+.achp.rar-rare small{color:#59c3ff}
+.achp.rar-epic{border-color:#c07bff;box-shadow:0 10px 36px rgba(0,0,0,.35),0 0 0 1px #c07bff66,0 0 28px #c07bff33}
+.achp.rar-epic small{color:#c07bff}
+.achp.rar-legendary{border-color:#ffc74d;box-shadow:0 10px 36px rgba(0,0,0,.35),0 0 0 1px #ffc74daa,0 0 34px #ffc74d4d;animation:achin .6s cubic-bezier(.2,1.2,.4,1),rarGlow 2.4s ease-in-out infinite alternate}
+.achp.rar-legendary small{color:#ffc74d}
+@keyframes rarGlow{to{box-shadow:0 10px 36px rgba(0,0,0,.35),0 0 0 1px #ffc74daa,0 0 44px #ffc74d66}}
+.lc .rar{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:99px;border:1px solid currentColor;font:700 9px var(--sans,system-ui,sans-serif);letter-spacing:.1em;text-transform:uppercase;color:var(--mut);vertical-align:middle}
+.lc.rar-rare .rar{color:#59c3ff}.lc.rar-epic .rar{color:#c07bff}.lc.rar-legendary .rar{color:#ffc74d}
+@media(prefers-reduced-motion:reduce){.achp.rar-legendary{animation:achin .6s cubic-bezier(.2,1.2,.4,1)}}
+/* =============================================================================
+   COMMAND CONSOLE (the Console button in the top bar, or the backtick key)
+   -----------------------------------------------------------------------------
+   A draggable-looking terminal dock that sits above the game but below the
+   story screen and the settings dialogs. The markup is built in webgame.js:
+   #tcon > .tcon-head, .tcon-out and .tcon-in. Output lines carry .tcon-you,
+   .tcon-ok, .tcon-bad or .tcon-dim so each kind of reply has its own colour.
+   ============================================================================= */
+.tcon{position:fixed;right:14px;bottom:14px;z-index:66;width:min(420px,calc(100vw - 28px));max-height:min(360px,60vh);display:flex;flex-direction:column;border:1px solid color-mix(in srgb,var(--a) 35%,var(--line));border-radius:14px;background:color-mix(in srgb,#05070c 88%,transparent);color:#dbe3f0;box-shadow:0 18px 60px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.04) inset;overflow:hidden;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:tconIn .22s ease-out}
+.tcon[hidden]{display:none}
+@keyframes tconIn{from{opacity:0;transform:translateY(10px)}}
+.tcon-head{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);font:700 12px var(--sans,system-ui,sans-serif);letter-spacing:.08em;text-transform:uppercase;color:#9fb0c8}
+.tcon-head b{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tcon-dots{display:inline-flex;gap:4px}
+.tcon-dots i{width:8px;height:8px;border-radius:50%;background:#3a4459}
+.tcon-dots i:first-child{background:#ff6b7f}
+.tcon-dots i:nth-child(2){background:#ffc74d}
+.tcon-dots i:nth-child(3){background:#3ddc84}
+.tcon-x{min-width:26px;min-height:26px;border:0;border-radius:8px;background:transparent;color:#9fb0c8;font:700 18px/1 var(--sans,system-ui,sans-serif);cursor:pointer}
+.tcon-x:hover,.tcon-x:focus-visible{background:rgba(255,255,255,.1);color:#fff}
+.tcon-out{flex:1;min-height:84px;overflow:auto;padding:10px 12px;font:12.5px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;word-break:break-word;overscroll-behavior:contain}
+.tcon-line{margin:0 0 2px}
+.tcon-line.tcon-you{color:#8fa3c0}
+.tcon-line.tcon-ok{color:#6ee7a8}
+.tcon-line.tcon-bad{color:#ff8b9c}
+.tcon-line.tcon-dim{color:#7d8aa0}
+.tcon-in{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.35);font:13px ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--a)}
+.tcon-in input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#e8eefc;font:inherit;padding:4px 0}
+.tcon-in input::placeholder{color:#5f6b80}
+.tcon-in:focus-within{background:rgba(0,0,0,.5);box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 45%,transparent) inset}
+/* The glitch command only shakes the screen for a moment, never the whole page. */
+body.zap{animation:tconZap .42s steps(2,end)}
+@keyframes tconZap{10%{filter:hue-rotate(18deg) contrast(1.08)}30%{transform:translateX(-2px)}50%{filter:hue-rotate(-14deg)}70%{transform:translateX(2px)}90%{filter:none;transform:none}}
+@media(max-width:560px){.tcon{right:8px;left:8px;bottom:8px;width:auto;max-height:52vh}}
+@media(prefers-reduced-motion:reduce){.tcon{animation:none}body.zap{animation:none}}
+/* Quick-command chips above the input line. They run the same commands as
+   typing, so the console can be used with a pointer alone. */
+.tcon-chips{display:flex;gap:5px;flex-wrap:wrap;padding:7px 10px 0;border-top:1px solid rgba(255,255,255,.06);background:rgba(0,0,0,.18)}
+.tcon-chips button{min-height:24px;padding:0 8px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:transparent;color:#8fa3c0;font:600 10.5px var(--sans,system-ui,sans-serif);letter-spacing:.06em;cursor:pointer}
+.tcon-chips button:hover,.tcon-chips button:focus-visible{border-color:color-mix(in srgb,var(--a) 60%,transparent);color:var(--a)}
+/* A select used by the break-interval row. It sits where the switch normally
+   does, so the row keeps the same height and alignment. */
+.setrow select{flex:none;min-height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--bg) 80%,#000);color:var(--fg);font:600 13px var(--sans,system-ui,sans-serif);cursor:pointer}
+.setrow select:focus-visible{outline:2px solid var(--a);outline-offset:3px}
+.setrow:has(select){cursor:default}
+/* Keyboard focus for the block palette and the script blocks. A visible ring
+   is the only way a switch or keyboard player can tell where they are. */
+.blk:focus-visible{outline:3px solid var(--a);outline-offset:3px}
+.blk.pal:focus-visible{outline-offset:2px}
+/* ---------- Story cinematic (opening, ending) ------------------------------
+   Text comes from story.js; this only dresses it. Each speaker gets a small
+   CSS portrait, the line is typed out, and one dot tracks the scene. */
+#cine.c-story{background:radial-gradient(circle at 50% 32%,#101a2e,#05060a 68%);overflow:auto}
+#cine.c-story .stage{position:relative;z-index:1;gap:10px}
+.cs-bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.cs-grid{position:absolute;left:-25%;right:-25%;bottom:-12%;height:85%;background-image:linear-gradient(rgba(53,201,232,.24) 1px,transparent 1px),linear-gradient(90deg,rgba(53,201,232,.24) 1px,transparent 1px);background-size:44px 44px;transform:perspective(420px) rotateX(64deg);transform-origin:50% 100%;animation:csGrid 8s linear infinite;opacity:.45;-webkit-mask-image:linear-gradient(transparent 4%,#000 50%,transparent 92%);mask-image:linear-gradient(transparent 4%,#000 50%,transparent 92%)}
+.cs-scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 4px);animation:csScan 11s linear infinite;mix-blend-mode:screen}
+.cs-bg b{position:absolute;bottom:-8px;width:3px;height:3px;border-radius:50%;background:#8fe9ff;box-shadow:0 0 8px #35c9e8;opacity:0;animation:csMote 9s linear infinite}
+.cs-bg b:nth-of-type(1){left:8%;animation-delay:-2s}
+.cs-bg b:nth-of-type(2){left:24%;animation-delay:-6s;width:2px;height:2px}
+.cs-bg b:nth-of-type(3){left:43%;animation-delay:-4s}
+.cs-bg b:nth-of-type(4){left:61%;animation-delay:-7.5s;width:4px;height:4px}
+.cs-bg b:nth-of-type(5){left:78%;animation-delay:-1s}
+.cs-bg b:nth-of-type(6){left:91%;animation-delay:-5s;width:2px;height:2px}
+.cs-title{margin:0;font-size:clamp(28px,5.6vw,54px);letter-spacing:.06em;animation:csIn .9s ease-out both}
+.cs-scene{--sw:#35c9e8;position:relative;display:flex;align-items:center;gap:18px;width:min(640px,100%);min-height:150px;padding:18px;text-align:left;border:1px solid color-mix(in srgb,var(--sw) 40%,transparent);border-radius:20px;background:linear-gradient(135deg,color-mix(in srgb,var(--sw) 10%,transparent),rgba(8,10,20,.65));box-shadow:0 0 40px -14px var(--sw),inset 0 0 30px rgba(0,0,0,.4);transition:border-color .3s,box-shadow .3s;cursor:pointer}
+.cs-scene[data-who=r]{--sw:#35c9e8}.cs-scene[data-who=u]{--sw:#3ddc84}.cs-scene[data-who=l]{--sw:#f2c94c}.cs-scene[data-who=s]{--sw:#ef7a8c}
+.cs-port{flex:none;display:grid;place-items:center;width:96px;height:96px}
+#cine.c-story .cs-scene.swap .cs-port{animation:csPop .5s cubic-bezier(.2,1.4,.4,1)}
+.cs-halo{position:absolute;inset:-10px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--sw) 32%,transparent),transparent 68%);animation:csHalo 2.6s ease-in-out infinite}
+.cs-bot{position:relative;display:grid;place-items:center;width:72px;height:72px}
+.cs-head{position:relative;width:64px;height:54px;border-radius:16px;background:linear-gradient(160deg,#1b2733,#0a1016);border:2px solid var(--sw);box-shadow:0 0 18px -2px var(--sw),inset 0 0 14px rgba(0,0,0,.7)}
+.cs-bot.r .cs-head{margin-top:12px}
+.cs-head i{position:absolute;top:19px;width:14px;height:9px;border-radius:4px;background:var(--sw);box-shadow:0 0 10px var(--sw);animation:csBlink 4s infinite}
+.cs-head i:first-of-type{left:11px}.cs-head i:nth-of-type(2){right:11px}
+.cs-head b{position:absolute;left:14px;right:14px;bottom:10px;height:6px;background:repeating-linear-gradient(90deg,var(--sw) 0 5px,transparent 5px 9px);opacity:.75}
+.cs-bot.u .cs-head{width:66px;height:62px;border-radius:50%}
+.cs-bot.u .cs-head i{top:23px;width:12px;height:12px;border-radius:50%}
+.cs-bot.u .cs-head b{left:20px;right:20px;bottom:14px;height:4px}
+.cs-ant{position:absolute;top:0;left:50%;width:3px;height:16px;margin-left:-1.5px;border-radius:2px;background:linear-gradient(var(--sw),#3d5366);transform-origin:bottom}
+.cs-ant:after{content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--sw);box-shadow:0 0 10px var(--sw);animation:csBlink 2s infinite}
+.cs-term{position:relative;display:grid;align-content:center;gap:6px;width:84px;height:64px;padding:10px;border:2px solid var(--sw);border-radius:10px;background:#12070c;box-shadow:0 0 18px -4px var(--sw),inset 0 0 16px rgba(0,0,0,.8)}
+.cs-term b{display:block;height:4px;border-radius:2px;background:var(--sw);animation:csTerm 2.4s infinite}
+.cs-term b:nth-of-type(1){width:58%}.cs-term b:nth-of-type(2){width:88%;animation-delay:.2s}.cs-term b:nth-of-type(3){width:44%;animation-delay:.4s}
+.cs-term i{position:absolute;left:12px;bottom:8px;width:7px;height:9px;background:var(--sw);animation:csBlink 1s steps(1) infinite}
+.cs-radio{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;width:82px;height:62px;border:2px solid var(--sw);border-radius:12px;background:linear-gradient(160deg,#231c07,#0d0a03);box-shadow:0 0 18px -4px var(--sw)}
+.cs-waves{display:flex;align-items:flex-end;gap:4px;height:20px}
+.cs-waves i{width:4px;height:100%;border-radius:2px;background:var(--sw);transform-origin:50% 100%;animation:csWave 1s ease-in-out infinite}
+.cs-waves i:nth-child(2){animation-delay:.12s}.cs-waves i:nth-child(3){animation-delay:.24s}.cs-waves i:nth-child(4){animation-delay:.36s}.cs-waves i:nth-child(5){animation-delay:.48s}
+.cs-radio b{font:700 7px var(--sans,system-ui,sans-serif);letter-spacing:.18em;color:var(--sw)}
+.cs-say{flex:1;min-width:0}
+.cs-say .sline{margin:0;gap:3px}
+.cs-say .sline b{font-size:11px;color:var(--sw);opacity:1}
+.cs-say .sline span{min-height:3.2em;font-size:clamp(15px,2.4vw,18px);line-height:1.5;color:#e8eefc}
+.cs-say .typing:after{content:"";display:inline-block;width:.45em;height:1em;margin-left:2px;vertical-align:-.15em;background:var(--sw);animation:csBlink 1s steps(1) infinite}
+.cs-live{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.cs-dots{display:flex;justify-content:center;gap:7px;margin-top:2px}
+.cs-dot{width:9px;height:9px;border-radius:5px;background:rgba(255,255,255,.18);transition:width .35s,background .35s}
+.cs-dot.on{width:26px;background:#35c9e8;box-shadow:0 0 10px #35c9e8}
+.cs-bar{justify-content:center;flex-wrap:wrap;margin-top:4px}
+#cine.c-story .sobj{--a:#35c9e8;max-width:640px;margin:4px 0;background:rgba(53,201,232,.08);color:#d6f4ff;font-size:14px;animation:csObj .6s ease-out}
+@keyframes csGrid{to{background-position:0 44px,44px 0}}
+@keyframes csScan{to{background-position:0 40px}}
+@keyframes csMote{12%{opacity:.6}to{transform:translateY(-70vh) translateX(18px);opacity:0}}
+@keyframes csIn{from{opacity:0;letter-spacing:.3em;filter:blur(6px)}}
+@keyframes csPop{from{opacity:0;transform:scale(.7) translateY(8px)}}
+@keyframes csBlink{50%{opacity:.15}}
+@keyframes csWave{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes csTerm{0%,100%{opacity:.25}50%{opacity:.85}}
+@keyframes csObj{from{opacity:0;transform:translateY(8px)}}
+@keyframes csHalo{50%{opacity:.5;transform:scale(1.08)}}
+@media(max-width:560px){
+ .cs-title{font-size:clamp(26px,8vw,38px)}
+ .cs-scene{align-items:flex-start;gap:12px;padding:12px;border-radius:16px;min-height:0}
+ .cs-port{width:64px;height:64px}
+ .cs-bot{width:62px;height:62px}
+ .cs-head{width:54px;height:46px;border-radius:14px}
+ .cs-bot.r .cs-head{margin-top:9px}
+ .cs-head i{top:15px;width:11px;height:8px}
+ .cs-head i:first-of-type{left:9px}.cs-head i:nth-of-type(2){right:9px}
+ .cs-head b{left:11px;right:11px;bottom:8px;height:5px}
+ .cs-bot.u .cs-head{width:56px;height:52px}
+ .cs-bot.u .cs-head i{top:19px;width:10px;height:10px}
+ .cs-bot.u .cs-head b{left:17px;right:17px;bottom:11px}
+ .cs-term{width:64px;height:56px;padding:8px;gap:5px}
+ .cs-radio{width:64px;height:54px;gap:6px}
+ .cs-radio b{font-size:6px}
+ .cs-say .sline span{min-height:4.4em;font-size:15px}
+ .cs-dots{margin-top:0}
+}
+html.reduce-fx .cs-bg *,html.reduce-fx .cs-port *,html.reduce-fx .cs-title,html.reduce-fx .cs-dot,html.reduce-fx #cine.c-story .sobj{animation:none!important}
+@media(prefers-reduced-motion:reduce){.cs-bg *,.cs-port *,.cs-title,.cs-dot,#cine.c-story .sobj{animation:none!important}}
+
+/* =========================================================================
+   TOUCH ERGONOMICS AND SMALL-SCREEN POLISH
+   Thumb-sized targets on phones and tablets, a sticky action row so Run is
+   always in reach, and press feedback on the blocks.
+   ========================================================================= */
+.blk.pal{transition:transform .15s ease,box-shadow .15s ease}
+.blk.pal:active{transform:scale(.97)}
+.blk:focus-visible,.tour-card button:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.zone.over{border-style:solid;box-shadow:0 0 0 4px color-mix(in srgb,var(--a) 22%,transparent),0 0 30px color-mix(in srgb,var(--a) 30%,transparent)}
+#pal.over{border-style:solid;background:color-mix(in srgb,var(--bad) 10%,transparent)}
+#run{box-shadow:0 6px 18px color-mix(in srgb,var(--a) 45%,transparent)}
+#run:disabled{opacity:.7;cursor:progress}
+@media(pointer:coarse){
+  .blk{min-height:44px}
+  .blk select,.blk input{min-height:32px;font-size:15px}
+  .btn{min-height:46px}
+  .bar-top .btn{flex:1 1 90px}
+}
+@media(max-width:600px){
+  /* Run, Reset and Hint stay at the bottom of the screen while the script
+     scrolls, so the next run is always one tap away. */
+  #game .bar-top{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:18;margin-top:12px;padding:8px;border-radius:16px;background:color-mix(in srgb,var(--bg) 90%,transparent);border:1px solid var(--line);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 10px 26px rgba(0,0,0,.35)}
+  #game .bar-top #run{flex:1 1 auto}
+  #game .bar-top .btn{min-height:48px}
+}
+@media(max-width:600px){
+  /* On a phone the blocks become one swipeable row, so the script and Run are
+     not pushed far down the page. */
+  #pal{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  #pal .blk{flex:0 0 auto;margin:0;max-width:78vw;scroll-snap-align:start}
+  #pal .blk:only-child{max-width:none}
+  .work{gap:10px}
+}

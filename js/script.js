@@ -32,8 +32,8 @@ const PAGES = {
         lead: "No install, no waiting. Open The Lost Protocol in your browser and start solving.",
         bits: [
             ["Runs in your browser", "Open it on any modern browser and play."],
-            ["Six sections, twenty-four chapters", "From variables and loops to functions, recursion, binary and debugging."],
-            ["Guardians to beat", "Six bosses that remember your code. Defeat them to bring the light back."]
+            ["Five sections, twenty chapters", "From variables and loops to functions, recursion, binary, debugging and optimisation."],
+            ["Guardians to beat", "Five story guardians that remember your code, plus one optional bonus guardian."]
         ],
         btn: "Play now",
         req: "Works in any modern browser"
@@ -406,7 +406,7 @@ function effect(b, label, k) {
 const ME={photo:"assets/Screenshot_20261013_112542.jpg",name:"Joumana Amir Eldeeb",lines:[
 "I'm Joumana, a final-year student at the Faculty of Computer Studies. The Lost Protocol is my final-year project, supervised by Dr. Ramadan Babers.",
 "I picked this idea because programming can feel abstract when you are just starting out. Loops, variables and logic are much easier to understand when you can watch a little robot do exactly what your code says.",
-"I built The Lost Protocol as a web game so anyone can play it in a browser with nothing to install. It has six sections, twenty-four chapters and six guardians to defeat.",
+"I built The Lost Protocol as a web game so anyone can play it in a browser with nothing to install. It has five sections, twenty chapters and five guardians to defeat, plus an optional Mastery bonus area.",
 "If you are new to coding, I hope this makes it feel a lot less scary. Thanks for stopping by."]};
 function meView(){
 const el=$('#aboutme');

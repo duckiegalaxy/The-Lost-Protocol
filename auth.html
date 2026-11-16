@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="assets/brand/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#080d16">
 <title>Account · The Lost Protocol</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,7 +16,7 @@
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/pages/auth.css">
 </head>
-<body>
+<body data-music="home">
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
@@ -24,7 +30,7 @@
        swaps between sign-in, register and recovery. -->
   <div class="acct-head">
     <h1>Account</h1>
-    <p class="lead">Sign in to play, save your progress and appear on the leaderboards.</p>
+    <p class="lead">Sign in to save your progress and get on the leaderboards.</p>
   </div>
   <!-- Shared message strip: every view writes feedback into this element. -->
   <div id="alert" class="alert" role="alert" aria-live="polite"></div>
@@ -66,7 +72,7 @@
            because a Player ID has no email address to send a link to. -->
       <div class="forgot-row"><button class="linky" id="forgotLink" type="button">Forgot your password?</button></div>
       <button class="btn big go" type="submit" id="liGo">Sign in</button>
-      <p class="note">Students whose parent or teacher created their profile sign in with the Player ID and password they were given.</p>
+      <p class="note">If a parent or teacher made your profile, sign in with your Player ID and password.</p>
     </form>
 
     <form id="regForm" autocomplete="off" hidden>
@@ -74,27 +80,32 @@
       <div class="cards">
         <button type="button" class="pick" data-role="learner" aria-pressed="true">
           <svg class="bot" viewBox="0 0 48 48" aria-hidden="true"><line x1="24" y1="5" x2="24" y2="12"/><circle class="f" cx="24" cy="4" r="2.4"/><rect x="9" y="12" width="30" height="24" rx="8"/><circle class="f" cx="18" cy="24" r="3"/><circle class="f" cx="30" cy="24" r="3"/><line x1="17" y1="42" x2="31" y2="42"/></svg>
-          <b>Learner</b><span>For a student who plays the game on their own device and appears on the leaderboards.</span></button>
+          <b>Learner</b><span>For a student playing on their own device.</span></button>
+        <button type="button" class="pick" data-role="learner" data-path="adult" aria-pressed="false">
+          <svg class="bot" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="12" r="5"/><path d="M24 18v14M16 24h16M24 32l-7 10M24 32l7 10"/></svg>
+          <b>Adult learner</b><span>For a university student or adult who plays. This is a learner account, not a parent account.</span></button>
         <button type="button" class="pick" data-role="parent" aria-pressed="false">
           <svg class="bot" viewBox="0 0 48 48" aria-hidden="true"><rect x="9" y="10" width="30" height="26" rx="4"/><rect x="14" y="19" width="8" height="6" rx="1.5"/><rect x="26" y="19" width="8" height="6" rx="1.5"/><line x1="22" y1="22" x2="26" y2="22"/><line x1="18" y1="42" x2="30" y2="42"/></svg>
-          <b>Parent or Educator</b><span>For a parent or teacher who creates Player IDs and passwords for children or students and follows their progress. This account does not play.</span></button>
+          <b>Parent or Educator</b><span>For a parent or teacher who makes Player IDs for children and follows their progress. This account does not play.</span></button>
       </div>
 
       <label class="l" for="rgName" id="rgNameLabel">Display name</label>
       <input type="text" id="rgName" maxlength="32" autocomplete="off">
 
       <div id="learnerFields">
-        <label class="l">Age group</label>
+        <label class="l" id="pathLabel">Age group</label>
         <div class="cards" id="pathCards"></div>
         <label class="l">Starting difficulty</label>
         <div class="cards" id="diffCards"></div>
-        <p class="note">You can change the difficulty later in the game settings. Changing to a difficulty that is not yet unlocked restarts your progress, and you will be asked to confirm.</p>
+        <p class="note">You can change this later in Settings. Moving to a locked difficulty starts your progress over.</p>
       </div>
 
       <label class="l" for="rgEmail">Email address</label><input type="email" id="rgEmail" autocomplete="email">
-      <label class="l" for="rgPw">Password (at least 6 characters)</label><input type="password" id="rgPw" autocomplete="new-password">
+      <label class="l" for="rgPw">Password (at least 10 characters)</label><input type="password" id="rgPw" autocomplete="new-password" aria-describedby="rgHint">
+      <div class="pwbar" id="rgMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p class="pwhint" id="rgHint" role="status" aria-live="polite">Three unrelated words make a strong, easy password.</p>
       <button class="btn big go" type="submit" id="rgGo">Create account</button>
-      <p class="note">A confirmation email is requested when you register. It can take a few minutes, so please also check your spam folder.</p>
+      <p class="note">We send a confirmation email. If it does not arrive in a few minutes, check your spam folder.</p>
     </form>
   </div>
 
@@ -125,12 +136,14 @@
     <p class="note">You are signed in through the link from your email. Set a new password, then continue to the game.</p>
     <form id="resetForm" autocomplete="off">
       <label class="l" for="npPw">New password</label>
-      <input type="password" id="npPw" autocomplete="new-password">
+      <input type="password" id="npPw" autocomplete="new-password" aria-describedby="npHint">
+      <div class="pwbar" id="npMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p class="pwhint" id="npHint" role="status" aria-live="polite">Use at least 10 characters. Three unrelated words work well.</p>
       <label class="l" for="npPw2">Confirm new password</label>
       <input type="password" id="npPw2" autocomplete="new-password">
       <button class="btn big go" type="submit" id="npGo">Save new password</button>
     </form>
-    <p class="note">Use at least 6 characters.</p>
+    <p class="note">Passwords are checked against known data breaches without sending the password itself.</p>
   </section>
 </div>
 </main>
@@ -141,6 +154,9 @@
 <script src="js/config.js"></script>
 <script src="js/tlp-auth.js"></script>
 <script src="js/tlp-common.js"></script>
+<script src="js/streak.js"></script>
+<script src="js/music.js"></script>
+<script src="js/password.js"></script>
 <script src="js/pages/auth.js"></script>
 </body>
 </html>

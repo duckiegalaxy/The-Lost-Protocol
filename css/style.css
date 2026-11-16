@@ -106,6 +106,12 @@ footer {
   z-index: 2;
 }
 
+/* The header owns the menu panel, so it must sit above the page content.
+   Without this the hero and the "Ready to play?" card paint over the panel. */
+header {
+  z-index: 50;
+}
+
 h1,
 h2,
 h3 {
@@ -233,9 +239,26 @@ em {
   z-index: 2;
 }
 
+/* Links written inside cards and lead paragraphs used to fall back to the
+   browser's blue underline. They now follow the theme accent colour. */
+.pn a:not(.btn),
+.lead a:not(.btn),
+.m a:not(.btn) {
+  color: var(--a);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--a) 45%, transparent);
+  text-underline-offset: 3px;
+  transition: color .18s, text-decoration-color .18s;
+}
+
+.pn a:not(.btn):hover,
+.lead a:not(.btn):hover,
+.m a:not(.btn):hover {
+  text-decoration-color: currentColor;
+}
+
 .btn {
-  position: relative;
-  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1607,6 +1630,32 @@ header .fxb {
     flex: 1 0 100%;
     justify-content: center;
     flex-wrap: wrap;
+  }
+}
+
+/* Desktop headers below 1400px: tighten the nav links so the logo stays on
+   one line. Above 1400px there is room for the full spacing. */
+@media (min-width: 901px) {
+  nav .logo {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+@media (min-width: 901px) and (max-width: 1400px) {
+  nav .wrap {
+    gap: 8px;
+  }
+  header .navlink {
+    padding-left: 12px;
+    padding-right: 14px;
+    font-size: 14px;
+  }
+  .tools small {
+    display: none;
+  }
+  header .fxb {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 }
 
