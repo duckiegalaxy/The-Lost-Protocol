@@ -418,6 +418,18 @@ body.d-beg,body.d-pro{--a:hsl(var(--h) 80% 66%);--b:hsl(calc(var(--h) + 45) 85% 
 .hud-nav,.hud-tools{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .hud-nav,.hud-tools{padding-left:12px;border-left:1px solid var(--line)}
 .hud .btn.sm{min-height:36px;padding:0 14px;font:700 13px var(--sans);border-radius:999px}
+/* Four page links stay in the bar. Secondary tools live behind one More
+   button so the header does not become a strip of eleven controls. */
+.hud-tools{position:relative}
+.hud-more{position:absolute;top:calc(100% + 8px);right:0;z-index:60;display:grid;gap:4px;min-width:230px;padding:8px;border:1px solid var(--line);border-radius:14px;background:color-mix(in srgb,var(--bg) 94%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.hud-more[hidden]{display:none}
+.hm{background:none;border:0;border-radius:9px;padding:10px 12px;text-align:left;color:var(--fg);font:600 14px var(--sans);cursor:pointer}
+.hm:hover,.hm:focus-visible{background:color-mix(in srgb,var(--a) 16%,transparent);outline:none}
+.hm[aria-pressed="true"]{color:var(--a)}
+/* One Continue button at the top of the map opens the next unfinished level. */
+.cont{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 20px}
+.cont[hidden]{display:none}
+.cont span{color:var(--mut);font-size:14px}
 .hud #exit{min-height:36px;padding:0 18px;font:700 13px var(--sans);border-radius:999px}
 .hud-score{margin-left:auto;display:flex;align-items:baseline;gap:8px;padding:5px 16px;border-radius:999px;border:1px solid color-mix(in srgb,var(--a) 45%,var(--line));background:color-mix(in srgb,var(--a) 15%,transparent);color:var(--fg)}
 .hud-score span{font:700 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
@@ -427,9 +439,11 @@ body.d-beg,body.d-pro{--a:hsl(var(--h) 80% 66%);--b:hsl(calc(var(--h) + 45) 85% 
  .hud-score{order:2;margin-left:auto}
  .hud-nav{order:3}
  .hud-tools{order:4}
- .hud-nav,.hud-tools{padding-left:0;border-left:0;width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
- .hud-nav::-webkit-scrollbar,.hud-tools::-webkit-scrollbar{display:none}
+ .hud-nav,.hud-tools{padding-left:0;border-left:0;width:100%}
+ .hud-nav{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+ .hud-nav::-webkit-scrollbar{display:none}
  .hud-nav .btn.sm,.hud-tools .btn.sm{flex:none}
+ .hud-more{right:auto;left:0;min-width:min(78vw,260px)}
  .hud #exit{order:2;margin-left:8px}
 }
 @media(max-width:520px){

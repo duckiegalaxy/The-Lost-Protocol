@@ -406,7 +406,7 @@ function effect(b, label, k) {
 const ME={photo:"assets/Screenshot_20261013_112542.jpg",name:"Joumana Amir Eldeeb",lines:[
 "I'm Joumana, a final-year student at the Faculty of Computer Studies. The Lost Protocol is my final-year project, supervised by Dr. Ramadan Babers.",
 "I picked this idea because programming can feel abstract when you are just starting out. Loops, variables and logic are much easier to understand when you can watch a little robot do exactly what your code says.",
-"I built The Lost Protocol as a web game so anyone can play it in a browser with nothing to install. It has five sections, twenty chapters and five guardians to defeat, plus an optional Mastery bonus area.",
+"I built The Lost Protocol as a web game so anyone can play it in a browser with nothing to install. It has five sections, twenty chapters and five guardians to defeat, plus optional Bonus sections: four Mastery missions and a sixth guardian.",
 "If you are new to coding, I hope this makes it feel a lot less scary. Thanks for stopping by."]};
 function meView(){
 const el=$('#aboutme');
@@ -438,7 +438,8 @@ $('#home').hidden=!!pg||ab;$('#page').hidden=!pg;$('#aboutme').hidden=!ab;
         $('#page').classList.add('view');
     }
     if(ab)meView();
-    $('.navlink').classList.toggle('on',ab);
+    const abLink=$('#navAbout');
+    if(abLink)abLink.classList.toggle('on',ab);
     scrollTo({ top: 0, behavior: 'auto' });
 }
 

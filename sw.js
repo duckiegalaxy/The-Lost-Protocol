@@ -3,7 +3,7 @@
    once still works without a connection. Sign-in, scores and co-op always go
    to the network; nothing here touches game results. Bump CACHE to retire an
    old copy of the site. */
-const CACHE = 'tlp-2026-11-16-3';
+const CACHE = 'tlp-2026-11-16-4';
 const CDN = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//;
 const SHELL = [
   'index.html', 'webgame.html', 'bonus.html', 'auth.html', 'parent.html',

@@ -704,7 +704,9 @@
         var a = document.createElement('a');
         a.id = 'navAdmin'; a.className = 'navlink'; a.href = 'admin.html';
         a.innerHTML = '<span class="sp" aria-hidden="true">✦</span>Admin';
-        var after = $('#navParent'); if (after && after.parentNode) after.parentNode.insertBefore(a, after.nextSibling); else host.appendChild(a);
+        // The admin link belongs with the main header links. The Parent link
+        // lives in the footer, so use the Account link as the insertion point.
+        var after = $('#navAccount'); if (after && after.parentNode) after.parentNode.insertBefore(a, after.nextSibling); else host.appendChild(a);
       }
     } catch (e) {}
   }

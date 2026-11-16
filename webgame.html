@@ -33,15 +33,18 @@
         <a class="btn ghost sm" id="accountLink" href="auth.html" title="Account and sync">Account</a>
         <a class="btn ghost sm" href="leaderboard.html">Leaderboards</a>
         <a class="btn ghost sm" href="coop.html">Co-op</a>
+        <a class="btn ghost sm" id="bonusLink" href="bonus.html">Bonus</a>
       </nav>
       <div class="hud-tools">
-        <a class="btn ghost sm" id="bonusLink" href="bonus.html">Bonus</a>
-        <button class="btn ghost sm" id="setOpen" type="button">Settings</button>
-        <button class="btn ghost sm" id="bugOpen" type="button">Report</button>
-        <button class="btn ghost sm" id="fx" type="button" aria-pressed="false">Effects: off</button>
-        <button class="btn ghost sm" id="libb">Library</button>
-        <button class="btn ghost sm" id="friendsBtn" type="button">Friends</button>
-        <button class="btn ghost sm" id="conBtn" type="button" aria-expanded="false" aria-controls="tcon" title="Command console (backtick)">Console</button>
+        <button class="btn ghost sm" id="moreBtn" type="button" aria-expanded="false" aria-controls="hudMore">More</button>
+        <div class="hud-more" id="hudMore" hidden>
+          <button class="hm" id="setOpen" type="button">Settings</button>
+          <button class="hm" id="libb" type="button">Library</button>
+          <button class="hm" id="bugOpen" type="button">Report a bug</button>
+          <button class="hm" id="fx" type="button" aria-pressed="false">Reduce visual effects: off</button>
+          <button class="hm" id="friendsBtn" type="button">Friends</button>
+          <button class="hm" id="conBtn" type="button" aria-expanded="false" aria-controls="tcon" title="Command console (backtick)">Console</button>
+        </div>
         <button class="btn ghost sm" id="sndg" type="button" title="Sound and music on or off" aria-label="Sound and music on or off"><i class=ic-volume></i></button>
         <button class="btn ghost sm" id="adminPrev" type="button" hidden>Admin preview</button>
       </div>
@@ -54,6 +57,10 @@
     <div class="hero"><span class="hand">web edition</span><h1>Restore the protocol.</h1>
       <p>Drag blocks together to give your robot instructions. Each chapter teaches one idea, and each mission is a small puzzle only your logic can solve.</p></div>
     <div class="how"><span>1. Read the short lesson</span><span>2. Drag blocks into your script</span><span>3. Press Run and watch the robot</span></div>
+    <div class="cont" id="cont" hidden>
+      <button class="btn" id="contBtn" type="button">Continue</button>
+      <span id="contName"></span>
+    </div>
     <div class="who"><span class="hand">Your name:</span><input id="name" maxlength="14" value="Player" aria-label="Your name"></div>
     <div id="pick"></div><div id="tally"></div>
     <div class="dashrow"><div id="streak"></div><div id="daily"></div></div>

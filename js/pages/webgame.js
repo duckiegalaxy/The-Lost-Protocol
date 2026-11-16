@@ -16,7 +16,7 @@
    9. RUN LIFECYCLE ........ run(), finish(), the result screen, next level.
   10. BOSS MODE ............ rounds, hearts, taunts and the boss fight loop.
   11. CURRICULUM DATA ...... the five story sections, twenty chapters, bosses and
-                             the optional Mastery bonus section.
+                             the optional Bonus sections (Mastery missions).
   12. ACHIEVEMENTS ......... the badge queue and its popups.
   13. BLOCK LIBRARY ........ the reference sheet opened from the HUD.
   14. PATH + DIFFICULTY .... configuration, unlock rules and the settings modal.
@@ -957,7 +957,7 @@ function renderDaily(){
 }
 (function(){const el=$('#daily');if(!el)return;el.addEventListener('click',e=>{const b=e.target.closest('[data-claim]');if(b)claimDaily(b.dataset.claim)})})();
 
-function menu(){stopBossClock();stopNarration();document.querySelectorAll('.coach').forEach(x=>x.remove());try{window.TLP_MUSIC&&TLP_MUSIC.setTheme(PATH)}catch(e){};$('#menu').hidden=false;$('#game').hidden=true;hudFit();$('#exit').hidden=true;$('#name').value=S.name;delete document.body.dataset.sec;hud();renderPick();renderTally();renderStreak();renderDaily();if(window.TLP_PRESENCE)TLP_PRESENCE.setActivity('On the chapter map · '+(PATHS_CFG[PATH]?PATHS_CFG[PATH].n:''));
+function menu(){stopBossClock();stopNarration();document.querySelectorAll('.coach').forEach(x=>x.remove());try{window.TLP_MUSIC&&TLP_MUSIC.setTheme(PATH)}catch(e){};$('#menu').hidden=false;$('#game').hidden=true;hudFit();$('#exit').hidden=true;$('#name').value=S.name;delete document.body.dataset.sec;hud();renderPick();renderContinue();renderTally();renderStreak();renderDaily();if(window.TLP_PRESENCE)TLP_PRESENCE.setActivity('On the chapter map · '+(PATHS_CFG[PATH]?PATHS_CFG[PATH].n:''));
  // The map shows the five story sections only. Mastery is a bonus section and
  // is reached from the Bonus page, so it is never numbered or counted here.
  const MS=mainSecs(),kd=MS.filter(s=>done(s.boss)).length;
@@ -1114,6 +1114,17 @@ function openLib(tab){
   l.querySelectorAll('.lc:not(.lk)').forEach(c=>c.onclick=()=>{const i=c.querySelector('.aico,.bwrap'),cl=i&&[...i.classList].find(x=>/^(x\d+|bd\d)$/.test(x));if(cl){i.classList.remove(cl);void i.offsetWidth;i.classList.add(cl)}});
 }
 $('#libb').onclick=()=>openLib();$('#sndg').onclick=toggleMute;$('#sndg').innerHTML=mute?'<i class=ic-mute></i>':'<i class=ic-volume></i>';
+/* The More panel keeps the infrequent controls out of the header. It closes
+   after a choice, on an outside click, and with Escape. */
+(function(){
+ const btn=$('#moreBtn'),panel=$('#hudMore');
+ if(!btn||!panel)return;
+ const close=()=>{panel.hidden=true;btn.setAttribute('aria-expanded','false')};
+ btn.onclick=e=>{e.stopPropagation();const open=panel.hidden;panel.hidden=!open;btn.setAttribute('aria-expanded',String(open))};
+ panel.addEventListener('click',e=>{if(e.target.closest('button,a'))close()});
+ document.addEventListener('click',e=>{if(!panel.hidden&&!panel.contains(e.target)&&!btn.contains(e.target))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!panel.hidden){close();btn.focus()}});
+})();
 $('#run').addEventListener('click',()=>snd('tick'));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){const l=$('#lib');if(l)l.remove()}});
 checkAch(true);{const b=badges();SEC.forEach(s=>{if(done(s.boss)&&!b.includes(s.id))b.push(s.id)});try{localStorage.setItem('tlp-badges',JSON.stringify(b))}catch(e){}}
@@ -1297,6 +1308,33 @@ function openAdminPreview(){let m=$('#apm');
  m.querySelectorAll('button[data-d]').forEach(b=>b.onclick=()=>{setDiff(b.dataset.d);openAdminPreview()});
  m.querySelectorAll('button[data-c]').forEach(b=>b.onclick=()=>{m.hidden=true;play(+b.dataset.c,+b.dataset.l)});
  m.querySelectorAll('button[data-badge]').forEach(b=>b.onclick=()=>{m.hidden=true;try{badgeScene(+b.dataset.badge)}catch(e){}})}
+/* Continue ------------------------------------------------------------------
+   The map is a grid of every chapter. The button above it answers the one
+   question a returning learner has: where was I? It walks the same ORDER the
+   map uses and opens the first required level that has no stars yet. */
+function nextTarget(){
+ for(const c of ORDER){ if(!done(c)) return c }
+ return -1;
+}
+function nextLevel(c){
+ const L=CH[c].L;
+ for(let i=0;i<L.length;i++){ if(!isBonus(L[i])&&!S.prog[key(c,i)]) return i }
+ return 0;
+}
+function renderContinue(){
+ const box=$('#cont'),name=$('#contName'),btn=$('#contBtn');
+ if(!box||!name||!btn)return;
+ if(window.__adminPreview){box.hidden=true;return}
+ const c=nextTarget();
+ if(c<0){box.hidden=true;return}
+ const l=nextLevel(c);
+ box.hidden=false;
+ name.textContent=(CH[c].n?CH[c].n+' · ':'')+CH[c].L[l].t;
+ btn.onclick=()=>{
+  if(!Object.keys(S.prog).length&&window.TLP_STORY&&!TLP_STORY.seen('intro')){storyOpening();return}
+  play(c,l);
+ };
+}
 function renderPick(){const el=$('#pick');if(!el)return;
  const pc=PATHS_CFG[PATH]||{n:'',age:'',d:''};
  el.innerHTML=`<div class="lab">Your learning path</div><div class="psum"><b>${pc.n}</b><span>${pc.age} · ${pc.d}</span></div><div class="lab" style="margin-top:14px">Your difficulty</div><div class="psum"><b>${DIFFS[DIFF].n}</b><span>${DIFFS[DIFF].d}</span><button class="btn ghost sm" id="chDiff" type="button">Difficulty settings</button></div>`;

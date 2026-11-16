@@ -431,7 +431,7 @@ window.BONUS = { evalCircuit, genSteps, PUZZLES, ALGS, get comps() { return comp
     // The owner account is also a parent, but it may inspect every section.
     if (u && u.role === 'parent' && !admin) { g.hidden = false; g.innerHTML = 'Parent and Educator accounts do not play. <a href="parent.html">Back to the Parent and Educator area</a>.'; return; }
     const l = A().getActiveLearner(); if (admin) learnerId = 'admin-preview'; else if (l && !l.isGuest) learnerId = l.id;
-    if (A().isCloudConfigured() && !(await isUnlocked(l || {}, u))) { g.hidden = false; g.innerHTML = '<h2>Locked</h2><p>The Bonus areas unlock after you finish the five story sections, on any difficulty. Keep going: the guardians are waiting. <a href="webgame.html">Back to the game</a></p>'; return; }
+    if (A().isCloudConfigured() && !(await isUnlocked(l || {}, u))) { g.hidden = false; g.innerHTML = '<h2>Locked</h2><p>The Bonus sections unlock after you finish the five story sections, on any difficulty. Keep going: the guardians are waiting. <a href="webgame.html">Back to the game</a></p>'; return; }
     // Grades 1-6 do not have the Mastery chapters in their game, so the tab is
     // hidden rather than offering links that would not open. The game picks its
     // chapters from this same saved path, including for guests.
