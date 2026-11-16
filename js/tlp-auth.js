@@ -78,7 +78,36 @@
 
       if (url && key && window.supabase && typeof window.supabase.createClient === 'function') {
         try {
-          this.supabase = window.supabase.createClient(url, key);
+          // Supabase stores its session in localStorage by default, which is
+          // what keeps a returning visitor signed in. When the sign-in box
+          // "Keep me signed in on this device" is unchecked the flag is "0"
+          // and the same session goes to sessionStorage instead, so closing
+          // the browser ends it. Sign-out clears both stores.
+          const authStorage = {
+            getItem: (k) => {
+              try {
+                const store = localStorage.getItem('tlp-remember') === '0' ? sessionStorage : localStorage;
+                return store.getItem(k);
+              } catch (e) { return null; }
+            },
+            setItem: (k, v) => {
+              try {
+                const store = localStorage.getItem('tlp-remember') === '0' ? sessionStorage : localStorage;
+                const other = store === localStorage ? sessionStorage : localStorage;
+                store.setItem(k, v);
+                // A session must live in exactly one store, so a token left
+                // over from the other choice cannot come back later.
+                other.removeItem(k);
+              } catch (e) {}
+            },
+            removeItem: (k) => {
+              try { localStorage.removeItem(k); } catch (e) {}
+              try { sessionStorage.removeItem(k); } catch (e) {}
+            }
+          };
+          this.supabase = window.supabase.createClient(url, key, {
+            auth: { storage: authStorage, persistSession: true, autoRefreshToken: true }
+          });
           this.mode = 'cloud';
           // Check existing cloud session
           const { data: { session }, error } = await this.supabase.auth.getSession();
@@ -149,9 +178,17 @@
       }
     }
 
+    _rememberOn() {
+      try { return localStorage.getItem('tlp-remember') !== '0'; } catch (e) { return true; }
+    }
+
+    _localSessionStore() {
+      return this._rememberOn() ? localStorage : sessionStorage;
+    }
+
     _loadLocalSession() {
       try {
-        const rawUser = localStorage.getItem('tlp-local-session-user');
+        const rawUser = this._localSessionStore().getItem('tlp-local-session-user');
         if (rawUser) {
           this.currentUser = JSON.parse(rawUser);
           const learners = this._getLocalLearners(this.currentUser.id);
@@ -335,7 +372,7 @@
           }
 
           this.currentUser = { id: newUserId, email, role, isAdmin: role === 'admin', isTestAccount: isTest, displayName };
-          localStorage.setItem('tlp-local-session-user', JSON.stringify(this.currentUser));
+          this._localSessionStore().setItem('tlp-local-session-user', JSON.stringify(this.currentUser));
           if (initialLearner) this.setActiveLearner(initialLearner);
           return { user: this.currentUser, learner: initialLearner, requiresEmailConfirmation: false };
         }
@@ -386,7 +423,7 @@
               isTestAccount: Boolean(matched.isTestAccount),
               displayName: matched.displayName || matched.email.split('@')[0]
             };
-            localStorage.setItem('tlp-local-session-user', JSON.stringify(this.currentUser));
+            this._localSessionStore().setItem('tlp-local-session-user', JSON.stringify(this.currentUser));
             const learners = this._getLocalLearners(this.currentUser.id);
             this.activeLearner = learners[0] || null;
             if (this.activeLearner) this.setActiveLearner(this.activeLearner);
@@ -410,7 +447,7 @@
             isTestAccount: Boolean(matched.isTestAccount),
             displayName: matched.displayName || matched.email.split('@')[0]
           };
-          localStorage.setItem('tlp-local-session-user', JSON.stringify(this.currentUser));
+          this._localSessionStore().setItem('tlp-local-session-user', JSON.stringify(this.currentUser));
           const learners = this._getLocalLearners(this.currentUser.id);
           this.activeLearner = learners[0] || null;
           if (this.activeLearner) this.setActiveLearner(this.activeLearner);
@@ -429,6 +466,7 @@
       this.activeLearner = null;
       try {
         localStorage.removeItem('tlp-local-session-user');
+        sessionStorage.removeItem('tlp-local-session-user');
         localStorage.removeItem('tlp-active-learner-id');
       } catch (e) {}
       return true;

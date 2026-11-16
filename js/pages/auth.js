@@ -167,6 +167,10 @@ function method(byId) {
 $('#mEmail').onclick = () => method(false);
 $('#mId').onclick = () => method(true);
 
+// Remember the last choice so the checkbox reflects what happens on the next
+// sign-in; the default is on.
+try { $('#liRemember').checked = localStorage.getItem('tlp-remember') !== '0'; } catch (e) {}
+
 document.querySelectorAll('#regForm .pick[data-role]').forEach((b) => b.onclick = () => {
   role = b.dataset.role;
   document.querySelectorAll('#regForm .pick[data-role]').forEach((o) => o.setAttribute('aria-pressed', o === b));
@@ -223,6 +227,9 @@ $('#loginForm').addEventListener('submit', async (e) => {
   const btn = $('#liGo');
   btn.disabled = true;
   try {
+    // The session store reads this flag, so set it before signing in:
+    // "0" keeps the session in sessionStorage and signs out on browser close.
+    try { localStorage.setItem('tlp-remember', $('#liRemember').checked ? '1' : '0'); } catch (e) {}
     const byId = !$('#fId').hidden;
     const r = byId
       ? await A().loginWithPlayerId({ playerId: $('#liId').value, password: $('#liPw').value })

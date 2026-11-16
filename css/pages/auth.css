@@ -329,6 +329,11 @@
   cursor: pointer;
 }
 
+/* Sign-in only: the session choice sits above the password-reset link. */
+.consent.remember {
+  margin-top: 14px;
+}
+
 .consent input {
   width: 18px;
   height: 18px;

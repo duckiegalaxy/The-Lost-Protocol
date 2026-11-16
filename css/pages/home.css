@@ -241,6 +241,143 @@
 }
 
 /* -----------------------------------------------------------------------------
+   5b. PREVIEW STRIP
+   Three still-life cards show the play loop before anyone makes an account.
+   The art is drawn with borders and colour, not screenshots, so it stays sharp
+   at every width and never goes stale when a level changes.
+   -------------------------------------------------------------------------- */
+#home .pvrow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 4px;
+}
+
+#home .pvcard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--fg) 4%, transparent);
+}
+
+#home .pvcard b {
+  font: 700 16px var(--sans);
+}
+
+#home .pvcard p {
+  margin: 0;
+  color: var(--mut);
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+#home .pvart {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 7px;
+  min-height: 96px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--fg) 6%, transparent);
+  overflow: hidden;
+}
+
+#home .pvb-k {
+  color: var(--a);
+  font: 700 10px/1 var(--sans);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+#home .pvb-l {
+  height: 6px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--fg) 22%, transparent);
+}
+
+#home .pvb-l.s {
+  width: 62%;
+}
+
+#home .pvb-blk {
+  align-self: flex-start;
+  padding: 7px 10px;
+  border-left: 3px solid var(--a);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--a) 16%, transparent);
+  font: 600 12px var(--sans);
+}
+
+#home .pvb-blk.b {
+  margin-left: 14px;
+  border-left-color: var(--b);
+  background: color-mix(in srgb, var(--b) 16%, transparent);
+}
+
+#home .pvb-blk.c {
+  margin-left: 28px;
+}
+
+#home .pvb-run {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#home .pvb-hearts {
+  display: inline-flex;
+  gap: 7px;
+}
+
+#home .pvb-hearts i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--a);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--a) 50%, transparent);
+}
+
+#home .pvb-hearts i:last-child {
+  opacity: .35;
+}
+
+#home .pvb-runline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--mut);
+  font: 700 12px var(--sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+#home .pvb-runline i {
+  color: var(--a);
+  font-style: normal;
+}
+
+#home .pvfoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 18px 0 6px;
+}
+
+#home .pvnote {
+  flex: 1 1 320px;
+  margin: 0;
+  color: var(--mut);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* -----------------------------------------------------------------------------
    6. TOPIC CHIPS
    The chips are a long, dense list. Removing the "button" look (no shadow, flat
    fill) and tightening the type makes it read as a legend rather than a toolbar.
@@ -343,6 +480,17 @@
 
   #home .home-cta .label {
     margin-top: 2px;
+  }
+}
+
+@media (max-width: 760px) {
+  #home .pvrow {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  #home .pvart {
+    min-height: 84px;
   }
 }
 
