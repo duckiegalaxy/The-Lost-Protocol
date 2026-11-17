@@ -30,6 +30,15 @@ let indSearch = '', coSearch = '', today = false, weekOnly = false, indReq = 0, 
 
 function fmtTime(ms) { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function fmtDate(d) { try { return new Date(d).toLocaleDateString(); } catch (e) { return ''; } }
+function ago(d) {
+  const t = new Date(d).getTime();
+  if (!t) return '';
+  const days = Math.floor((Date.now() - t) / 86400000);
+  if (days <= 0) return 'today';
+  if (days === 1) return 'yesterday';
+  if (days < 30) return days + ' days ago';
+  return fmtDate(d);
+}
 function medal(n) { return n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : ''; }
 
 /* -----------------------------------------------------------------------------
@@ -87,13 +96,24 @@ function seniorGrid(list) {
     '</div><p class="tfootline">stars ' + list.reduce((a, r) => a + r.total_stars, 0) + ' · chapters ' + list.reduce((a, r) => a + r.chapters_cleared, 0) + ' · guardians ' + list.reduce((a, r) => a + r.badges, 0) + '</p>';
 }
 function adultList(list) {
-  return '<div class="lbadult">' + list.map((r) =>
-    '<article class="arow' + (r.rank <= 3 ? ' lead' : '') + '"><span class="arank">' + r.rank + '</span><div class="awho"><b>' + esc(r.display_name) + '</b><small>' + esc(r.player_id) + ' · updated ' + esc(fmtDate(r.updated_at)) + '</small></div>' +
-    '<div class="ameta"><span>' + r.total_stars + ' stars</span><span>' + r.chapters_cleared + ' chapters</span><span>' + r.badges + ' guardians</span></div><strong>' + r.total_score + '</strong></article>').join('') + '</div>';
+  const max = Math.max.apply(null, list.map((r) => r.total_score).concat([1]));
+  const initial = (r) => { const n = String(r.display_name || '?').trim(); return esc((n.charAt(0) || '?').toUpperCase()); };
+  return '<div class="lbadult">' +
+    '<div class="ahead" aria-hidden="true"><span>Rank</span><span>Player</span><span>Progress</span><span>Score</span></div>' +
+    list.map((r) =>
+      '<article class="arow' + (r.rank <= 3 ? ' lead r' + r.rank : '') + '">' +
+        '<span class="arank">' + r.rank + '</span>' +
+        '<div class="awho"><span class="aav" aria-hidden="true">' + initial(r) + '</span><div class="aname"><b>' + esc(r.display_name) + '</b><small title="' + esc(fmtDate(r.updated_at)) + '">' + esc(r.player_id) + ' · ' + esc(ago(r.updated_at)) + '</small></div></div>' +
+        '<div class="ameta"><span><b>' + r.total_stars + '</b> stars</span><span><b>' + r.chapters_cleared + '</b> chapters</span><span><b>' + r.badges + '</b> guardians</span></div>' +
+        '<div class="ascore"><strong>' + r.total_score + '</strong><span class="abar" aria-hidden="true"><i style="width:' + Math.max(3, Math.round(r.total_score / max * 100)) + '%"></i></span></div>' +
+      '</article>').join('') +
+    '</div>';
 }
 
 function renderInd(rows) {
   const body = $('#indBody');
+  const slide = body.closest('.slide');
+  if (slide) slide.classList.toggle('adultBoard', path === 'adult' && rows.length > 0);
   if (!rows.length) {
     body.className = 'msg3';
     body.textContent = indSearch ? 'No player matches "' + indSearch + '" in this group.' : today ? 'Nobody has played this group today yet.' : weekOnly ? 'Nobody has played this group this week yet.' : indPage ? 'No more entries.' : 'No scores yet in this group. Finish a mission to be the first.';

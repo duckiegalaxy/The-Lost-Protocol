@@ -497,20 +497,24 @@ $('#area').addEventListener('input',edit);$('#area').addEventListener('change',e
    the robot position on the track, said stores the last spoken value. Loops and
    functions are expanded by recursion, so a run always ends or hits a guard.
    -------------------------------------------------------------------------- */
-let env={},pos=0,said=null;
+let env={},pos=0,said=null,lastMove=null,lastSay=null;
 const bot=$('#bot'),track=$('#track');
+/* After a failed run these two marks answer "where did it go wrong?":
+   the cell where the robot stopped and the block that caused the miss. */
+function clearBad(){$$('.blk.badblk').forEach(x=>x.classList.remove('badblk'));$$('#track i.stop').forEach(x=>x.classList.remove('stop'))}
+function markBad(id,cell){clearBad();const el=id!=null?$('.blk[data-id="'+id+'"]'):null;if(el){el.classList.add('badblk');setTimeout(()=>el.classList.remove('badblk'),2800)}if(cell!=null&&track.children[cell]){const c=track.children[cell];c.classList.add('stop');setTimeout(()=>c.classList.remove('stop'),1800)}}
 function mem(pop){$('#mem').innerHTML=Object.entries(env).length?Object.entries(env).map(([k,v])=>`<div class="box ${k===pop?'pop':''}">${k}${isC(k)?' <i class=ic-lock></i>':''}<b>${fmt(v)}</b></div>`).join(''):'<span style="color:var(--mut);font-size:14px">No variables in this mission.</span>'}
-function reset(){S.run=false;useCase(0);bot.className='bot';$$('.bub').forEach(x=>x.remove());$$('.blk.run').forEach(x=>x.classList.remove('run'));mem();msg('Drag blocks into your script, then press Run.')}
+function reset(){S.run=false;useCase(0);lastMove=null;lastSay=null;clearBad();bot.className='bot';$$('.bub').forEach(x=>x.remove());$$('.blk.run').forEach(x=>x.classList.remove('run'));mem();msg('Drag blocks into your script, then press Run.')}
 const val=v=>v.trim()===''||isNaN(+v)?v:+v;
 async function exec(list){for(const b of list){if(!S.run)return;const el=$('.blk[data-id="'+b.id+'"]');el&&el.classList.add('run');await sleep(500);
- if((b.t==='set'||b.t==='change')&&isC(b.v)){fail(b.v+' is a constant. A constant is set once and can never change, so '+b.t+' is not allowed on it.');el&&el.classList.remove('run');return}
- if(b.t==='move'&&b.src!=='#'&&lv().strict&&typeof env[b.src]!=='number'){fail('The box "'+b.src+'" holds '+(typeof env[b.src]==='string'?'the word "'+env[b.src]+'"':'something that is not a number')+', but move needs a number. Check the type, or convert it first.');el&&el.classList.remove('run');return}
+ if((b.t==='set'||b.t==='change')&&isC(b.v)){S.errId=b.id;fail(b.v+' is a constant. A constant is set once and can never change, so '+b.t+' is not allowed on it.');el&&el.classList.remove('run');return}
+ if(b.t==='move'&&b.src!=='#'&&lv().strict&&typeof env[b.src]!=='number'){S.errId=b.id;fail('The box "'+b.src+'" holds '+(typeof env[b.src]==='string'?'the word "'+env[b.src]+'"':'something that is not a number')+', but move needs a number. Check the type, or convert it first.');el&&el.classList.remove('run');return}
  if(b.t==='set'){env[b.v]=val(String(b.val));mem(b.v)}
  if(b.t==='change'){env[b.v]=(+env[b.v]||0)+(+b.n||0);mem(b.v)}
  if(b.t==='move'){const n=b.src==='#'?+b.n||0:+env[b.src]||0,np=Math.max(0,Math.min(8,pos+n));
   if(np!==pos+n){bot.classList.add('oops');setTimeout(()=>bot.classList.remove('oops'),600)}
-  for(let c=Math.min(pos,np);c<=Math.max(pos,np);c++)track.children[c].classList.add('vis');pos=np;bot.classList.add('walk');tp('--p',pos);snd('step');{const r=bot.getBoundingClientRect();puff(r.left+r.width/2,r.top+r.height*.8,3)}await sleep(600);bot.classList.remove('walk');chk();{const G=cases()[cc];if(G.goal!=null&&pos===G.goal&&pos>0){snd('chime');goalFx()}}}
- if(b.t==='say'){said=String(env[b.src]??'');$$('.bub').forEach(x=>x.remove());const u=document.createElement('div');u.className='bub';u.textContent=said||'…';bot.appendChild(u);chk();await sleep(500)}
+  for(let c=Math.min(pos,np);c<=Math.max(pos,np);c++)track.children[c].classList.add('vis');pos=np;lastMove={c:pos,id:b.id};bot.classList.add('walk');tp('--p',pos);snd('step');{const r=bot.getBoundingClientRect();puff(r.left+r.width/2,r.top+r.height*.8,3)}await sleep(600);bot.classList.remove('walk');chk();{const G=cases()[cc];if(G.goal!=null&&pos===G.goal&&pos>0){snd('chime');goalFx()}}}
+ if(b.t==='say'){said=String(env[b.src]??'');lastSay={s:said,id:b.id};$$('.bub').forEach(x=>x.remove());const u=document.createElement('div');u.className='bub';u.textContent=said||'…';bot.appendChild(u);chk();await sleep(500)}
  if(b.t==='rep'){for(let i=0;i<Math.min(+b.n||0,12)&&S.run;i++)await exec(b.c)}
  if(b.t==='if'){await exec(cond(b)?b.c:b.e)}
  if(b.t==='while'){let g=0;while(S.run&&cond(b)&&g++<40){await exec(b.c)}}
@@ -523,27 +527,27 @@ async function exec(list){for(const b of list){if(!S.run)return;const el=$('.blk
  if(b.t==='bit'){onBits.add(+b.n);const t=[...onBits].reduce((a,c)=>a+c,0);env.total=t;env.bin=t.toString(2);mem('total')}
  if(b.t==='base'){const x=env[b.src];env[b.v]=b.to==='bin'?Math.max(0,Math.floor(+x||0)).toString(2):(parseInt(String(x),2)||0);mem(b.v)}
  if(b.t==='def'){FN[b.v]=b}
- if(b.t==='call'){const f=FN[b.v];if(!f){fail('The function "'+b.v+'" is not defined yet. Define it above the place where you call it.');el&&el.classList.remove('run');return}if(++fdepth>30){fail('Too many nested calls. A recursive function needs a stopping rule (a base case).');el&&el.classList.remove('run');return}const keep=env;env={...env};await exec(f.c);env=keep;if(onBits.size){const t=[...onBits].reduce((a,c)=>a+c,0);env.total=t;env.bin=t.toString(2)}fdepth--;mem()}
+ if(b.t==='call'){const f=FN[b.v];if(!f){S.errId=b.id;fail('The function "'+b.v+'" is not defined yet. Define it above the place where you call it.');el&&el.classList.remove('run');return}if(++fdepth>30){S.errId=b.id;fail('Too many nested calls. A recursive function needs a stopping rule (a base case).');el&&el.classList.remove('run');return}const keep=env;env={...env};await exec(f.c);env=keep;if(onBits.size){const t=[...onBits].reduce((a,c)=>a+c,0);env.total=t;env.bin=t.toString(2)}fdepth--;mem()}
  el&&el.classList.remove('run')}}
-async function run(){if(S.run)return;reset();S.err=null;bot.dataset.m=['hop','bounce','glide','spin','wobble'][Math.random()*5|0];const L=lv();if(!S.script.length){msg('Add some blocks to your script first.','bad');return}
+async function run(){if(S.run)return;reset();S.err=null;S.errId=null;bot.dataset.m=['hop','bounce','glide','spin','wobble'][Math.random()*5|0];const L=lv();if(!S.script.length){msg('Add some blocks to your script first.','bad');return}
  if(DIFF==='pro'&&!L.boss&&count(S.script)>L.par+2){msg('Professional rules: use at most '+(L.par+2)+' blocks for this mission.','bad');return}
  if(hardMode()&&!L.boss&&count(S.script)>L.par+1){msg('Hardcore rule: this mission allows at most '+(L.par+1)+' blocks. Try a tighter solution.','bad');return}
  if(L.cap&&count(S.script)>L.cap){msg('This mission allows at most '+L.cap+' blocks. Try a loop.','bad');return}
  if(L.boss&&(bossWait||bossRepeat()))return;
  bumpTry(key(S.ci,S.li));S.runT0=Date.now();
- S.run=true;$('#run').disabled=true;const CS=cases(),miss=[];
+ S.run=true;$('#run').disabled=true;const CS=cases(),miss=[];let badGoal=false,badSay=false;
  for(let i=0;i<CS.length&&S.run;i++){const X=CS[i];if(i){await sleep(800);bot.className='bot'}useCase(i);if(CS.length>1)msg('<b>Test '+(i+1)+' of '+CS.length+'</b>');
   await exec(S.script);
   if(S.run){const t=CS.length>1?'Test '+(i+1)+': the robot ':'The robot ';
-   if(X.goal!=null&&pos!==X.goal)miss.push(`${t}stopped at cell ${pos}, but it needed cell ${X.goal}.`);
-   if(X.say!=null&&said!==X.say)miss.push(said==null?`${t}never said anything.`:`${t}said "${said}", but needed "${X.say}".`);
+   if(X.goal!=null&&pos!==X.goal){miss.push(`${t}stopped at cell ${pos}, but it needed cell ${X.goal}.`);badGoal=true}
+   if(X.say!=null&&said!==X.say){miss.push(said==null?`${t}never said anything.`:`${t}said "${said}", but needed "${X.say}".`);badSay=true}
    if(miss.length)break}}
- const was=S.run;S.run=false;$('#run').disabled=false;if(!was){if(S.err){bot.classList.add('oops');snd('err');msg(S.err,'bad');S.err=null}return}
+ const was=S.run;S.run=false;$('#run').disabled=false;if(!was){if(S.err){markBad(S.errId,null);bot.classList.add('oops');snd('err');msg(S.err,'bad');S.err=null;S.errId=null}return}
  
  
  if(L.needs&&!has(S.script,'rep'))miss.push('This mission wants a loop. Try using a repeat block.');
  if(L.rule&&!L.rule.f(S.script))miss.push('Round rule not met: '+L.rule.txt+'.');
- if(miss.length){bot.classList.add('oops');snd('err');msg(miss.join(' ')+' '+(kidMode()?'Almost! Take a breath, change one block and try again. You can do it!':(DIFF==='beg'?'Check your blocks and try again, or ask for a hint. You are doing great!'+((PATH==='g16'||PATH==='g710')?' The Coach steps can help.':''):'Check your blocks and try again, or ask for a hint.'))+storyFail(),'bad');return}
+ if(miss.length){if(badSay)markBad(lastSay&&lastSay.id,null);else if(badGoal)markBad(lastMove&&lastMove.id,pos);bot.classList.add('oops');snd('err');msg(miss.join(' ')+' '+(kidMode()?'Almost! Take a breath, change one block and try again. You can do it!':(DIFF==='beg'?'Check your blocks and try again, or ask for a hint. You are doing great!'+((PATH==='g16'||PATH==='g710')?' The Coach steps can help.':''):'Check your blocks and try again, or ask for a hint.'))+storyFail(),'bad');return}
  if(L.boss)return bossHit();
  bot.classList.add('win');sparks();const n=count(S.script),st=n<=L.par+PB()?3:n<=L.par+PB()+1?2:1,k=key(S.ci,S.li);S.prog[k]=Math.max(S.prog[k]||0,st);completeLevel(k,st,{hardcore:hardMode(),ms:Date.now()-S.runT0});save();hud();dailyFromWin(st);checkAch();snd('win');if(DIFF==='beg')cheer();
  msg('<b>Correct! Protocol restored.</b> Here is what each block in your code did:'+whyList());await sleep(2600);finish(st,n)}
@@ -585,7 +589,7 @@ function finish(st,n){hideToast();try{localStorage.removeItem('tlp-draft')}catch
  if(kidMode()){const p=document.createElement('p');p.className='kidpraise';p.textContent=kidPraise();const bar=$('#pan .bar');if(bar)bar.before(p);kidBurst()}}
 let cc=0;
 const cases=()=>{const c=lv().cases||[{vars:{},goal:lv().goal,say:lv().say}];return DIFF==='beg'&&!lv().boss?c.slice(0,1):c};
-function useCase(i){cc=i;const X=cases()[i];INP=X.input;onBits=new Set();FN={};fdepth=0;env={...lv().vars,...X.vars};pos=0;said=null;tp('--p',0);tp('--g',X.goal==null?-5:X.goal);$$('.track i').forEach(c=>c.classList.remove('vis'));$$('.bub').forEach(x=>x.remove());goals();mem()}
+function useCase(i){cc=i;const X=cases()[i];INP=X.input;onBits=new Set();FN={};fdepth=0;env={...lv().vars,...X.vars};pos=0;said=null;lastMove=null;lastSay=null;tp('--p',0);tp('--g',X.goal==null?-5:X.goal);$$('.track i').forEach(c=>c.classList.remove('vis'));$$('.bub').forEach(x=>x.remove());goals();mem()}
 function goals(){const L=lv(),CS=cases(),X=CS[cc],g=[];
  if(CS.length>1)g.push(['tip','Test '+(cc+1)+' of '+CS.length+': '+Object.entries(X.vars).map(([k,v])=>k+' = '+v).join(', ')+(X.input!=null?(Object.keys(X.vars).length?', ':'')+'the player types '+X.input:'')+'. One script must pass every test.']);
  if(X.goal!=null)g.push([X.goal?'pos':'tip',X.goal?'Reach the chip at cell '+X.goal:'Stay at the start']);

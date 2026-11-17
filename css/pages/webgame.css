@@ -87,6 +87,12 @@ body.bt-dragging *{cursor:grabbing!important}
 @media(pointer:coarse){.touchnote{display:block}}
 .set,.change{background:hsl(calc(var(--h) + 25) 85% 68%)}.move{background:hsl(calc(var(--h) + 100) 80% 70%)}.say{background:hsl(calc(var(--h) + 170) 75% 74%)}.rep{background:hsl(calc(var(--h) + 240) 80% 72%);display:block}
 .blk.run{outline:3px solid var(--fg);transform:scale(1.04)}
+/* The block that caused a failed run shakes once, and the cell where the
+   robot stopped flashes, so the learner looks at the right place first. */
+.blk.badblk{outline:3px dashed var(--bad);animation:badblk 2.6s}
+@keyframes badblk{0%,100%{transform:none}20%,60%{transform:translateX(-3px)}40%,80%{transform:translateX(3px)}}
+.track i.stop{animation:stopcell 1.8s;box-shadow:inset 0 0 0 2px var(--bad)}
+@keyframes stopcell{0%,40%{background:color-mix(in srgb,var(--bad) 42%,transparent)}100%{background:transparent}}
 .blk select,.blk input{border:0;border-radius:6px;padding:1px 6px;background:#fff;color:#111;width:auto}.blk input{width:58px}.blk input:disabled{opacity:.4}
 .zone{min-height:150px;border:2px dashed var(--line);border-radius:14px;padding:6px 10px;transition:.2s}.zone.over{border-color:var(--a);background:color-mix(in srgb,var(--a) 12%,transparent)}
 .zone.in{min-height:46px;margin-top:6px;background:rgba(0,0,0,.14);padding:2px 8px}
@@ -1098,3 +1104,78 @@ html.reduce-fx .cs-bg *,html.reduce-fx .cs-port *,html.reduce-fx .cs-title,html.
     background: linear-gradient(90deg, #4b2fae, #a62c7f, #0a6f8f, #4b2fae);
     background-size: 300% 100%;
   }
+
+/* ---------------------------------------------------------------------------
+   ONE-SCREEN BOARD
+   While a level is open on a tablet or a computer, the page stops scrolling:
+   the header keeps its row and the three game panels fill the rest of the
+   window. Long lesson text, a full palette and a long script scroll inside
+   their own panel instead of moving the Run button off the screen. The boss
+   bar is fixed and reserves its height through --hudh, so the same height
+   maths works during a guardian fight.
+   --------------------------------------------------------------------------- */
+@media(min-width:761px){
+ body:has(#game:not([hidden])){height:100dvh;overflow:hidden}
+ body:has(#game:not([hidden])) .wrap{display:flex;flex-direction:column;height:calc(100dvh - var(--hudh,0px));max-width:none;padding:0 18px 10px}
+ body:has(#game:not([hidden])) .top{flex:none;padding:8px 0 10px;margin-bottom:10px;gap:10px}
+ body:has(#game:not([hidden])) .hud{padding:6px 10px;gap:8px 10px}
+ body:has(#game:not([hidden])) .hud-who b{font-size:19px}
+ body:has(#game:not([hidden])) .hud .btn.sm{min-height:32px}
+ body:has(#game:not([hidden])) .hud-score b{font-size:19px}
+ body:has(#game:not([hidden])) #game{flex:1;min-height:0;align-items:stretch;gap:14px}
+ body:has(#game:not([hidden])) .game>.col{height:100%;min-height:0;gap:10px}
+ body:has(#game:not([hidden])) .card{padding:12px 14px;border-radius:14px}
+ body:has(#game:not([hidden])) .lab{margin-bottom:6px}
+ /* Lesson panel: cap the banner and the explainer, then let the text scroll. */
+ body:has(#game:not([hidden])) .card.learn{overflow:auto;min-height:0;overscroll-behavior:contain}
+ body:has(#game:not([hidden])) .card.learn .sec-art{max-height:96px;margin-bottom:10px}
+ body:has(#game:not([hidden])) .card.learn .sec-art img{height:96px;width:100%;aspect-ratio:auto;object-fit:cover}
+ body:has(#game:not([hidden])) .card.learn h2{font-size:21px;margin:2px 0 6px}
+ body:has(#game:not([hidden])) .card.learn p{font-size:14px;line-height:1.5;margin:4px 0}
+ body:has(#game:not([hidden])) .card.learn .mis{margin-top:8px;padding:8px 10px;font-size:13.5px}
+ body:has(#game:not([hidden])) #nar{min-height:34px;padding:6px 12px;font-size:12px;margin:6px 0 2px}
+ body:has(#game:not([hidden])) .goals{margin:6px 0;gap:4px}
+ body:has(#game:not([hidden])) .goals li{padding:5px 9px;font-size:12.5px}
+ body:has(#game:not([hidden])) .ex{margin:8px 0 10px}
+ body:has(#game:not([hidden])) .ex-stage{min-height:92px;padding:10px 8px}
+ body:has(#game:not([hidden])) .ex-cap{min-height:2.6em;font-size:13px;margin-bottom:6px}
+ body:has(#game:not([hidden])) .ex-btn{min-height:30px;padding:0 11px}
+ /* Middle panel: track, memory boxes and the message share the height. */
+ body:has(#game:not([hidden])) .col.mid{display:flex;flex-direction:column}
+ body:has(#game:not([hidden])) .col.mid>.card{flex:none}
+ body:has(#game:not([hidden])) .track{height:92px}
+ body:has(#game:not([hidden])) .mem{min-height:44px;gap:8px}
+ body:has(#game:not([hidden])) .box b{font-size:18px;min-height:22px}
+ body:has(#game:not([hidden])) #msg{flex:1 1 auto;min-height:44px;overflow:auto;overscroll-behavior:contain}
+ /* Script panel: the Run bar stays at the bottom, the two lists scroll. */
+ body:has(#game:not([hidden])) .game>.col:last-child>.card{display:flex;flex-direction:column;height:100%;min-height:0}
+ body:has(#game:not([hidden])) .work{flex:1;min-height:0;grid-template-columns:140px minmax(0,1fr);gap:12px}
+ body:has(#game:not([hidden])) .work>div{display:flex;flex-direction:column;min-height:0}
+ body:has(#game:not([hidden])) #pal{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+ body:has(#game:not([hidden])) .zone{flex:1;min-height:60px;overflow:auto;overscroll-behavior:contain}
+ body:has(#game:not([hidden])) .empty{padding:24px 10px}
+ body:has(#game:not([hidden])) .bar-top{flex:none;margin-top:10px}
+ body:has(#game:not([hidden])) .bar .btn{padding:9px 18px;font-size:14px}
+ body:has(#game:not([hidden])) .touchnote{flex:none}
+}
+/* Narrow tablets and small laptops: same board, tighter pieces. */
+@media(min-width:761px) and (max-width:1100px){
+ body:has(#game:not([hidden])) #game{grid-template-columns:minmax(0,1.05fr) minmax(0,.88fr) minmax(0,1.14fr);gap:10px}
+ body:has(#game:not([hidden])) .game>.col:nth-child(3){grid-column:auto}
+ body:has(#game:not([hidden])) .wrap{padding:0 12px 8px}
+ body:has(#game:not([hidden])) .work{grid-template-columns:minmax(0,112px) minmax(0,1fr);gap:8px}
+ body:has(#game:not([hidden])) .blk{padding:6px 9px;font-size:13px;margin:4px 0}
+ body:has(#game:not([hidden])) .track{height:80px}
+ body:has(#game:not([hidden])) .bd{width:30px;height:25px}
+ body:has(#game:not([hidden])) .card.learn h2{font-size:19px}
+ body:has(#game:not([hidden])) .ex-stage{min-height:84px}
+ body:has(#game:not([hidden])) .ex-cap{font-size:12.5px;min-height:2.8em}
+ body:has(#game:not([hidden])) .card.learn .sec-art{max-height:76px}
+ body:has(#game:not([hidden])) .card.learn .sec-art img{height:76px}
+}
+/* Phones keep the stacked page, but Run travels with the reader. */
+@media(max-width:760px){
+ body:has(#game:not([hidden])) .bar-top{position:sticky;bottom:0;z-index:20;margin:8px -4px 0;padding:8px 4px 6px;border-top:1px solid var(--line);background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+ body:has(#game:not([hidden])) .card.learn .sec-art{max-height:120px}
+ body:has(#game:not([hidden])) .card.learn .sec-art img{height:120px;width:100%;aspect-ratio:auto;object-fit:cover}
+}
