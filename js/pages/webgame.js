@@ -1402,6 +1402,9 @@ function openSettings(){
  const hard=PATH==='g1112'||PATH==='adult'?row('setHard',hardMode(),'Hardcore mode','No hints, fewer blocks, faster guardians. 1.5× score.'):'';
  m.innerHTML='<div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="stt"><button class="tlpm-x" type="button" id="stx" aria-label="Close"><i class=ic-close></i></button><h2 id="stt">Settings</h2><p class="s">Saved on this device for this learner.</p>'+
   '<div class="setlab">Volume</div>'+(window.TLP_VOL?TLP_VOL.ui():'')+
+  '<div class="setlab">Appearance</div>'+
+  '<label class="setrow" for="setTheme"><span><b>Theme</b><small>Auto follows this device. Light is easier in a bright room.</small></span><select id="setTheme">'+
+    [['auto','Auto'],['light','Light'],['dark','Dark']].map(o=>'<option value="'+o[0]+'"'+(window.TLP_THEME&&TLP_THEME.pref()===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></label>'+
   '<div class="setlab">Game</div>'+
   row('setGuide',pref('guide',true),'Guided steps','A tip list on every mission.')+
   row('setKid',pref('kidfx',PATH==='g16'),'Extra animations','More stars and celebrations.')+
@@ -1421,6 +1424,7 @@ function openSettings(){
  wire('setGuide','guide');wire('setKid','kidfx');wire('setBreaks','breaks');wire('setAfk','afk');
  const bm=$('#setBreakMin');if(bm)bm.onchange=()=>{setPref('breakmin',Number(bm.value));breakMin=0};
  if(window.TLP_VOL)TLP_VOL.wire(m,kind=>snd(kind));
+ const tsel=$('#setTheme');if(tsel)tsel.onchange=()=>{if(window.TLP_THEME)TLP_THEME.set(tsel.value);snd('chime')};
  const mus=$('#setMusic');if(mus)mus.onchange=()=>{TLP_MUSIC.setEnabled(mus.checked);snd('chime')};
  wire('setHard','hard');
  {const sh=$('#setHard');if(sh)sh.onchange=()=>{setPref('hard',sh.checked);if(sh.checked)document.querySelectorAll('.coach').forEach(x=>x.remove())}}

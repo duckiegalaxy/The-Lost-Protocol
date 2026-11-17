@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/pages/parent.css">
 </head>
@@ -27,33 +28,68 @@
 
 <main>
 <div class="wrap edu">
-  <h1>Parent and Educator area</h1>
-  <p class="lead">This area is for parents and teachers. After creating a Parent or Educator account, you can add learner profiles for your children or students, view their stars and chapter progress, and share each learner's Player ID and password so they can sign in and play on their own device. Adults who want to play the game themselves should create an <a href="auth.html">Adult learner</a> account instead; it is a normal Learner account and appears on the leaderboards.</p>
+  <div class="phead">
+    <p class="pkick">For parents and teachers</p>
+    <h1>Parent and Educator area</h1>
+    <p class="psub">Your learners, their Player IDs and their progress, in one place.</p>
+  </div>
 
-  <div id="gate" class="warnbox" hidden></div>
+  <div id="gate" class="pnote" hidden></div>
+
+  <section id="landing" class="planding" hidden>
+    <div class="pstart">
+      <h2>Start with an account</h2>
+      <p>One Parent or Educator account covers every learner you look after.</p>
+      <a class="btn big" href="auth.html">Sign in or create an account</a>
+      <p class="palt">Want to play the game yourself? Create an <a href="auth.html">Adult learner</a> account instead. It plays like any learner account; this area does not.</p>
+    </div>
+    <ol class="psteps">
+      <li><span class="ptile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="8" r="3.4"/><path d="M3.6 19.2c.7-3.3 3.3-5.2 6.4-5.2s5.7 1.9 6.4 5.2"/><path d="M18 6.5v5M15.5 9h5"/></svg></span>
+        <div><b>Create your account</b><span>Choose Parent or Educator. It is separate from a learner account.</span></div></li>
+      <li><span class="ptile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.2" y="5" width="17.6" height="14" rx="2.6"/><circle cx="8.8" cy="11" r="2.1"/><path d="M5.6 16c.4-1.6 1.7-2.4 3.2-2.4s2.8.8 3.2 2.4M15 10.2h3.2M15 13.4h3.2"/></svg></span>
+        <div><b>Add each learner</b><span>Pick an age group and starting difficulty. A Player ID is made for you.</span></div></li>
+      <li><span class="ptile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19.5V13M9.3 19.5V8.6M14.7 19.5v-8M20 19.5V4.8"/></svg></span>
+        <div><b>Follow progress</b><span>Stars, chapters, guardians and a daily grade, ready to print or email.</span></div></li>
+    </ol>
+  </section>
+
   <div id="app" hidden>
-    <div class="bar2">
-      <div class="count"><b id="cnt">0</b><span id="cntLbl">learners</span></div>
-      <div class="row2" style="margin:0">
+    <div class="pbar2">
+      <div class="pcount"><b id="cnt">0</b><span id="cntLbl">learners</span></div>
+      <label class="psearch" for="pSearch">
+        <svg class="pic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.6"/><path d="M16 16l4.4 4.4"/></svg>
+        <input id="pSearch" type="search" maxlength="40" placeholder="Search a child by name or Player ID" autocomplete="off" aria-label="Search a child by name or Player ID">
+      </label>
+      <div class="pacts2">
         <button class="btn ghost" id="pPrint" type="button">Print reports</button>
         <button class="btn" id="addBtn" type="button">Add a learner</button>
       </div>
     </div>
-    <div class="ptools">
-      <label class="psearch" for="pSearch"><i class="ic ic-target" aria-hidden="true"></i><input id="pSearch" type="search" maxlength="40" placeholder="Search a child by name or Player ID" autocomplete="off" aria-label="Search a child by name or Player ID"></label>
-      <span class="meta" id="pFindNote" hidden></span>
-    </div>
-    <p class="meta">Email opens your mail app with the report already written. Automatic overnight sending needs a mail service set up on the server.</p>
+    <p class="pfind" id="pFindNote" hidden></p>
     <div id="list" class="grid"></div>
+    <p class="pfine">Email opens your mail app with the report already written. Automatic overnight sending needs a mail service set up on the server.</p>
 
     <div class="sec2" id="rankSec" hidden>
       <h2>Your learners, ranked</h2>
       <p class="meta">Ranked by score within your own learners. The public leaderboards compare each age group separately.</p>
-      <div class="scroll-x"><table class="rank" id="rank"></table></div>
+      <div class="scroll-x ptable"><table class="rank" id="rank"></table></div>
     </div>
   </div>
 </div>
 </main>
+
+<!-- Sign-in QR -->
+<div class="tlpm" id="qrM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="qrT">
+  <button class="tlpm-x" type="button" id="qrX" aria-label="Close">&#10005;</button>
+  <h2 id="qrT">Sign in a device</h2>
+  <p class="s" id="qrWho"></p>
+  <p class="s">The code signs that device in to this learner, works once and expires after ten minutes. Show it only to the learner.</p>
+  <div class="qrbox"><div id="qrImg" aria-hidden="true"></div></div>
+  <p class="qrstat" id="qrStatus"></p>
+  <div class="fld"><label for="qrUrl">Sign-in link</label><input id="qrUrl" type="text" readonly autocomplete="off"></div>
+  <p class="msg2" id="qrMsg" role="status" aria-live="polite"></p>
+  <div class="tlpm-row"><button type="button" class="tlpm-btn" id="qrClose">Close</button><button type="button" class="tlpm-btn" id="qrCopy">Copy link</button><button type="button" class="tlpm-btn pri" id="qrNew">New code</button></div>
+</div></div>
 
 <!-- Add learner -->
 <div class="tlpm" id="addM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="addT">
@@ -106,6 +142,7 @@
 <script src="js/config.js"></script>
 <script src="js/tlp-auth.js"></script>
 <script src="js/tlp-common.js"></script>
+<script src="js/vendor/qrcode.js"></script>
 <script src="js/streak.js"></script>
 <script src="js/music.js"></script>
 <script src="js/pages/parent.js"></script>

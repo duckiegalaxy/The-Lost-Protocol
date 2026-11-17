@@ -1,68 +1,219 @@
 /* =============================================================================
    PARENT AND EDUCATOR STYLES  (parent.html)
    -----------------------------------------------------------------------------
-   Card grid for learner profiles, the progress bars, the credential dialog and
-   the add/delete confirmation modals. Everything here is presentation; the
-   permissions that make the page safe live in the database.
+   A quiet portal: a short page header, a sign-in card with three steps for
+   visitors, then a toolbar, learner cards and a ranked table for signed-in
+   educators. Cards sit on the page like paper using two surface tokens that
+   follow the light or dark theme. The permissions that make the page safe live
+   in the database, not here.
    Areas in this file:
-     - page frame
-     - learner card grid and progress bars
-     - credential and confirm modals
-     - responsive layout
+     - page frame and surfaces
+     - page header
+     - signed-out landing and steps
+     - dashboard toolbar and search
+     - learner cards
+     - ranked table
+     - credential and note boxes in the dialogs
+     - responsive layout and print
    ============================================================================= */
-.edu{max-width:1040px;margin:30px auto 70px;position:relative;z-index:5}
-.edu h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
-.edu .lead{color:var(--mut);margin:0 0 18px;max-width:70ch;line-height:1.5}
-.bar2{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:0 0 16px}
-.count{font:700 15px var(--sans);color:var(--mut)}
-.count b{font:800 26px var(--serif);color:var(--fg);margin-right:6px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.lc2{border:1px solid var(--line);border-radius:18px;padding:16px}
-.lc2 h3{margin:0 0 2px;font:800 20px var(--serif)}
-.pid{display:inline-flex;gap:8px;align-items:center;margin:6px 0;padding:6px 10px;border:1px dashed var(--a);border-radius:10px;font:800 15px var(--sans);letter-spacing:.05em}
-.meta{font-size:13px;color:var(--mut);margin:2px 0 8px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
-.chip{font:700 12px var(--sans);padding:4px 10px;border:1px solid var(--line);border-radius:999px}
-.row2{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.row2 .btn{flex:1 1 120px}
-table.rank{width:100%;border-collapse:collapse;font-size:14px}
-table.rank th,table.rank td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
-table.rank th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
-.sec2{margin-top:30px}
-.sec2 h2{margin:0 0 10px;font:800 24px var(--serif)}
-.warnbox{border:1px solid #ef7a8c;border-radius:14px;padding:12px 14px;margin:12px 0;line-height:1.5}
-.cred{border:1px solid var(--a);border-radius:14px;padding:14px;margin:12px 0}
-.cred code{font:800 20px var(--sans);letter-spacing:.05em}
-/* Credential dialog spacing, moved out of the inline attributes in parent.html. */
-.cred p{margin:6px 0}
-.cred p:first-of-type{margin:0 0 6px}
-.scroll-x{overflow-x:auto}
-.fld label{display:block;margin:12px 0 4px;font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
-.msg2{min-height:1.3em;margin-top:10px;font-size:14px}
 
 /* ---------------------------------------------------------------------------
-   SEARCH, DAILY GRADE AND REPORT
-   The grade badge is the only colour-coded element on the card; green means a
-   strong session, red means the learner has been away for a few days.
+   PAGE FRAME AND SURFACES
+   --card is a card surface one step away from the page, --hair a thin border.
+   Light mode uses white paper; dark mode lifts the card slightly above the bg.
    --------------------------------------------------------------------------- */
-.ptools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:0 0 6px}
-.psearch{flex:1 1 280px;display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--mut)}
-.psearch:focus-within{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 18%,transparent)}
+.edu{
+  --card:color-mix(in srgb,var(--fg) 5%,var(--bg));
+  --card2:color-mix(in srgb,var(--fg) 9%,var(--bg));
+  --hair:color-mix(in srgb,var(--fg) 16%,transparent);
+  --lift:0 24px 50px -42px rgba(0,0,0,.9);
+  max-width:1040px;margin:30px auto 70px;position:relative;z-index:5
+}
+html[data-theme="light"] .edu{
+  --card:#fff;
+  --card2:color-mix(in srgb,var(--a) 6%,#fff);
+  --hair:color-mix(in srgb,var(--fg) 14%,transparent);
+  --lift:0 20px 40px -34px rgba(23,32,43,.35)
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]) .edu{
+    --card:#fff;
+    --card2:color-mix(in srgb,var(--a) 6%,#fff);
+    --hair:color-mix(in srgb,var(--fg) 14%,transparent);
+    --lift:0 20px 40px -34px rgba(23,32,43,.35)
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   PAGE HEADER
+   Short on purpose: one line of context and one line of purpose.
+   --------------------------------------------------------------------------- */
+.phead{max-width:620px;margin:6px 0 24px}
+.pkick{font:700 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
+.phead h1{font-size:clamp(30px,5vw,44px);margin:0 0 10px}
+.psub{color:var(--mut);font-size:17px;line-height:1.55;margin:0}
+
+/* ---------------------------------------------------------------------------
+   GATE NOTE
+   Used for the wrong-account message, the offline note and errors. A plain
+   bordered note with a single accent edge, never a pink alarm box.
+   --------------------------------------------------------------------------- */
+.pnote{border:1px solid var(--hair);border-left:3px solid var(--a);border-radius:0 14px 14px 0;background:var(--card);padding:14px 16px;margin:0 0 22px;font-size:14px;line-height:1.55;color:var(--mut);max-width:70ch}
+.pnote b{display:block;color:var(--fg);font-size:15px;margin-bottom:2px}
+.pnote p{margin:0 0 12px;color:var(--mut)}
+.pnote .btn{margin-top:2px}
+
+/* ---------------------------------------------------------------------------
+   SIGNED-OUT LANDING
+   Left: the one action that matters. Right: what happens next, as three steps.
+   --------------------------------------------------------------------------- */
+.planding{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:stretch;margin:0 0 26px}
+.planding[hidden]{display:none!important}
+.pstart{display:flex;flex-direction:column;align-items:flex-start;background:var(--card);border:1px solid var(--hair);border-radius:18px;padding:26px;box-shadow:var(--lift)}
+.pstart h2{font:800 24px/1.15 var(--serif);margin:0 0 8px}
+.pstart > p{color:var(--mut);font-size:15px;line-height:1.55;margin:0 0 20px;max-width:38ch}
+.pstart .btn{margin:0 0 18px}
+.pstart .palt{font-size:13px;line-height:1.5;margin:0;max-width:44ch;color:var(--mut)}
+.palt a{color:var(--fg);text-decoration:underline;text-underline-offset:3px}
+.psteps{list-style:none;margin:0;padding:4px 22px;background:var(--card);border:1px solid var(--hair);border-radius:18px;box-shadow:var(--lift)}
+.psteps li{display:flex;gap:14px;align-items:flex-start;padding:16px 0}
+.psteps li + li{border-top:1px solid var(--hair)}
+.ptile{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--card2);border:1px solid var(--hair);color:var(--a)}
+.ptile svg{width:20px;height:20px}
+.psteps div{min-width:0}
+.psteps div > b{display:block;font:700 15px var(--sans);line-height:1.3;margin:1px 0 3px}
+.psteps div > span{display:block;font:14px/1.45 var(--sans);color:var(--mut)}
+
+/* ---------------------------------------------------------------------------
+   DASHBOARD TOOLBAR AND SEARCH
+   One card holds the count, the search field and the two page actions.
+   --------------------------------------------------------------------------- */
+.pbar2{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:14px 16px;background:var(--card);border:1px solid var(--hair);border-radius:16px;box-shadow:var(--lift)}
+.pcount{display:flex;align-items:baseline;gap:8px;min-width:100px}
+.pcount b{font:800 30px/1 var(--serif);color:var(--fg)}
+.pcount span{font:600 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.psearch{flex:1 1 260px;display:flex;align-items:center;gap:9px;min-height:42px;padding:0 13px;border:1px solid var(--hair);border-radius:11px;background:var(--card2);color:var(--mut);transition:border-color .2s,box-shadow .2s}
+.psearch:focus-within{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 16%,transparent)}
 .psearch input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:15px var(--sans);outline:none}
+.pic{flex:0 0 auto;opacity:.7}
+.pacts2{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto}
+.pfind{margin:10px 2px 0;font-size:13px;color:var(--mut)}
+
+/* ---------------------------------------------------------------------------
+   LEARNER CARDS
+   Name and grade first, then the Player ID, the quiet stat line, progress and
+   the daily report. Actions are text-like until hovered.
+   --------------------------------------------------------------------------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:16px}
+.grid > p.meta{grid-column:1/-1;padding:22px 2px;font-size:14px;color:var(--mut)}
+.lc2{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:20px;box-shadow:var(--lift)}
+.lc2 h3{margin:0;font:800 21px/1.2 var(--serif);overflow-wrap:anywhere}
 .lhead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-.grade{flex:0 0 auto;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font:800 22px var(--serif);border:1px solid var(--line);background:rgba(255,255,255,.04)}
+.lhead > div{min-width:0}
+.pid{display:inline-flex;gap:6px;align-items:center;margin:8px 0 0;padding:3px 5px 3px 10px;border:1px solid var(--hair);border-radius:9px;background:var(--card2);font:700 13px var(--sans);letter-spacing:.05em;color:var(--fg)}
+.lc2 .pid .btn{padding:4px 10px!important;min-height:28px!important;font-size:12px!important;border-radius:7px!important}
+.lc2 .meta{font-size:13px;color:var(--mut);margin:10px 0 0;line-height:1.4}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+.chip{font:600 12px var(--sans);padding:3px 9px;border:1px solid var(--hair);border-radius:999px;color:var(--mut)}
+.chip.today{border-color:color-mix(in srgb,var(--a) 45%,transparent);color:var(--a);background:color-mix(in srgb,var(--a) 9%,transparent)}
+.lc2 .pbar{height:6px;margin:16px 0 0;background:var(--hair);border-radius:999px;overflow:hidden}
+.lc2 .pbar > i{display:block;height:100%;border-radius:999px;background:var(--a)}
+.digest{display:grid;gap:4px;margin:14px 0 0;padding:14px 0 0;border-top:1px solid var(--hair);font-size:13px;line-height:1.45;color:var(--mut)}
+.digest b{display:block;font:700 13px var(--sans);color:var(--fg);margin:0 0 2px}
+.digest span:last-child{color:var(--fg)}
+.row2{display:flex;flex-wrap:wrap;gap:4px;margin:auto 0 0;padding:12px 0 0;border-top:1px solid var(--hair)}
+.lc2 .digest{margin-bottom:14px}
+.lc2 .row2 .btn{flex:0 0 auto;padding:6px 11px!important;min-height:32px!important;font-size:12.5px!important;border-color:transparent!important;color:var(--mut)!important;border-radius:9px!important}
+.lc2 .row2 .btn:hover{border-color:var(--hair)!important;color:var(--fg)!important;background:var(--card2)!important;box-shadow:none!important}
+.lc2 .row2 .btn[data-act="del"]:hover{color:#d9566e!important;border-color:color-mix(in srgb,#d9566e 45%,transparent)!important;background:color-mix(in srgb,#d9566e 9%,transparent)!important}
+.pfine{font-size:12.5px;line-height:1.5;color:var(--mut);margin:14px 2px 0;max-width:70ch}
+
+/* Grade stamps stay the same colour in both themes; they read as marks. */
+.grade{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font:800 20px var(--serif);border:1px solid var(--hair);background:var(--card2);color:var(--mut)}
 .grade.gA{color:#0b0f14;background:#8fe3a0;border-color:transparent}
 .grade.gB{color:#0b0f14;background:#9fd8ff;border-color:transparent}
 .grade.gC{color:#0b0f14;background:#ffd166;border-color:transparent}
 .grade.gD{color:#ffd7de;background:#33121a;border-color:#ff6b7f}
-.chip.today{border-color:var(--a);color:var(--a)}
-.digest{display:grid;gap:3px;margin:10px 0;padding:10px 12px;border-left:3px solid var(--a);border-radius:0 10px 10px 0;background:rgba(255,255,255,.03);font-size:13px;color:var(--mut)}
-.digest b{font:700 13px var(--sans);color:var(--fg)}
-.digest span:last-child{color:var(--fg)}
+
+/* ---------------------------------------------------------------------------
+   RANKED TABLE
+   --------------------------------------------------------------------------- */
+.sec2{margin-top:34px}
+.sec2 h2{margin:0 0 4px;font:800 22px var(--serif)}
+.sec2 .meta{margin:0 0 14px}
+.scroll-x{overflow-x:auto}
+.ptable{background:var(--card);border:1px solid var(--hair);border-radius:16px;padding:2px 16px;box-shadow:var(--lift)}
+table.rank{width:100%;border-collapse:collapse;font-size:14px}
+table.rank th,table.rank td{text-align:left;padding:11px 8px;border-bottom:1px solid var(--hair);white-space:nowrap}
+table.rank tbody tr:last-child td{border-bottom:0}
+table.rank th{font:700 11px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+table.rank tbody tr:hover td{background:color-mix(in srgb,var(--fg) 3%,transparent)}
+table.rank td:last-child{color:var(--a);font-weight:700}
+
+/* ---------------------------------------------------------------------------
+   BOXES INSIDE THE DIALOGS
+   The dialogs sit outside .edu, so these use the page tokens directly.
+   --------------------------------------------------------------------------- */
+.cred{border:1px solid color-mix(in srgb,var(--fg) 16%,transparent);border-radius:14px;padding:14px 16px;margin:12px 0;background:color-mix(in srgb,var(--fg) 4%,var(--bg))}
+.cred code{font:800 20px var(--sans);letter-spacing:.05em}
+.cred p{margin:6px 0}
+.cred p:first-of-type{margin:0 0 6px}
+/* The dialog panel defaults to the page colour, which turns grey over a dimmed
+   page in light mode. A white sheet matches the cards. */
+html[data-theme="light"] .tlpm-pan{background:#fff}
+html[data-theme="light"] .cred{background:color-mix(in srgb,var(--a) 4%,#fff)}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]) .tlpm-pan{background:#fff}
+  :root:not([data-theme="dark"]) .cred{background:color-mix(in srgb,var(--a) 4%,#fff)}
+}
+.warnbox{border:1px solid color-mix(in srgb,#ef7a8c 55%,transparent);border-radius:14px;padding:12px 14px;margin:12px 0;line-height:1.5;font-size:14px;background:color-mix(in srgb,#ef7a8c 8%,transparent)}
+.fld label{display:block;margin:12px 0 4px;font:700 12px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.msg2{min-height:1.3em;margin-top:10px;font-size:14px}
+
+/* Sign-in QR. The code is drawn black on a white tile so it scans in either
+   theme; an empty tile collapses while a new code is being made. */
+.qrbox{display:grid;place-items:center;margin:16px 0 0}
+#qrImg{width:min(100%,250px);aspect-ratio:1;padding:10px;border-radius:16px;background:#fff;border:1px solid color-mix(in srgb,var(--fg) 14%,transparent)}
+#qrImg:empty{display:none}
+#qrImg svg{display:block;width:100%;height:100%}
+.qrstat{min-height:1.4em;margin:10px 0 0;text-align:center;font-size:13.5px;color:var(--mut)}
+.msg2.ok{color:var(--a);font-weight:700}
+#qrUrl{font:600 12.5px var(--sans);color:var(--mut)}
+
+/* ---------------------------------------------------------------------------
+   RESPONSIVE
+   --------------------------------------------------------------------------- */
+@media (max-width:820px){
+  .planding{grid-template-columns:1fr}
+  .pacts2{margin-left:0;width:100%}
+  .pacts2 .btn{flex:1 1 auto}
+  .grid{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .pbar2{padding:12px}
+  .pcount{min-width:0}
+  .psearch{order:3;flex-basis:100%}
+  .pstart{padding:20px}
+  .psteps{padding:2px 18px}
+}
+
+/* ---------------------------------------------------------------------------
+   PRINT
+   The page is designed to be printed as a progress pack: white paper, card
+   grid two across, no toolbar or action rows.
+   --------------------------------------------------------------------------- */
 @media print{
- header,footer,.bar2 .row2,.ptools,#addBtn,.row2{display:none!important}
- .edu{margin:0;max-width:none}
- .grid{grid-template-columns:1fr 1fr}
- .lc2{break-inside:avoid;border-color:#999}
- .digest{background:#f2f2f2;border-color:#444;color:#222}
+  body{background:#fff;color:#111}
+  .edu{--fg:#111;--bg:#fff;--mut:#444;--a:#111;--hair:#bbb;--card:#fff;--card2:#f4f4f4}
+  header,footer,.pbar2,.pacts2,.psearch,.pfind,.pfine,.row2,.planding,.pnote,.lc2 .pid .btn{display:none!important}
+  .edu{margin:0;max-width:none}
+  .phead{margin:0 0 14px}
+  .grid{grid-template-columns:1fr 1fr;margin-top:0;gap:10px}
+  .lc2,.ptable,.pstart,.psteps{break-inside:avoid;border-color:#999;box-shadow:none;background:#fff}
+  .ptable{padding:0}
+  .digest{color:#222}
+  .digest b{color:#111}
+  .digest span:last-child{color:#111}
+  .chip{color:#333}
+  table.rank td:last-child{color:#111}
 }

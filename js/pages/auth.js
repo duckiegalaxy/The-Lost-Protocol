@@ -1,12 +1,13 @@
 /* =============================================================================
    ACCOUNT PAGE LOGIC  (js/pages/auth.js)
 
-   This file drives four mutually exclusive views on auth.html:
+   This file drives five mutually exclusive views on auth.html:
 
      forms   sign in / create account                  (default)
      session who is signed in, Player ID, delete       (when a session exists)
      forgot  ask for a reset email                     (from "Forgot your password?")
      reset   choose a new password                     (after the email link)
+     qr      one-time sign-in code                     (from the Parent area)
 
    All backend work goes through window.TLP_AUTH (js/tlp-auth.js). Nothing here
    talks to Supabase directly, so the page keeps working in local/offline mode
@@ -31,6 +32,11 @@ const hashParams = new URLSearchParams(initialHash);
 const queryParams = new URLSearchParams(window.location.search);
 
 const isRecoveryLink = hashParams.get('type') === 'recovery' || queryParams.get('type') === 'recovery';
+
+// A one-time sign-in code from the Parent area arrives as #qr=<code>. It is
+// read here, before any library call, so the page can ask before spending it.
+const qrRaw = String(hashParams.get('qr') || '');
+const qrCode = /^[A-Za-z0-9_-]{40,64}$/.test(qrRaw) ? qrRaw : '';
 
 // A link that has already been used or has timed out arrives with an error
 // instead of a token. Show the reason rather than an empty password form.
@@ -70,12 +76,13 @@ function say(msg, kind) {
   if (msg) a.scrollIntoView({ block: 'nearest' });
 }
 
-// Exactly one of the four views is visible at a time.
+// Exactly one of the views is visible at a time.
 function showView(which) {
   $('#formsView').hidden = which !== 'forms';
   $('#sessionView').hidden = which !== 'session';
   $('#forgotView').hidden = which !== 'forgot';
   $('#resetView').hidden = which !== 'reset';
+  $('#qrView').hidden = which !== 'qr';
 }
 
 // Render a set of choice cards and keep aria-pressed in sync with the choice.
@@ -351,6 +358,47 @@ $('#resetForm').addEventListener('submit', async (e) => {
 });
 
 /* -----------------------------------------------------------------------------
+   8b. ONE-TIME SIGN-IN CODE
+
+   Reached from a code made in the Parent area. The code is spent only when
+   Sign in is pressed, so opening the link by accident costs nothing. The
+   server returns a one-time magic-link token, and completeLearnerSignIn()
+   exchanges it for a normal session on this device.
+   -------------------------------------------------------------------------- */
+$('#qrBack').onclick = () => {
+  // Drop the code from the address bar, then show what this browser knows:
+  // the signed-in summary, or the normal sign-in form.
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  say('');
+  refresh();
+};
+
+$('#qrGo').onclick = async () => {
+  say('');
+  const btn = $('#qrGo');
+  btn.disabled = true;
+  $('#qrIntro').textContent = 'Signing in…';
+  let spent = false;
+  try {
+    const r = await A().redeemLearnerSignInToken(qrCode);
+    spent = true;
+    await A().completeLearnerSignIn(r.magicToken, $('#qrRemember').checked);
+    $('#qrIntro').textContent = 'Signed in as ' + r.learner.name + ' (' + r.learner.playerId + '). Opening the game…';
+    // A reload must not replay a code that has just been spent.
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    setTimeout(() => { location.href = 'webgame.html'; }, 900);
+  } catch (err) {
+    const m = String((err && err.message) || '');
+    $('#qrIntro').textContent = 'A parent or teacher made a one-time code for this device. Continuing signs it in to that learner\'s account.';
+    say(spent ? 'The code was accepted, but this browser could not finish signing in. Ask the parent or teacher for a new one.'
+      : /expired/.test(m) ? 'This code has expired or has already been used. Ask the parent or teacher to show a new one.'
+        : /network|fetch|failed to send|requested function/i.test(m) ? 'The sign-in service could not be reached. Check the connection and try again.'
+          : 'That code could not be used. Ask the parent or teacher to show a new one.');
+    btn.disabled = false;
+  }
+};
+
+/* -----------------------------------------------------------------------------
    9. SIGNED-IN VIEW
 
    Fills the account summary and wires the destructive action. The delete button
@@ -440,6 +488,26 @@ $('#copyPid').onclick = () => {
    - otherwise the normal signed-in / signed-out decision is made.
    -------------------------------------------------------------------------- */
 (async function boot() {
+  if (qrRaw) {
+    if (!qrCode) {
+      showView('forms');
+      say('That sign-in code is not valid. Ask the parent or teacher to show a new one.', 'err');
+      return;
+    }
+    showView('qr');
+    // Nothing about the learner is known until the code is redeemed, so the
+    // confirmation stays general. Only a session already open here is named.
+    try { await A().init(); } catch (e) {}
+    const other = $('#qrOther');
+    const u = A().getCurrentUser();
+    if (u) {
+      other.hidden = false;
+      other.textContent = (u.displayName || u.email || 'Another account') + ' is already signed in on this device. Signing in will replace that session.';
+    }
+    try { $('#qrRemember').checked = localStorage.getItem('tlp-remember') !== '0'; } catch (e) {}
+    $('#qrGo').focus();
+    return;
+  }
   if (linkError) {
     showView('forms');
     say('That reset link is no longer valid: ' + linkError + ' Please request a new one.', 'err');

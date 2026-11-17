@@ -400,6 +400,11 @@
   line-height: 1.6;
 }
 
+/* One-time sign-in: a different account already open on this device. */
+#qrOther {
+  color: #ef7a8c;
+}
+
 .alert {
   display: none;
   margin: 0;

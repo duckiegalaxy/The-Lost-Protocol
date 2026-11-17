@@ -13,6 +13,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<script src="js/theme.js"></script>
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/pages/auth.css">
 </head>
@@ -114,6 +115,21 @@
       <p class="note">We send a confirmation email. If it does not arrive in a few minutes, check your spam folder.</p>
     </form>
   </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2b — one-time sign-in code from the Parent area                  -->
+  <!-- The code is redeemed only when Sign in is pressed, so merely opening  -->
+  <!-- the link does not spend it.                                           -->
+  <!-- ===================================================================== -->
+  <section id="qrView" class="card2" hidden>
+    <h2 class="s-name">Sign in on this device</h2>
+    <p class="note" id="qrIntro">A parent or teacher made a one-time code for this device. Continuing signs it in to that learner's account.</p>
+    <p class="note" id="qrOther" hidden></p>
+    <label class="consent remember"><input type="checkbox" id="qrRemember" checked> <span>Keep me signed in on this device</span></label>
+    <button class="btn big go" type="button" id="qrGo">Sign in</button>
+    <div class="rw"><button class="linky" id="qrBack" type="button">Not now</button></div>
+    <p class="note">The code works once and expires after ten minutes. If it has expired, ask for a new one.</p>
+  </section>
 
   <!-- ===================================================================== -->
   <!-- VIEW 3 — ask for the reset email                                      -->

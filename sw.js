@@ -6,7 +6,7 @@
 /* Cache version for this release (privacy notice and sign-up consent).
    A new name makes the browser download the changed files and delete the old
    cache; forget to bump it and visitors keep the previous copies. */
-const CACHE = 'tlp-2026-11-16-8';
+const CACHE = 'tlp-2026-11-17-4';
 const CDN = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//;
 const SHELL = [
   'index.html', 'webgame.html', 'bonus.html', 'auth.html', 'parent.html',
@@ -18,8 +18,9 @@ const SHELL = [
   'css/pages/leaderboard.css', 'css/pages/parent.css', 'css/pages/webgame.css',
   'css/pages/explainers.css', 'css/pages/privacy.css',
   'js/config.js', 'js/coop-core.js', 'js/explainers.js', 'js/music.js', 'js/password.js',
-  'js/script.js', 'js/story.js', 'js/streak.js', 'js/tlp-auth.js',
+  'js/script.js', 'js/story.js', 'js/streak.js', 'js/theme.js', 'js/tlp-auth.js',
   'js/tlp-common.js', 'js/tlp-presence.js',
+  'js/vendor/qrcode.js',
   'js/pages/admin.js', 'js/pages/auth.js', 'js/pages/bonus.js',
   'js/pages/coop.js', 'js/pages/friends.js', 'js/pages/leaderboard.js',
   'js/pages/parent.js', 'js/pages/webgame.js',

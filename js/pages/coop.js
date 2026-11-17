@@ -22,34 +22,41 @@ let room = null, role = 'host', inst = null, offset = 0, lanes = { host: [], gue
 let practice = false;
 
 /* -----------------------------------------------------------------------------
-   Practice levels
-   Three local missions built from the same rules the server checks. A preset
+   Practice missions
+   Five local missions built from the same rules the server checks. A preset
    bot program covers the lane the player is not practising, so the full grid
    can be tested without a second person. Practice never reaches the server.
+   The last two change the puzzle, not the rules: Mirror Relay gives both lanes
+   the same targets, and Signal Drift starts some stations partly charged.
    -------------------------------------------------------------------------- */
 const PRACTICE = {
   easy: { title: 'Relay Basics', bus: 3, pours: 2, host: [2, 3, 4, 2, 3], guest: [2, 3, 4, 2, 3] },
   medium: { title: 'Split Signal', bus: 4, pours: 3, host: [5, 4, 3, 5, 4], guest: [5, 4, 3, 5, 4] },
-  hard: { title: 'Relay Overload', bus: 6, pours: 3, host: [5, 4, 5, 4, 5], guest: [5, 4, 5, 4, 5] }
+  hard: { title: 'Relay Overload', bus: 6, pours: 3, host: [5, 4, 5, 4, 5], guest: [5, 4, 5, 4, 5] },
+  mirror: { title: 'Mirror Relay', bus: 4, pours: 3, host: [2, 4, 6, 4, 8], guest: [2, 4, 6, 4, 8] },
+  drift: { title: 'Signal Drift', bus: 3, pours: 3, host: [4, 6, 2, 5, 6], guest: [5, 3, 4, 6, 4], hostStart: [1, 2, 0, 3, 1], guestStart: [2, 0, 1, 4, 2] }
 };
 function practiceInstance(level) {
   const d = PRACTICE[level];
+  const starts = (d.hostStart || []).concat(d.guestStart || []);
   return {
     title: d.title,
     maxStatements: 80,
-    stations: d.host.concat(d.guest).map((k) => ({ start: 0, target: k })),
+    stations: d.host.concat(d.guest).map((k, i) => ({ start: starts[i] || 0, target: k })),
     core: { target: d.bus * d.pours }
   };
 }
 function solvedLane(lane, level) {
   const d = PRACTICE[level], out = [];
-  if (lane === 'host') {
-    out.push({ op: 'bus', k: d.bus });
-    d.host.forEach((k, i) => out.push({ op: 'add', st: i, k: k }));
-  } else {
-    for (let p = 0; p < d.pours; p++) out.push({ op: 'addbus', st: 10 });
-    d.guest.forEach((k, i) => out.push({ op: 'add', st: 5 + i, k: k }));
-  }
+  const targets = lane === 'host' ? d.host : d.guest;
+  const starts = (lane === 'host' ? d.hostStart : d.guestStart) || [];
+  const base = lane === 'host' ? 0 : 5;
+  if (lane === 'host') out.push({ op: 'bus', k: d.bus });
+  else for (let p = 0; p < d.pours; p++) out.push({ op: 'addbus', st: 10 });
+  targets.forEach((k, i) => {
+    let need = k - (starts[i] || 0);
+    while (need > 0) { const step = Math.min(5, need); out.push({ op: 'add', st: base + i, k: step }); need -= step; }
+  });
   return out;
 }
 function startPractice(level, side) {

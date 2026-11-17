@@ -407,7 +407,7 @@
    shifting horizontally while the page loads its tally line.
    -------------------------------------------------------------------------- */
 #home .facts {
-  gap: 14px 0;
+  gap: 14px 26px;
   margin-top: 42px;
 }
 
@@ -415,17 +415,11 @@
   display: inline-flex;
   align-items: baseline;
   gap: 8px;
-  padding-right: 26px;
 }
 
 #home .facts b {
   font-variant-numeric: tabular-nums;
   line-height: 1;
-}
-
-#home .facts span + span {
-  border-left: 1px solid var(--line);
-  padding-left: 26px;
 }
 
 #home .tally {
@@ -517,13 +511,7 @@
     margin-inline: auto;
   }
 
-  #home .facts span + span {
-    border-left: 0;
-    padding-left: 0;
-  }
-
   #home .facts span {
-    padding-right: 0;
     min-width: 46%;
   }
 }

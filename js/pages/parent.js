@@ -26,9 +26,10 @@ const BOSS_KEYS = ['3-0', '9-0', '14-0', '19-0', '24-0'];
 let learners = [], selected = null;
 
 const open = (id) => { $(id).hidden = false; }, close = (id) => { $(id).hidden = true; };
-['add', 'pw', 'del'].forEach((k) => { $('#' + k + 'X').onclick = () => close('#' + k + 'M'); });
+['add', 'pw', 'del', 'qr'].forEach((k) => { $('#' + k + 'X').onclick = () => { close('#' + k + 'M'); qrShut(); }; });
 $('#aCancel').onclick = () => close('#addM'); $('#pwCancel').onclick = () => close('#pwM'); $('#delCancel').onclick = () => close('#delM'); $('#cClose').onclick = () => { close('#addM'); load(); };
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') ['#addM', '#pwM', '#delM'].forEach(close); });
+$('#qrClose').onclick = () => { close('#qrM'); qrShut(); };
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { ['#addM', '#pwM', '#delM', '#qrM'].forEach(close); qrShut(); } });
 
 /* -----------------------------------------------------------------------------
    Progress summary
@@ -153,7 +154,7 @@ function paint() {
       '<div class="chips"><span class="chip">' + s.stars + ' stars</span><span class="chip">' + s.missions + ' missions</span><span class="chip">' + s.bosses + ' of 5 guardians</span><span class="chip">' + s.score + ' points</span><span class="chip today">+' + g.delta.score + ' today</span></div>' +
       '<div class="pbar" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="' + s.bosses + '" aria-label="Guardians defeated"><i style="width:' + Math.round(s.bosses / 5 * 100) + '%"></i></div>' +
       '<div class="digest"><b>Daily report · grade ' + g.grade + '</b><span>' + esc(GRADE_WHY[g.grade]) + '</span><span>' + esc(adviceFor(l, s)) + '</span></div>' +
-      '<div class="row2"><button class="btn ghost sm" data-act="pw" type="button">Reset password</button><button class="btn ghost sm" data-act="del" type="button">Delete</button><button class="btn ghost sm" data-act="mail" type="button">Email report</button><button class="btn ghost sm" data-act="copyrep" type="button">Copy report</button></div></div>';
+      '<div class="row2"><button class="btn ghost sm" data-act="pw" type="button">Reset password</button><button class="btn ghost sm" data-act="qr" type="button">Sign-in QR</button><button class="btn ghost sm" data-act="del" type="button">Delete</button><button class="btn ghost sm" data-act="mail" type="button">Email report</button><button class="btn ghost sm" data-act="copyrep" type="button">Copy report</button></div></div>';
   }).join('');
 }
 
@@ -180,6 +181,12 @@ $('#list').addEventListener('click', (e) => {
   selected = l;
   if (b.dataset.act === 'copy') { try { navigator.clipboard.writeText(l.player_id); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1400); } catch (x) {} }
   if (b.dataset.act === 'pw') { $('#pwWho').textContent = l.name + ' (' + l.player_id + ')'; $('#pwNew').value = ''; $('#pwMsg').textContent = ''; open('#pwM'); }
+  if (b.dataset.act === 'qr') {
+    $('#qrWho').textContent = 'Code for ' + l.name + ' (' + l.player_id + ').';
+    $('#qrImg').innerHTML = ''; $('#qrUrl').value = ''; $('#qrStatus').textContent = ''; $('#qrStatus').className = 'qrstat'; qrNote('');
+    open('#qrM');
+    qrMake(l);
+  }
   if (b.dataset.act === 'del') { $('#delLbl').textContent = 'Type the Player ID ' + l.player_id + ' to confirm'; $('#delTxt').value = ''; $('#delGo').disabled = true; $('#delMsg').textContent = ''; open('#delM'); }
   const sum = (sums.find((x) => x.l.id === l.id) || {}).s;
   if (b.dataset.act === 'mail' && sum) {
@@ -190,6 +197,117 @@ $('#list').addEventListener('click', (e) => {
     try { navigator.clipboard.writeText(reportText(l, sum)); b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy report', 1400); } catch (x) {}
   }
 });
+
+/* -----------------------------------------------------------------------------
+   One-time sign-in QR
+   The learner-qr function makes a code that signs one device in without a
+   Player ID and password. The parent sees the code here; only its hash is kept
+   on the server, so the dialog is the one chance to scan or copy the link.
+   -------------------------------------------------------------------------- */
+let qrLearner = null, qrToken = '', qrExpires = 0, qrCount = null, qrPoll = null, qrSeq = 0;
+
+function qrStop() {
+  clearInterval(qrCount);
+  clearInterval(qrPoll);
+  qrCount = qrPoll = null;
+}
+
+// Closing the dialog abandons any request still in flight, so a late answer
+// cannot reopen a code on a dialog the parent has already dismissed.
+function qrShut() {
+  qrStop();
+  qrSeq += 1;
+}
+
+function qrTick() {
+  const left = qrExpires - Date.now();
+  if (left <= 0) {
+    qrStop();
+    $('#qrStatus').textContent = '';
+    qrNote('This code has expired. Make a new one.');
+    return;
+  }
+  const s = Math.ceil(left / 1000);
+  $('#qrStatus').textContent = 'Waiting for the learner · expires in ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+}
+
+// Dialog messages are the announced ones; the countdown above stays silent.
+function qrNote(text, ok) {
+  const m = $('#qrMsg');
+  m.textContent = text;
+  m.className = 'msg2' + (ok ? ' ok' : '');
+}
+
+async function qrCheck() {
+  if (!qrToken) return;
+  try {
+    const s = await A().getLearnerSignInStatus(qrToken);
+    if (s.used) {
+      qrStop();
+      qrToken = '';
+      $('#qrImg').innerHTML = '';
+      $('#qrUrl').value = '';
+      $('#qrStatus').textContent = '';
+      qrNote('The learner is signed in on that device.', true);
+    } else if (s.expired) {
+      qrStop();
+      $('#qrStatus').textContent = '';
+      qrNote('This code has expired. Make a new one.');
+    }
+  } catch (e) { /* The countdown keeps running if a check fails. */ }
+}
+
+async function qrMake(l) {
+  if (l) qrLearner = l;
+  if (!qrLearner) return;
+  qrStop();
+  qrToken = '';
+  qrExpires = 0;
+  $('#qrImg').innerHTML = '';
+  $('#qrUrl').value = '';
+  $('#qrStatus').textContent = 'Making a code...';
+  $('#qrStatus').className = 'qrstat';
+  qrNote('');
+  $('#qrNew').disabled = true;
+  const seq = ++qrSeq;
+  try {
+    const r = await A().createLearnerSignInQr(qrLearner.id);
+    if (seq !== qrSeq) return;
+    qrToken = r.token;
+    qrExpires = new Date(r.expiresAt).getTime();
+    const url = new URL('auth.html', location.href);
+    url.hash = 'qr=' + qrToken;
+    $('#qrUrl').value = url.href;
+    try {
+      const q = qrcode(0, 'M');
+      q.addData(url.href);
+      q.make();
+      $('#qrImg').innerHTML = q.createSvgTag({ cellSize: 4, margin: 3, scalable: true });
+    } catch (e) { $('#qrMsg').textContent = 'The QR image could not be drawn. Use the link below instead.'; }
+    qrTick();
+    qrCount = setInterval(qrTick, 1000);
+    qrPoll = setInterval(qrCheck, 5000);
+  } catch (err) {
+    const m = String((err && err.message) || '');
+    $('#qrStatus').textContent = '';
+    $('#qrMsg').textContent = /rate_limited/.test(m) ? 'Too many codes in the last hour. Wait a few minutes, then try again.'
+      : /not_educator/.test(m) ? 'Only Parent and Educator accounts can make sign-in codes.'
+        : /not_found/.test(m) ? 'This learner cannot use a sign-in code.'
+          : /network|fetch|failed to send|requested function|not found/i.test(m) ? 'The sign-in service is not available yet. Check the connection, or sign the learner in with their Player ID.'
+            : 'Could not make a code: ' + m;
+  } finally { $('#qrNew').disabled = false; }
+}
+
+$('#qrNew').onclick = () => qrMake();
+$('#qrCopy').onclick = () => {
+  if (!$('#qrUrl').value) return;
+  try {
+    navigator.clipboard.writeText($('#qrUrl').value);
+    $('#qrCopy').textContent = 'Copied';
+    setTimeout(() => { $('#qrCopy').textContent = 'Copy link'; }, 1400);
+  } catch (e) {}
+};
+$('#qrUrl').onfocus = () => $('#qrUrl').select();
 
 $('#addBtn').onclick = () => { $('#addF').hidden = false; $('#aDone').hidden = true; $('#addF').reset(); $('#aMsg').textContent = ''; $('#aDiffHelp').textContent = DHELP.int; open('#addM'); };
 $('#aDiff').onchange = () => { $('#aDiffHelp').textContent = DHELP[$('#aDiff').value]; };
@@ -229,8 +347,12 @@ $('#pPrint').onclick = () => window.print();
   try {
     await A().init();
     const u = A().getCurrentUser();
-    if (!u) { g.hidden = false; g.innerHTML = 'Please <a href="auth.html">sign in</a> with a Parent or Educator account. If you are an adult who wants to play the game yourself, create an <a href="auth.html">Adult learner</a> account instead.'; return; }
-    if (u.role !== 'parent') { g.hidden = false; g.innerHTML = 'This area is for Parent and Educator accounts. Adult learners play the game and do not need this area. <a href="' + (u.isAdmin ? 'admin.html' : 'webgame.html') + '">Continue</a>'; return; }
+    if (!u) { $('#landing').hidden = false; return; }
+    if (u.role !== 'parent') {
+      g.hidden = false;
+      g.innerHTML = '<b>This area is for Parent and Educator accounts.</b><p>Your account opens the game instead.</p><a class="btn sm" href="' + (u.isAdmin ? 'admin.html' : 'webgame.html') + '">Continue</a>';
+      return;
+    }
     if (!A().isCloudConfigured()) {
       g.hidden = false;
       g.style.borderColor = 'var(--a)';

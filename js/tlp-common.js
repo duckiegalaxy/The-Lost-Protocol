@@ -715,6 +715,8 @@
   function init() {
     FX.apply();
     setupNav();
+    // The appearance switch waits for the shared menu so it can sit beside it.
+    try { window.dispatchEvent(new Event('tlp-nav-ready')); } catch (e) {}
     var fxb = $('#fx'); if (fxb) fxb.onclick = function () { FX.set(!FX.get()); };
     var vb = $('#volBtn'); if (vb) vb.onclick = openVolume;
     ['pointerdown', 'pointerup', 'keydown', 'wheel', 'touchstart', 'scroll', 'input'].forEach(function (ev) { document.addEventListener(ev, onActivity, { passive: true, capture: true }); });

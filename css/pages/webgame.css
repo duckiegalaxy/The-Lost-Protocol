@@ -24,7 +24,8 @@
    ============================================================================= */
 :root{--h:200;--bg:hsl(var(--h) 26% 8%);--fg:#f3efe8;--mut:hsl(var(--h) 12% 76%);--line:rgba(255,255,255,.14);--a:hsl(var(--h) 80% 64%);--b:hsl(calc(var(--h) + 45) 85% 72%);--ink:#0b0f14;--bad:#ef7a8c;--ok:#4fc98a;
 --serif:'Fraunces',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif;--hand:'Caveat','Segoe Print',cursive;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:light){:root{--bg:hsl(var(--h) 45% 95%);--fg:#17202b;--mut:hsl(var(--h) 18% 30%);--line:rgba(20,30,45,.18);--a:hsl(var(--h) 75% 34%);--b:hsl(calc(var(--h) + 45) 70% 36%);--ink:#fff;--bad:#b8324b;--ok:#1b7a4c}}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:hsl(var(--h) 45% 95%);--fg:#17202b;--mut:hsl(var(--h) 18% 30%);--line:rgba(20,30,45,.18);--a:hsl(var(--h) 75% 34%);--b:hsl(calc(var(--h) + 45) 70% 36%);--ink:#fff;--bad:#b8324b;--ok:#1b7a4c}}
+:root[data-theme="light"]{--bg:hsl(var(--h) 45% 95%);--fg:#17202b;--mut:hsl(var(--h) 18% 30%);--line:rgba(20,30,45,.18);--a:hsl(var(--h) 75% 34%);--b:hsl(calc(var(--h) + 45) 70% 36%);--ink:#fff;--bad:#b8324b;--ok:#1b7a4c}
 *{box-sizing:border-box;margin:0}
 body{min-height:100vh;background:linear-gradient(120deg,color-mix(in srgb,var(--a) 14%,var(--bg)),var(--bg) 45%,color-mix(in srgb,var(--b) 11%,var(--bg)));color:var(--fg);font:16px/1.6 var(--sans);transition:background .8s}
 h1,h2,h3{font-family:var(--serif);line-height:1.1}
@@ -898,3 +899,194 @@ html.reduce-fx .cs-bg *,html.reduce-fx .cs-port *,html.reduce-fx .cs-title,html.
   #pal .blk:only-child{max-width:none}
   .work{gap:10px}
 }
+
+/* =============================================================================
+   LIGHT APPEARANCE FOR THE AGE-GROUP THEMES
+   -----------------------------------------------------------------------------
+   Each path keeps its identity (playful shapes, signal deck, blueprint,
+   cinematic serif) but draws it on paper instead of on black when the light
+   appearance is chosen (Auto on a light device, or Light in Settings). Dark
+   keeps the original themes above.
+   ============================================================================= */
+  html[data-theme="light"] body.path-g16, html[data-theme="light"] body.path-g710, html[data-theme="light"] body.path-g1112, html[data-theme="light"] body.path-adult {
+    --fg: #1b2430;
+    --mut: #4b5a6d;
+    --line: rgba(25, 40, 60, .16);
+    --ink: #fff;
+    color: var(--fg);
+  }
+  /* The difficulty palettes are tuned for dark surfaces; use the deeper pair
+     so buttons and accents keep their contrast on white. */
+  html[data-theme="light"] body.path-g16.d-beg, html[data-theme="light"] body.path-g16.d-pro,
+  html[data-theme="light"] body.path-g710.d-beg, html[data-theme="light"] body.path-g710.d-pro,
+  html[data-theme="light"] body.path-g1112.d-beg, html[data-theme="light"] body.path-g1112.d-pro,
+  html[data-theme="light"] body.path-adult.d-beg, html[data-theme="light"] body.path-adult.d-pro {
+    --a: hsl(var(--h) 72% 36%);
+    --b: hsl(calc(var(--h) + 45) 66% 38%);
+  }
+
+  html[data-theme="light"] body.path-g16 {
+    --a: #5a3fc0;
+    --b: #0b7285;
+    background:
+      radial-gradient(circle at 15% 8%, #e8dfff, transparent 42%),
+      radial-gradient(circle at 88% 18%, #d8f0f8, transparent 38%),
+      radial-gradient(circle at 50% 96%, #ffe4ef, transparent 44%),
+      #faf8ff;
+  }
+  html[data-theme="light"] body.path-g710 {
+    --a: #1c6ea4;
+    --b: #6c4bc4;
+    background-color: #f3f7fb;
+    background-image:
+      radial-gradient(1100px 520px at 12% -8%, rgba(28, 110, 164, .10), transparent 62%),
+      radial-gradient(900px 480px at 96% 4%, rgba(108, 75, 196, .07), transparent 60%),
+      linear-gradient(rgba(28, 110, 164, .06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(28, 110, 164, .06) 1px, transparent 1px);
+    background-size: auto, auto, 46px 46px, 46px 46px;
+    background-attachment: fixed;
+  }
+  html[data-theme="light"] body.path-g1112 {
+    --a: #2d5f86;
+    --b: #7a6420;
+    background-color: #f7f8f4;
+    background-image:
+      linear-gradient(rgba(45, 95, 134, .07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45, 95, 134, .07) 1px, transparent 1px),
+      linear-gradient(rgba(45, 95, 134, .035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45, 95, 134, .035) 1px, transparent 1px),
+      radial-gradient(900px 520px at 88% -12%, rgba(45, 95, 134, .10), transparent 64%);
+    background-size: 110px 110px, 110px 110px, 22px 22px, 22px 22px, auto;
+    background-attachment: fixed;
+  }
+  html[data-theme="light"] body.path-adult {
+    --a: #8a6a3a;
+    --b: #4f5d75;
+    background-color: #f7f5f0;
+    background-image:
+      radial-gradient(1200px 620px at 50% -22%, rgba(255, 255, 255, .9), transparent 62%),
+      radial-gradient(900px 620px at 92% 112%, rgba(138, 106, 58, .10), transparent 64%);
+    background-attachment: fixed;
+  }
+
+  /* Shared surfaces: glass becomes paper, neon borders become hairlines. */
+  html[data-theme="light"] body.path-g16 .top, html[data-theme="light"] body.path-g710 .top,
+  html[data-theme="light"] body.path-g1112 .top, html[data-theme="light"] body.path-adult .top {
+    border-bottom: 1px solid var(--line);
+  }
+  html[data-theme="light"] body.path-g16 .hud, html[data-theme="light"] body.path-g710 .hud,
+  html[data-theme="light"] body.path-g1112 .hud, html[data-theme="light"] body.path-adult .hud {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .88);
+    color: var(--mut);
+    box-shadow: 0 10px 28px rgba(20, 30, 45, .07);
+  }
+  html[data-theme="light"] body.path-g16 .hud-nav, html[data-theme="light"] body.path-g16 .hud-tools,
+  html[data-theme="light"] body.path-g710 .hud-nav, html[data-theme="light"] body.path-g710 .hud-tools,
+  html[data-theme="light"] body.path-g1112 .hud-nav, html[data-theme="light"] body.path-g1112 .hud-tools,
+  html[data-theme="light"] body.path-adult .hud-nav, html[data-theme="light"] body.path-adult .hud-tools {
+    border-left-color: var(--line);
+  }
+  html[data-theme="light"] body.path-g16 .hud-score, html[data-theme="light"] body.path-g710 .hud-score,
+  html[data-theme="light"] body.path-g1112 .hud-score, html[data-theme="light"] body.path-adult .hud-score {
+    border-color: var(--line);
+    background: #fff;
+    box-shadow: none;
+  }
+  html[data-theme="light"] body.path-g16 .hud-score b, html[data-theme="light"] body.path-g710 .hud-score b,
+  html[data-theme="light"] body.path-g1112 .hud-score b, html[data-theme="light"] body.path-adult .hud-score b {
+    text-shadow: none;
+    color: var(--fg);
+  }
+  html[data-theme="light"] body.path-g16 .card, html[data-theme="light"] body.path-g710 .card,
+  html[data-theme="light"] body.path-g1112 .card, html[data-theme="light"] body.path-adult .card {
+    border: 1px solid var(--line);
+    background: rgba(255, 255, 255, .9);
+    box-shadow: 0 12px 32px rgba(20, 30, 45, .08);
+  }
+  html[data-theme="light"] body.path-g1112 .card {
+    background: rgba(255, 255, 255, .82);
+    box-shadow: inset 0 0 22px rgba(20, 30, 45, .035), 0 12px 32px rgba(20, 30, 45, .07);
+  }
+  html[data-theme="light"] body.path-adult .card {
+    background: rgba(255, 255, 255, .92);
+    box-shadow: 0 26px 60px -40px rgba(20, 30, 45, .35);
+  }
+  html[data-theme="light"] body.path-g16 .learn .mis, html[data-theme="light"] body.path-g710 .learn .mis,
+  html[data-theme="light"] body.path-g1112 .learn .mis, html[data-theme="light"] body.path-adult .learn .mis {
+    background: color-mix(in srgb, var(--a) 8%, #fff);
+    color: var(--fg);
+  }
+  html[data-theme="light"] body.path-g710 .learn .mis, html[data-theme="light"] body.path-g1112 .learn .mis {
+    background-image: none;
+  }
+  html[data-theme="light"] body.path-g16 .goals li, html[data-theme="light"] body.path-g710 .goals li,
+  html[data-theme="light"] body.path-g1112 .goals li, html[data-theme="light"] body.path-adult .goals li {
+    background: #f8fafc;
+  }
+  html[data-theme="light"] body.path-g16 .zone, html[data-theme="light"] body.path-g710 .zone,
+  html[data-theme="light"] body.path-g1112 .zone, html[data-theme="light"] body.path-adult .zone {
+    background-color: #f8fafc;
+    background-image: none;
+    border-color: var(--line);
+  }
+  html[data-theme="light"] body.path-g16 .zone.in, html[data-theme="light"] body.path-g710 .zone.in,
+  html[data-theme="light"] body.path-g1112 .zone.in, html[data-theme="light"] body.path-adult .zone.in {
+    background: rgba(20, 30, 45, .05);
+  }
+  html[data-theme="light"] body.path-g16 .track, html[data-theme="light"] body.path-g710 .track,
+  html[data-theme="light"] body.path-g1112 .track, html[data-theme="light"] body.path-adult .track {
+    border-color: var(--line);
+    background: linear-gradient(0deg, color-mix(in srgb, var(--a) 10%, transparent), transparent 72%);
+    box-shadow: none;
+  }
+  html[data-theme="light"] body.path-g16 .track i, html[data-theme="light"] body.path-g710 .track i,
+  html[data-theme="light"] body.path-g1112 .track i, html[data-theme="light"] body.path-adult .track i {
+    border-right-color: var(--line);
+  }
+  html[data-theme="light"] body.path-g16 .lb, html[data-theme="light"] body.path-g710 .lb,
+  html[data-theme="light"] body.path-g1112 .lb, html[data-theme="light"] body.path-adult .lb {
+    background: #fff;
+    border-color: var(--line);
+  }
+  html[data-theme="light"] body.path-g16 .btn.ghost, html[data-theme="light"] body.path-g710 .btn.ghost,
+  html[data-theme="light"] body.path-g1112 .btn.ghost, html[data-theme="light"] body.path-adult .btn.ghost {
+    background: #fff;
+    border-color: var(--line);
+    color: var(--fg);
+  }
+  html[data-theme="light"] body.path-g16 .pan, html[data-theme="light"] body.path-g710 .pan,
+  html[data-theme="light"] body.path-g1112 .pan, html[data-theme="light"] body.path-adult .pan {
+    background: #fff;
+    border-color: var(--line);
+    box-shadow: 0 30px 70px -30px rgba(20, 30, 45, .35);
+  }
+  html[data-theme="light"] body.path-g16 .blk, html[data-theme="light"] body.path-g710 .blk,
+  html[data-theme="light"] body.path-g1112 .blk, html[data-theme="light"] body.path-adult .blk {
+    color: #12161c;
+  }
+  html[data-theme="light"] body.path-g710 .blk, html[data-theme="light"] body.path-adult .blk {
+    box-shadow: 0 1px 0 rgba(20, 30, 45, .18), 0 4px 10px -4px rgba(20, 30, 45, .25);
+  }
+  html[data-theme="light"] body.path-g710 .blk:hover, html[data-theme="light"] body.path-adult .blk:hover {
+    box-shadow: 0 2px 0 rgba(20, 30, 45, .18), 0 10px 20px -10px rgba(20, 30, 45, .3);
+  }
+  html[data-theme="light"] body.path-g16 .learned, html[data-theme="light"] body.path-g710 .learned,
+  html[data-theme="light"] body.path-g1112 .learned, html[data-theme="light"] body.path-adult .learned {
+    background: #fff;
+    border-color: var(--line);
+  }
+  html[data-theme="light"] body.path-g16 .why li, html[data-theme="light"] body.path-g710 .why li,
+  html[data-theme="light"] body.path-g1112 .why li, html[data-theme="light"] body.path-adult .why li {
+    background: #fff;
+  }
+  html[data-theme="light"] body.path-g16 .coach, html[data-theme="light"] body.path-g710 .coach,
+  html[data-theme="light"] body.path-g1112 .coach, html[data-theme="light"] body.path-adult .coach {
+    background: color-mix(in srgb, var(--b) 9%, #fff);
+  }
+  html[data-theme="light"] body.path-g710 .logo, html[data-theme="light"] body.path-g710 .hero h1,
+  html[data-theme="light"] body.path-adult .logo { text-shadow: none; }
+  html[data-theme="light"] body.path-g16 h1, html[data-theme="light"] body.path-g16 h2, html[data-theme="light"] body.path-g16 .logo {
+    background: linear-gradient(90deg, #4b2fae, #a62c7f, #0a6f8f, #4b2fae);
+    background-size: 300% 100%;
+  }

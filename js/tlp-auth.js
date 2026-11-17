@@ -1016,6 +1016,40 @@
       return { playerId: lrn.player_id, learnerId: lrn.id };
     }
 
+    // -------------------------------------------------------------------------
+    // ONE-TIME LEARNER SIGN-IN CODES
+    // A parent makes a code on parent.html; the learner's device redeems it on
+    // auth.html. The server keeps only the code's hash and mints a single-use
+    // magic-link token, which verifyOtp() below turns into a normal session.
+    // -------------------------------------------------------------------------
+    async createLearnerSignInQr(learnerId) {
+      return this._invoke('learner-qr', { action: 'create', learnerId });
+    }
+
+    async getLearnerSignInStatus(token) {
+      return this._invoke('learner-qr', { action: 'status', token });
+    }
+
+    async redeemLearnerSignInToken(token) {
+      const r = await this._invoke('learner-qr', { action: 'redeem', token });
+      if (!r || !r.magicToken) throw new Error('expired');
+      return r;
+    }
+
+    // rememberOn follows the same choice as the sign-in checkbox: on keeps the
+    // session for the next visit, off keeps it only until the tab closes.
+    async completeLearnerSignIn(magicToken, rememberOn) {
+      await this.init();
+      if (!this.isCloudConfigured()) throw new Error('This needs the online version of the site.');
+      try { localStorage.setItem('tlp-remember', rememberOn ? '1' : '0'); } catch (e) {}
+      const { data, error } = await this.supabase.auth.verifyOtp({ token_hash: magicToken, type: 'magiclink' });
+      if (error) throw error;
+      const user = data && data.session && data.session.user;
+      if (!user) throw new Error('signin_failed');
+      await this._loadCloudUser(user);
+      return this.currentUser;
+    }
+
     async resetLearnerPassword(learnerId, password) {
       if (this.isCloudConfigured()) {
         try {
