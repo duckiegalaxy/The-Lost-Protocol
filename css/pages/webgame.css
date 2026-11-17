@@ -94,6 +94,14 @@ body.bt-dragging *{cursor:grabbing!important}
 .modal{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(8px);padding:20px}
 .pan{width:min(460px,100%);text-align:center;border:1px solid var(--a);border-radius:22px;background:var(--bg);padding:34px;animation:pop .5s}.pan h2{font-size:34px;font-style:italic;margin-bottom:8px}.pan p{color:var(--mut);margin-bottom:18px}
 .stars{font-size:38px;color:var(--b);letter-spacing:8px;margin:6px 0}
+.payoff{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 16px;text-align:left}
+.payoff>span{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.035)}
+.payoff small{font:700 9.5px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.payoff b{font:800 16px var(--serif)}
+.nextup{display:flex;gap:8px;align-items:baseline;justify-content:center;flex-wrap:wrap;margin:0 0 14px;font-size:14px;color:var(--mut)}
+.nextup span{font:700 9.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--a)}
+.nextup b{font:700 15px var(--sans);color:var(--fg)}
+@media(max-width:520px){.payoff{grid-template-columns:1fr 1fr}.payoff>span:last-child{grid-column:1/-1}}
 .spark{position:fixed;z-index:60;width:9px;height:9px;border-radius:2px;pointer-events:none}
 .track{counter-reset:c -1}.track i{position:relative}.track i:before{counter-increment:c;content:counter(c);position:absolute;top:5px;left:0;right:0;text-align:center;font:700 12px var(--sans);color:var(--mut)}
 .track i:first-child:after{content:"START";font:700 9px var(--sans);letter-spacing:.1em;padding-bottom:4px}.track i.vis{background:color-mix(in srgb,var(--b) 20%,transparent)}

@@ -1183,7 +1183,7 @@
       return String(v == null ? '' : v).replace(/[%_,()*"'\\]/g, ' ').trim().slice(0, 40);
     }
 
-    async getPublicLeaderboardPage({ path, diff, offset = 0, limit = 20, search = '', today = false }) {
+    async getPublicLeaderboardPage({ path, diff, offset = 0, limit = 20, search = '', today = false, week = false }) {
       await this.init();
       if (!this.isCloudConfigured()) return { rows: [], hasMore: false };
       let q = this.supabase.from('public_leaderboard')
@@ -1192,6 +1192,9 @@
       const s = this._cleanSearch(search);
       if (s) q = q.or('display_name.ilike.%' + s + '%,player_id.ilike.%' + s + '%');
       if (today) q = q.gte('updated_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
+      if (week) {
+        (d => { d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); q = q.gte('updated_at', d.toISOString()); })(new Date());
+      }
       const { data, error } = await q
         .order('total_score', { ascending: false }).order('total_stars', { ascending: false }).order('updated_at', { ascending: true })
         .range(offset, offset + limit);

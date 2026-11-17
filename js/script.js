@@ -631,3 +631,99 @@ $('#fbchips').addEventListener('click', e => {
     FB.tags = $$('#fbchips button.on').map(x => x.textContent);
 });
 fbFlush();
+
+/* -----------------------------------------------------------------------------
+   Today card
+   The game menu already knows the streak and the daily goals, but a returning
+   player lands here first. This card reads the same per-learner save keys and
+   offers one next step. It never calls TLP_STREAK.check(), so opening the home
+   page alone does not count as a day played.
+   -------------------------------------------------------------------------- */
+function dayStamp() {
+    const d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+
+function savedProgressItem(item) {
+    try {
+        if (!window.TLP_AUTH || !TLP_AUTH.getActiveSaveKey) return null;
+        return localStorage.getItem(TLP_AUTH.getActiveSaveKey(item));
+    } catch (e) {
+        return null;
+    }
+}
+
+async function renderToday() {
+    const card = $('#today');
+    if (!card) return;
+    let user = null;
+    let learner = null;
+    try {
+        if (window.TLP_AUTH) {
+            await TLP_AUTH.init();
+            user = TLP_AUTH.getCurrentUser();
+            learner = TLP_AUTH.getActiveLearner();
+        }
+    } catch (e) {
+    }
+    // Parents and educators are heading for their own area, not the game.
+    if (user && user.role === 'parent') {
+        card.hidden = true;
+        return;
+    }
+
+    const who = $('#tcWho');
+    who.textContent = learner && !learner.isGuest && learner.name
+        ? 'for ' + String(learner.name).trim().split(' ')[0]
+        : '';
+
+    const streak = window.TLP_STREAK
+        ? TLP_STREAK.get()
+        : { count: 0, last: '', next: null, left: 0 };
+    const today = window.TLP_STREAK ? TLP_STREAK.today() : dayStamp();
+    $('#tcStreak').textContent = String(streak.count || 0);
+    if (!streak.count) {
+        $('#tcStreakNote').textContent = 'Your streak starts with one mission.';
+    } else if (streak.last !== today) {
+        $('#tcStreakNote').textContent = 'day streak · play today to keep it';
+    } else if (streak.next) {
+        $('#tcStreakNote').textContent = 'day streak · ' + streak.left + ' day' + (streak.left === 1 ? '' : 's') + ' to ' + streak.next.name;
+    } else {
+        $('#tcStreakNote').textContent = 'day streak · every milestone earned';
+    }
+
+    let daily = null;
+    try {
+        daily = JSON.parse(savedProgressItem('daily') || 'null');
+    } catch (e) {
+    }
+    if (daily && daily.date === dayStamp() && Array.isArray(daily.ids)) {
+        const goals = daily.goals || {};
+        const claimed = daily.claimed || [];
+        const done = daily.ids.filter((id) => (daily.prog[id] || 0) >= (goals[id] || Infinity)).length;
+        const ready = daily.ids.filter((id) => claimed.indexOf(id) < 0 && (daily.prog[id] || 0) >= (goals[id] || Infinity)).length;
+        if (!done) {
+            $('#tcDaily').textContent = '3';
+            $('#tcDailyNote').textContent = 'daily goals today';
+        } else {
+            $('#tcDaily').textContent = done + '/3';
+            $('#tcDailyNote').textContent = ready
+                ? ready + ' reward' + (ready === 1 ? '' : 's') + ' ready to claim'
+                : claimed.length >= 3 ? 'all daily goals complete' : 'daily goals done';
+        }
+    } else {
+        $('#tcDaily').textContent = '3';
+        $('#tcDailyNote').textContent = 'daily goals waiting today';
+    }
+
+    let started = false;
+    try {
+        const progress = JSON.parse(savedProgressItem('prog') || 'null');
+        started = !!(progress && Object.keys(progress).length);
+    } catch (e) {
+    }
+    $('#tcGoLabel').textContent = started ? 'Continue' : 'Start the first mission';
+    card.hidden = false;
+}
+
+renderToday();

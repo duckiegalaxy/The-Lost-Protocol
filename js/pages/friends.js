@@ -38,10 +38,62 @@ function card(f) {
     '</div></article>';
 }
 
+let boardSig = '';
+let boardReq = 0;
+
+/* Friends play at different times, so the board compares finished scores
+   instead of waiting for both people to be online. It only reloads when the
+   friend list itself changes, not on every presence update. */
+async function loadBoard(list) {
+  const box = $('#frBoard');
+  if (!box) return;
+  const l = A().getActiveLearner();
+  const me = l && l.player_id;
+  if (!l || l.isGuest || !me || !A().isCloudConfigured()) { box.hidden = true; return; }
+  /* Names are part of the signature: a friend is added with a placeholder
+     name and renamed once the public display name arrives. */
+  const sig = [me].concat(list.map((f) => f.pid + ':' + (f.name || ''))).join(',');
+  if (sig === boardSig) return;
+  boardSig = sig;
+  const req = ++boardReq;
+  const path = l.assigned_path || l.assignedPath || localStorage.getItem('tlp-path') || 'g710';
+  const diff = l.current_diff || l.currentDiff || localStorage.getItem('tlp-diff') || 'int';
+  const names = {};
+  list.forEach((f) => { names[f.pid] = f.name || f.pid; });
+  const pids = [...new Set([me].concat(list.map((f) => f.pid)).filter(Boolean))].slice(0, 10);
+  box.hidden = false;
+  box.innerHTML = '<div class="fbhead"><b>Friends on your board</b><span>Same age group and difficulty</span></div><p class="fbnote">Loading scores...</p>';
+  const rows = await Promise.all(pids.map(async (pid) => {
+    const isMe = pid === me;
+    const base = { pid, isMe, name: isMe ? (l.name || 'You') : (names[pid] || pid), row: null, pos: 0 };
+    try {
+      const r = await A().getLeaderboardRank({ path, diff, playerId: pid });
+      return r && r.row ? Object.assign(base, { row: r.row }) : base;
+    } catch (e) { return base; }
+  }));
+  if (req !== boardReq) return;
+  const scored = rows.filter((r) => r.row)
+    .sort((a, b) => b.row.total_score - a.row.total_score || b.row.total_stars - a.row.total_stars);
+  let prev = null, prevRank = 0;
+  scored.forEach((r, i) => {
+    const same = prev && prev.row.total_score === r.row.total_score && prev.row.total_stars === r.row.total_stars;
+    r.pos = same ? prevRank : i + 1;
+    prev = r; prevRank = r.pos;
+  });
+  const rest = rows.filter((r) => !r.row);
+  const line = (r) => '<div class="fbrow' + (r.isMe ? ' me' : '') + '"><span class="fbrk">' + (r.row ? '#' + r.pos : '—') + '</span><b>' + esc(r.name) + (r.isMe ? ' (you)' : '') + '</b>' + (r.row ? '<strong>' + r.row.total_score + '</strong>' : '<span class="none">Not on this board</span>') + '</div>';
+  const mine = rows.filter((r) => r.isMe)[0];
+  box.innerHTML = '<div class="fbhead"><b>Friends on your board</b><span>Same age group and difficulty</span></div>' +
+    scored.concat(rest).map(line).join('') +
+    (mine && !mine.row ? '<p class="fbnote">Your score joins this board after one mission while signed in.</p>' : '') +
+    (!scored.some((r) => !r.isMe) ? '<p class="fbnote">A friend joins this board after one mission at your age group and difficulty.</p>' : '');
+}
+
 function render(list) {
   $('#meActivity').textContent = (P().onlineMap()[P().me() && P().me().player_id] || {}).activity || 'Browsing friends';
   $('#frCount').textContent = list.length + (list.length === 1 ? ' friend' : ' friends');
   $('#frList').innerHTML = list.length ? list.map(card).join('') : '<p class="m">No friends yet. Add a Player ID above.</p>';
+  loadBoard(list).catch(() => {});
 }
 
 async function addFriend() {
@@ -113,6 +165,7 @@ $('#frList').addEventListener('click', (e) => {
     $('#mePid').textContent = me.player_id || 'No Player ID yet';
     $('#app').hidden = false;
     P().onChange(render);
+    render(P().friends());
   } catch (e) {
     g.hidden = false; g.textContent = 'Something went wrong: ' + (e && e.message ? e.message : e);
   }

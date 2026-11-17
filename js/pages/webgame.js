@@ -570,7 +570,16 @@ function finish(st,n){hideToast();try{localStorage.removeItem('tlp-draft')}catch
  else if(nextIsBonus){const nc=nextOf(S.ci);title='Chapter core complete';txt+=' You finished the core missions of '+CH[S.ci].t+'! Next chapter is unlocked, or try the optional bonus mission.';go='Bonus mission';nx=()=>play(S.ci,S.li+1)}
  if(last&&lv().boss&&S.ci===mainBoss()){const _n=nx;nx=()=>storyEnding(_n)}
  const showLearned=last||nextIsBonus||curBonus;
- $('#pan').innerHTML=`<span class="hand">${lv().boss?'Boss defeated':n+' blocks'} · +${S.lastPts||st*100} points</span><h2>${title}</h2><div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><p>${txt}</p>${whyHTML()}${showLearned?learnedHTML(S.ci):''}<div class="bar" style="justify-content:center"><button class="btn" id="nx">${go}</button><button class="btn ghost" id="rt">Play again</button></div>`;
+ // The payoff names what this run earned and what opens next, so a result
+ // never ends on a bare star count.
+ let nextName='';
+ if(last&&lv().boss){const nc=nextOf(S.ci);nextName=S.ci===mainBoss()?'The final scene':(nc!=null?CH[nc].t:'')}
+ else if(!last)nextName=CH[S.ci].L[S.li+1].t;
+ else {const nc=nextOf(S.ci);nextName=nc!=null?CH[nc].t:''}
+ const ds=dailyState(),dl=ds.ids.filter(id=>(ds.prog[id]||0)>=(ds.goals&&ds.goals[id]||Infinity)).length;
+ const payoff=`<div class="payoff"><span><small>This run</small><b>+${S.lastRunPts||st*100} points</b></span><span><small>Stars here</small><b>${st} / 3</b></span><span><small>Daily goals</small><b>${dl} of 3</b></span></div>`;
+ const nextLine=nextName?`<p class="nextup"><span>Next up</span> <b>${nextName}</b></p>`:'';
+ $('#pan').innerHTML=`<span class="hand">${lv().boss?'Boss defeated':n+' blocks'} · +${S.lastPts||st*100} points</span><h2>${title}</h2><div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div>${payoff}<p>${txt}</p>${whyHTML()}${showLearned?learnedHTML(S.ci):''}${nextLine}<div class="bar" style="justify-content:center"><button class="btn" id="nx">${go}</button><button class="btn ghost" id="rt">Play again</button></div>`;
  $('#pan').classList.toggle('big',true);storyOutcome(last);$('#res').hidden=false;$('#nx').onclick=()=>{stopSay();$('#res').hidden=true;nx()};$('#rt').onclick=()=>{stopSay();$('#res').hidden=true;reset()}
  if(showLearned){confetti();$('#lis').onclick=()=>sayLearned(S.ci);sayLearned(S.ci)}
  if(kidMode()){const p=document.createElement('p');p.className='kidpraise';p.textContent=kidPraise();const bar=$('#pan .bar');if(bar)bar.before(p);kidBurst()}}
@@ -945,6 +954,12 @@ function dailyState(){
  let d=null;try{d=JSON.parse(localStorage.getItem('tlp-daily')||'null')}catch(e){}
  if(!d||d.date!==t||d.path!==PATH||d.diff!==DIFF||!Array.isArray(d.ids)||d.ids.some(id=>!DAILY_BY_ID[id])){
   d={date:t,path:PATH,diff:DIFF,ids:dailyIds(),prog:{},claimed:[],bonusGiven:false};
+  try{localStorage.setItem('tlp-daily',JSON.stringify(d))}catch(e){}
+ }
+ // The goal numbers are stored with the day so other pages (the home card)
+ // can show progress without loading the whole mission list.
+ if(!d.goals||typeof d.goals!=='object'){
+  d.goals={};d.ids.forEach(id=>{d.goals[id]=DAILY_BY_ID[id].goal});
   try{localStorage.setItem('tlp-daily',JSON.stringify(d))}catch(e){}
  }
  return d;
@@ -1601,6 +1616,7 @@ let pgT=0;function proGlitch(){if(DIFF==='pro'&&!still&&!document.hidden&&!$('#g
 pgT=setTimeout(proGlitch,15000);
 bfxUpdate();
 
+let contHandled=false;
 async function initGameSession(){
   if(window.TLP_AUTH){
     try{
@@ -1653,12 +1669,24 @@ async function initGameSession(){
   if(window.__adminPreview){const ap=$('#adminPrev');if(ap)ap.hidden=false}
   // A Bonus page link opens the chosen Mastery mission directly. It only works
   // once the five story sections are finished, or inside the admin preview.
-  const want=Number(new URLSearchParams(location.search).get('bonus')||0);
+  const params=new URLSearchParams(location.search);
+  const want=Number(params.get('bonus')||0);
+  const wantContinue=params.get('continue')==='1';
   if(want&&SEC.some(s=>s.bonus&&(s.ch.includes(want)||s.boss===want))&&(window.__adminPreview||mainSecs().every(s=>done(s.boss)))){
     try{history.replaceState(null,'',location.pathname)}catch(e){}
     setTimeout(()=>{if(!$('#sc-body'))play(want,0)},80);
+  }else if(wantContinue&&!window.__adminPreview&&!contHandled){
+    contHandled=true;
+    try{history.replaceState(null,'',location.pathname)}catch(e){}
+    setTimeout(()=>{
+      if($('#sc-body'))return;
+      const c=nextTarget();
+      if(c<0)return;
+      if(!Object.keys(S.prog).length&&window.TLP_STORY&&!TLP_STORY.seen('intro')){try{storyOpening()}catch(e){}return}
+      play(c,nextLevel(c));
+    },80);
   }
-  if(!Object.keys(S.prog).length&&!window.__adminPreview)setTimeout(()=>{try{if(!$('#cine'))storyOpening()}catch(e){}},500);
+  if(!Object.keys(S.prog).length&&!window.__adminPreview&&!wantContinue&&!contHandled)setTimeout(()=>{try{if(!$('#cine'))storyOpening()}catch(e){}},500);
 }
 
 window.addEventListener('DOMContentLoaded', initGameSession);

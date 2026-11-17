@@ -26,7 +26,7 @@ const PATHS = [['g16', 'Grades 1 to 6'], ['g710', 'Grades 7 to 10'], ['g1112', '
 const DIFFS = [['beg', 'Beginner'], ['int', 'Intermediate'], ['pro', 'Professional']];
 const PER = 15;
 let path = 'g16', diff = 'int', indPage = 0, week = '', coPage = 0, coLoaded = false;
-let indSearch = '', coSearch = '', today = false, indReq = 0, coReq = 0;
+let indSearch = '', coSearch = '', today = false, weekOnly = false, indReq = 0, coReq = 0;
 
 function fmtTime(ms) { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function fmtDate(d) { try { return new Date(d).toLocaleDateString(); } catch (e) { return ''; } }
@@ -40,7 +40,7 @@ function medal(n) { return n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' :
 function buildTabs() {
   $('#pathTabs').innerHTML = PATHS.map(([id, n]) => '<button type="button" role="tab" data-id="' + id + '" aria-selected="' + (id === path) + '">' + n + '</button>').join('');
   $('#diffChips').innerHTML = DIFFS.map(([id, n]) => '<button type="button" data-id="' + id + '" aria-pressed="' + (id === diff) + '">' + n + '</button>').join('');
-  $('#pathTabs').querySelectorAll('button').forEach((b) => b.onclick = () => { path = b.dataset.id; indPage = 0; today = false; $('#todayChip').setAttribute('aria-pressed', 'false'); buildTabs(); loadInd(); });
+  $('#pathTabs').querySelectorAll('button').forEach((b) => b.onclick = () => { path = b.dataset.id; indPage = 0; today = false; weekOnly = false; $('#todayChip').setAttribute('aria-pressed', 'false'); $('#weekChip').setAttribute('aria-pressed', 'false'); buildTabs(); loadInd(); });
   $('#diffChips').querySelectorAll('button').forEach((b) => b.onclick = () => { diff = b.dataset.id; indPage = 0; buildTabs(); loadInd(); });
 }
 
@@ -96,7 +96,7 @@ function renderInd(rows) {
   const body = $('#indBody');
   if (!rows.length) {
     body.className = 'msg3';
-    body.textContent = indSearch ? 'No player matches "' + indSearch + '" in this group.' : today ? 'Nobody has played this group today yet.' : indPage ? 'No more entries.' : 'No scores yet in this group. Finish a mission to be the first.';
+    body.textContent = indSearch ? 'No player matches "' + indSearch + '" in this group.' : today ? 'Nobody has played this group today yet.' : weekOnly ? 'Nobody has played this group this week yet.' : indPage ? 'No more entries.' : 'No scores yet in this group. Finish a mission to be the first.';
     return;
   }
   body.className = 'lb-' + path;
@@ -104,7 +104,7 @@ function renderInd(rows) {
   if (path === 'g16') { body.innerHTML = kidCards(list); return; }
   if (path === 'adult') { body.innerHTML = adultList(list); return; }
   if (path === 'g1112') { body.innerHTML = seniorGrid(list); return; }
-  const showPod = indPage === 0 && !indSearch && !today && list.length > 1;
+  const showPod = indPage === 0 && !indSearch && !today && !weekOnly && list.length > 1;
   body.innerHTML = (showPod ? podium(list.slice(0, 3)) : '') + teenTable(showPod ? list.slice(3) : list);
 }
 
@@ -112,9 +112,9 @@ async function loadInd() {
   const body = $('#indBody'); body.className = 'msg3'; body.textContent = 'Loading...';
   const req = ++indReq;
   const note = $('#indNote');
-  if (note) { note.hidden = !(indSearch || today); note.textContent = indSearch ? 'Search results for "' + indSearch + '".' : 'Only players who finished something today are listed.'; }
+  if (note) { note.hidden = !(indSearch || today || weekOnly); note.textContent = indSearch ? 'Search results for "' + indSearch + '".' : today ? 'Only players who finished something today are listed.' : 'Only players who played this week are listed.'; }
   try {
-    const { rows, hasMore } = await A().getPublicLeaderboardPage({ path, diff, offset: indPage * PER, limit: PER, search: indSearch, today: today });
+    const { rows, hasMore } = await A().getPublicLeaderboardPage({ path, diff, offset: indPage * PER, limit: PER, search: indSearch, today: today, week: weekOnly });
     if (req !== indReq) return;
     // A parent or teacher usually knows the name, not the age group and
     // difficulty, so an empty scoped search also checks every other group.
@@ -137,7 +137,7 @@ async function searchEveryGroup(term) {
   const jobs = [];
   PATHS.forEach(([p]) => DIFFS.forEach(([d]) => {
     if (p === path && d === diff) return;
-    jobs.push(A().getPublicLeaderboardPage({ path: p, diff: d, offset: 0, limit: 5, search: term, today: today })
+    jobs.push(A().getPublicLeaderboardPage({ path: p, diff: d, offset: 0, limit: 5, search: term, today: today, week: weekOnly })
       .then((r) => r.rows.map((row) => Object.assign({ path: p, diff: d }, row)))
       .catch(() => []));
   }));
@@ -186,7 +186,14 @@ $('#indFind').onclick = doIndSearch;
 $('#indSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); doIndSearch(); } });
 $('#indClear').onclick = () => { $('#indSearch').value = ''; indSearch = ''; indPage = 0; $('#indClear').hidden = true; loadInd(); };
 $('#todayChip').onclick = () => {
-  today = !today; indPage = 0;
+  today = !today; if (today) weekOnly = false; indPage = 0;
+  $('#todayChip').setAttribute('aria-pressed', String(today));
+  $('#weekChip').setAttribute('aria-pressed', String(weekOnly));
+  loadInd();
+};
+$('#weekChip').onclick = () => {
+  weekOnly = !weekOnly; if (weekOnly) today = false; indPage = 0;
+  $('#weekChip').setAttribute('aria-pressed', String(weekOnly));
   $('#todayChip').setAttribute('aria-pressed', String(today));
   loadInd();
 };
@@ -258,8 +265,9 @@ $('#indBody').addEventListener('click', (e) => {
   const b = e.target.closest('.srrow');
   if (!b) return;
   path = b.dataset.path; diff = b.dataset.diff; indPage = 0;
-  indSearch = ''; today = false;
-  $('#indSearch').value = ''; $('#indClear').hidden = true; $('#todayChip').setAttribute('aria-pressed', 'false');
+  indSearch = ''; today = false; weekOnly = false;
+  $('#indSearch').value = ''; $('#indClear').hidden = true;
+  $('#todayChip').setAttribute('aria-pressed', 'false'); $('#weekChip').setAttribute('aria-pressed', 'false');
   buildTabs(); loadInd();
 });
 

@@ -20,6 +20,19 @@
 .selfact b{font:700 15px var(--sans);color:var(--a)}
 .frhead{display:flex;gap:10px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
 .frgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:12px}
+.frboard{margin-top:12px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.frboard[hidden]{display:none}
+.fbhead{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;padding:10px 13px;background:rgba(255,255,255,.03)}
+.fbhead b{font:700 13px var(--sans)}
+.fbhead span{font-size:11px;color:var(--mut)}
+.fbrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 13px;border-top:1px solid var(--line)}
+.fbrow b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.fbrow strong{font:800 15px var(--serif)}
+.fbrk{font:700 11px var(--sans);letter-spacing:.08em;color:var(--mut)}
+.fbrow.me{background:color-mix(in srgb,var(--a) 8%,transparent)}
+.fbrow.me b,.fbrow.me strong{color:var(--a)}
+.fbrow .none{font-size:12px;color:var(--mut);text-align:right}
+.fbnote{padding:9px 13px;border-top:1px solid var(--line);margin:0;font-size:12px;line-height:1.45;color:var(--mut)}
 .fcard{position:relative;display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:13px;background:rgba(255,255,255,.02)}
 .fcard.on{border-color:color-mix(in srgb,var(--a) 55%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--a) 20%,transparent),0 10px 30px -20px var(--a)}
 .fava{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font:800 18px var(--serif);background:color-mix(in srgb,var(--a) 16%,transparent);color:var(--a);border:1px solid color-mix(in srgb,var(--a) 35%,transparent)}

@@ -52,6 +52,104 @@
   margin: 0 0 14px;
 }
 
+/* -----------------------------------------------------------------------------
+   4a. TODAY CARD
+   A returning player should see one clear next step before anything else. The
+   card reads the streak and today's daily goals from the same per-learner keys
+   the game uses, so it never invents progress of its own.
+   -------------------------------------------------------------------------- */
+#home .todaycard {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 17px 18px 16px;
+  border: 1px solid color-mix(in srgb, var(--a) 42%, var(--line));
+  border-radius: 18px;
+  background:
+    linear-gradient(155deg, color-mix(in srgb, var(--a) 11%, transparent), transparent 72%),
+    rgba(255, 255, 255, .025);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+
+#home .todaycard[hidden] {
+  display: none;
+}
+
+#home .tc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#home .tc-head > span {
+  font: 700 11px var(--sans);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--a);
+}
+
+#home .tc-head small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--mut);
+}
+
+#home .tc-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+#home .tc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#home .tc-stat b {
+  font: 800 clamp(24px, 2.6vw, 32px)/1 var(--serif);
+}
+
+#home .tc-stat span {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--mut);
+}
+
+#home .tc-go {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--a);
+  color: var(--ink);
+  font: 700 14px var(--sans);
+  text-decoration: none;
+}
+
+#home .tc-go i {
+  font-style: normal;
+  transition: transform .25s;
+}
+
+#home .tc-go:hover i,
+#home .tc-go:focus-visible i {
+  transform: translateX(4px);
+}
+
+#home .tc-go:focus-visible {
+  outline: 2px solid var(--b);
+  outline-offset: 3px;
+}
+
 #home .home-cta .playcard {
   flex-direction: column;
   align-items: stretch;
