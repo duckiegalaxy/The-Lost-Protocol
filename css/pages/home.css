@@ -613,3 +613,29 @@
     min-width: 46%;
   }
 }
+
+/* -----------------------------------------------------------------------------
+   INSTALL TIP (iPhones)
+   Safari has no install prompt, so the install button explains the manual
+   Share > Add to Home Screen step. The tip floats above the bottom edge,
+   clear of the share bar and the home indicator.
+   -------------------------------------------------------------------------- */
+#installTip {
+  position: fixed;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 60;
+  margin: 0;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: color-mix(in srgb, var(--bg) 94%, #000);
+  color: var(--fg);
+  font: 600 14px var(--sans);
+  text-align: center;
+  box-shadow: 0 10px 30px #0008;
+  cursor: pointer;
+}

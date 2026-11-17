@@ -7,7 +7,7 @@
    tutorial). A new name makes the browser download the changed files and
    delete the old cache; forget to bump it and visitors keep the previous
    copies. */
-const CACHE = 'tlp-2026-11-17-12';
+const CACHE = 'tlp-2026-11-17-14';
 const CDN = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//;
 const SHELL = [
   'index.html', 'webgame.html', 'bonus.html', 'auth.html', 'parent.html',

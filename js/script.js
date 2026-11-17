@@ -7,39 +7,13 @@
    
    If you add markup to index.html, add its behaviour here rather than inline.
    Areas in this file:
-     - page constants and mood state
+     - mood state and the install button
      - intro sequence and title effects
      - the rain canvas and reduced-effects handling
-     - the hash router (home / about) and view transitions
+     - the hash router (home / about me)
      - the home tally
      - the feedback modal and its offline queue
    ============================================================================= */
-const LINKS = {
-    web: "webgame.html"
-};
-
-const ABOUT = [
-    "The Lost Protocol is an interactive educational game that teaches programming through game-based learning. Abstract ideas like algorithms, loops and logic become puzzles and missions, so you learn by solving them instead of memorising syntax.",
-    "Challenges and rewards keep you moving, and immediate visual feedback shows you the outcome of every decision as you play. This is the web version, the easiest way to play it."
-];
-
-const PAGES = {
-    web: {
-        n: "01",
-        name: "Play it right in your browser",
-        tag: "Playable",
-        cls: "live",
-        lead: "No install, no waiting. Open The Lost Protocol in your browser and start solving.",
-        bits: [
-            ["Runs in your browser", "Open it on any modern browser and play."],
-            ["Five sections, twenty chapters", "From variables and loops to functions, recursion, binary, debugging and optimisation."],
-            ["Guardians to beat", "Five story guardians that remember your code, plus one optional bonus guardian."]
-        ],
-        btn: "Play now",
-        req: "Works in any modern browser"
-    }
-};
-
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const root = document.documentElement;
@@ -259,19 +233,6 @@ function split(el) {
     walk(el);
 }
 
-function scramble(el) {
-    const t = el.dataset.t || (el.dataset.t = el.textContent);
-    let f = 0;
-    clearInterval(el._i);
-    el._i = setInterval(() => {
-        el.textContent = [...t].map((c, i) => c === ' ' || i < f / 2 ? c : GL[Math.random() * GL.length | 0]).join('');
-        if (++f > t.length * 2) {
-            clearInterval(el._i);
-            el.textContent = t;
-        }
-    }, 28);
-}
-
 const rio = new IntersectionObserver(es => es.forEach(e => {
     if (e.isIntersecting) {
         e.target.classList.add('in');
@@ -281,7 +242,7 @@ const rio = new IntersectionObserver(es => es.forEach(e => {
 }), { threshold: .15 });
 
 function reveals(c) {
-    $$('.about>div,.bit,.dl>*,.facts,.label', c).forEach((el, i) => {
+    $$('.facts,.label', c).forEach((el, i) => {
         el.classList.add('rv');
         el.style.transitionDelay = (i % 4) * .1 + 's';
         rio.observe(el);
@@ -290,12 +251,6 @@ function reveals(c) {
 
 split($('.hero h1'));
 reveals($('#home'));
-
-$$('.row').forEach(r => r.addEventListener('mouseenter', () => {
-    if (!still) {
-        scramble($('h3', r));
-    }
-}));
 
 const ttl = $('#ttl');
 
@@ -353,55 +308,54 @@ $('#fx').onclick = () => {
 
 fxSet();
 
-function render(k) {
-    const p = PAGES[k];
-    $('#page').innerHTML = `<div class="wrap">
-   <section class="phero"><span class="ghost">${p.n}</span>
-    <a class="back" href="#/">← back home</a>
-    <span class="pill ${p.cls} stamp">${p.tag}</span>
-    <h1>${p.name}</h1><p class="lead">${p.lead}</p>
-    <button class="down" id="down">scroll down<i>↓</i></button>
-   </section>
-   <section class="about"><div><h2>What is <em>The Lost Protocol?</em></h2>${ABOUT.map(t => `<p>${t}</p>`).join('')}</div>
-    <div class="bits">${p.bits.map(b => `<div class="bit"><h4>${b[0]}</h4><p>${b[1]}</p></div>`).join('')}</div></section>
-   <section class="dl" id="dl"><h2>Ready when you are.</h2><p>${k === 'web' ? 'One click and you are in.' : 'Grab the build and see how far you get.'}</p>
-    <button class="btn big" id="go">${p.btn}</button><small>${p.req}</small></section></div>`;
-    split($('.phero h1'));
-    reveals($('#page'));
-    $('#down').onclick = () => $('#dl').scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'center' });
-    $('#go').onclick = e => effect(e.currentTarget, p.btn, k);
+/* "install app": Chromium browsers fire beforeinstallprompt once the site is
+   installable. The event is kept so the header button can offer it, and the
+   button never appears when the game already runs as an installed app.
+   iPhone and iPad have no install prompt, so there the button explains the
+   manual Share > Add to Home Screen step instead. iPadOS reports a desktop
+   user agent, so touch support is part of that check. */
+const installBtn = $('#install');
+const installTip = $('#installTip');
+const alreadyInstalled = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const iosDevice = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let installEvent = null;
+let installTipTimer = 0;
+
+function showInstallTip() {
+    installTip.hidden = false;
+    clearTimeout(installTipTimer);
+    installTipTimer = setTimeout(() => {
+        installTip.hidden = true;
+    }, 6000);
 }
 
-function effect(b, label, k) {
-    if (b.classList.contains('busy')) {
-        return;
-    }
-    b.classList.add('busy');
-    b.textContent = k === 'web' ? 'Warming things up…' : 'Getting things ready…';
-    setTimeout(() => {
-        b.textContent = 'Coming soon ✓';
-        if (!still) {
-            const r = b.getBoundingClientRect();
-            const cx = r.left + r.width / 2;
-            const cy = r.top + r.height / 2;
-            for (let i = 0; i < 34; i++) {
-                const s = document.createElement('span');
-                s.className = 'spark';
-                s.style.cssText = `left:${cx}px;top:${cy}px;background:${i % 2 ? 'var(--a)' : 'var(--b)'}`;
-                document.body.appendChild(s);
-                const a = Math.random() * 6.28;
-                const d = 90 + Math.random() * 190;
-                s.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d + 60}px) rotate(${Math.random() * 540}deg)`, opacity: 0 }], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.1,.7,.3,1)' }).onfinish = () => s.remove();
+if (installBtn && !alreadyInstalled) {
+    if (iosDevice) {
+        installBtn.hidden = false;
+        installBtn.addEventListener('click', showInstallTip);
+        installTip.addEventListener('click', () => {
+            installTip.hidden = true;
+        });
+    } else {
+        addEventListener('beforeinstallprompt', e => {
+            e.preventDefault();
+            installEvent = e;
+            installBtn.hidden = false;
+        });
+        installBtn.addEventListener('click', async () => {
+            if (!installEvent) {
+                return;
             }
-        }
-        if (LINKS[k]) {
-            window.open(LINKS[k], '_blank', 'noopener');
-        }
-        setTimeout(() => {
-            b.classList.remove('busy');
-            b.textContent = label;
-        }, 2200);
-    }, 1350);
+            installEvent.prompt();
+            await installEvent.userChoice;
+            installEvent = null;
+            installBtn.hidden = true;
+        });
+        addEventListener('appinstalled', () => {
+            installEvent = null;
+            installBtn.hidden = true;
+        });
+    }
 }
 const ME={photo:"assets/Screenshot_20261013_112542.jpg",name:"Joumana Amir Eldeeb",lines:[
 "I'm Joumana, a final-year student at the Faculty of Computer Studies. The Lost Protocol is my final-year project, supervised by Dr. Ramadan Babers.",
@@ -426,20 +380,17 @@ r.readAsDataURL(f)}}
    host. Unknown hashes fall back to the home view.
    -------------------------------------------------------------------------- */
 function route() {
-    const k = location.hash.replace('#/', '');
-    const pg = PAGES[k];
-   const ab=k==='about';
-$('#home').hidden=!!pg||ab;$('#page').hidden=!pg;$('#aboutme').hidden=!ab;
-    document.title=ab?'The Lost Protocol · About me':pg? 'The Lost Protocol · ' + ({ web: 'Play it' })[k] : 'The Lost Protocol';
-    if (pg) {
-        render(k);
-        $('#page').classList.remove('view');
-        void $('#page').offsetWidth;
-        $('#page').classList.add('view');
+    const ab = location.hash.replace('#/', '') === 'about';
+    $('#home').hidden = ab;
+    $('#aboutme').hidden = !ab;
+    document.title = ab ? 'The Lost Protocol · About me' : 'The Lost Protocol';
+    if (ab) {
+        meView();
     }
-    if(ab)meView();
-    const abLink=$('#navAbout');
-    if(abLink)abLink.classList.toggle('on',ab);
+    const abLink = $('#navAbout');
+    if (abLink) {
+        abLink.classList.toggle('on', ab);
+    }
     scrollTo({ top: 0, behavior: 'auto' });
 }
 
