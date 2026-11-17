@@ -3,11 +3,11 @@
    once still works without a connection. Sign-in, scores and co-op always go
    to the network; nothing here touches game results. Bump CACHE to retire an
    old copy of the site. */
-/* Cache version for this release (one-screen board, adult leaderboard,
-   story hook and fail feedback). A new name makes the browser download
-   the changed files and delete the old cache; forget to bump it and visitors
-   keep the previous copies. */
-const CACHE = 'tlp-2026-11-17-8';
+/* Cache version for this release (co-op rebuild plus the five-step bot
+   tutorial). A new name makes the browser download the changed files and
+   delete the old cache; forget to bump it and visitors keep the previous
+   copies. */
+const CACHE = 'tlp-2026-11-17-12';
 const CDN = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//;
 const SHELL = [
   'index.html', 'webgame.html', 'bonus.html', 'auth.html', 'parent.html',

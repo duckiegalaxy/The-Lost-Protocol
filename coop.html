@@ -30,39 +30,41 @@
 <main>
 <div class="wrap co">
   <h1>Co-op mission</h1>
-  <p class="lead">Two players work as one team on a large repair mission. Each of you edits your own lane, you both see each other's work live, and the team result goes on the co-op leaderboard with both Player IDs. Every team gets the same mission each week, so scores can be compared fairly.</p>
-  <div id="gate" class="pn" hidden></div>
+  <p class="lead">Two players, one relay grid. Each of you writes half of the program, you see each other's steps as they happen, and your team's result goes on the co-op leaderboard.</p>
+
+  <!-- landing and sign-in gate: filled in by js/pages/coop.js -->
+  <div id="gate" hidden></div>
+
+  <!-- practice card: shared by the landing and the lobby -->
+  <div class="pn" id="pracCard" hidden>
+    <div class="row3 between"><h2>Practice on your own</h2><span class="pill2">No account needed</span></div>
+    <p class="m">A practice bot covers the other side, so you can build and test the whole grid alone. Practice never records a score.</p>
+    <div class="prac" id="pracList"></div>
+    <p class="msg4" id="pracMsg" role="status" aria-live="polite"></p>
+  </div>
 
   <!-- lobby -->
   <div id="lobby" hidden>
-    <p class="m" id="adminNote" hidden>Owner preview: rooms, invitations and team scores are off on this account. Practice levels work normally and record nothing.</p>
-    <div class="pn" id="teamCard"><h2>Start or join a team</h2>
-      <p class="m">Your Player ID: <b id="myPid"></b>. Share it with your teammate so they can invite you, or invite them using theirs.</p>
-      <div class="row3"><button class="btn" id="mkRoom" type="button">Create a room</button>
-        <input type="text" id="joinCode" maxlength="6" placeholder="Room code" aria-label="Room code" autocomplete="off"><button class="btn ghost" id="joinBtn" type="button">Join with code</button></div>
-      <p class="msg4" id="lobbyMsg" role="status" aria-live="polite"></div>
-    <div class="pn"><h2>Practice levels</h2>
-      <p class="m">Learn one lane at a time before you team up. A practice bot covers the other lane, so you can test the whole grid on your own. Practice never records a score.</p>
-      <div class="prac" id="pracList">
-        <div class="pracrow"><div><b>Relay Basics</b><small>Small targets and a simple Core.</small></div><button class="btn ghost sm" type="button" data-prac="easy" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="easy" data-side="guest">Guest lane</button></div>
-        <div class="pracrow"><div><b>Split Signal</b><small>More stations to balance.</small></div><button class="btn ghost sm" type="button" data-prac="medium" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="medium" data-side="guest">Guest lane</button></div>
-        <div class="pracrow"><div><b>Relay Overload</b><small>Bigger amounts and a heavier Core.</small></div><button class="btn ghost sm" type="button" data-prac="hard" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="hard" data-side="guest">Guest lane</button></div>
-        <div class="pracrow"><div><b>Mirror Relay</b><small>Both lanes carry the same targets, so agree on one plan.</small></div><button class="btn ghost sm" type="button" data-prac="mirror" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="mirror" data-side="guest">Guest lane</button></div>
-        <div class="pracrow"><div><b>Signal Drift</b><small>Stations arrive partly charged. Work out the gap to each target.</small></div><button class="btn ghost sm" type="button" data-prac="drift" data-side="host">Host lane</button><button class="btn ghost sm" type="button" data-prac="drift" data-side="guest">Guest lane</button></div>
+    <div class="pn" id="teamCard"><h2>Play with a teammate</h2>
+      <p class="m">Your Player ID is <b id="myPid"></b>. Your teammate can use it to invite you once you are in a room.</p>
+      <div class="duo">
+        <div class="duoCard"><b>Start a team</b><p class="m">Open a room and share the short code.</p><button class="btn" id="mkRoom" type="button">Create a room</button></div>
+        <div class="duoCard"><b>Join a team</b><p class="m">Type the code your teammate sent you.</p><div class="row3"><input type="text" id="joinCode" maxlength="6" placeholder="Room code" aria-label="Room code" autocomplete="off"><button class="btn ghost" id="joinBtn" type="button">Join</button></div></div>
       </div>
-      <p class="msg4" id="pracMsg" role="status" aria-live="polite"></p></div>
-    <div class="pn" id="invitesCard"><h2>Invitations for you</h2><div id="invites" class="m">None right now.</div></div>
+      <p class="msg4" id="lobbyMsg" role="status" aria-live="polite"></p></div>
+    <details class="pn invites" id="invitesCard"><summary><span>Invitations for you</span><span class="pill2" id="invCount" hidden></span></summary><div id="invites" class="m">None right now.</div></details>
   </div>
 
   <!-- waiting room -->
   <div id="waiting" hidden>
-    <div class="pn"><h2>Room</h2>
-      <p class="m">Room code (share it, or invite by Player ID):</p><div class="row3"><span class="code" id="roomCode"></span><button class="btn ghost sm" id="copyCode" type="button">Copy code</button></div>
+    <div class="pn"><h2>Waiting room</h2>
+      <p class="m">Share this code. Your teammate opens Co-op, chooses Join a team and types it in.</p>
+      <div class="row3"><span class="code" id="roomCode"></span><button class="btn ghost sm" id="copyCode" type="button">Copy code</button></div>
       <p class="m" id="weekInfo"></p>
-      <div class="row3" id="invRow"><input type="text" id="invPid" maxlength="12" placeholder="Teammate Player ID, TLP-12345678" aria-label="Teammate Player ID" autocomplete="off"><button class="btn ghost" id="invBtn" type="button">Send invite</button></div>
+      <div class="row3" id="invRow"><input type="text" id="invPid" maxlength="12" placeholder="Teammate Player ID, TLP-12345678" aria-label="Teammate Player ID" autocomplete="off"><button class="btn ghost" id="invBtn" type="button">Invite by Player ID</button></div>
       <div class="row3" id="whoRow"></div>
       <div class="row3"><button class="btn" id="readyBtn" type="button">I am ready</button><button class="btn ghost" id="leaveBtn" type="button">Leave room</button></div>
-      <p class="m">The mission starts when both players are ready. The timer is kept by the server.</p>
+      <p class="m">The mission starts as soon as both of you are ready. You can be on two different devices.</p>
       <p class="msg4" id="waitMsg" role="status" aria-live="polite"></p></div>
   </div>
 
@@ -74,32 +76,41 @@
         <button class="pipbtn" id="pipMin" type="button" aria-label="Minimize teammate preview">–</button>
       </div>
       <div class="pipbody" id="pipBody">
-        <p class="m" id="pipPresence">Live preview of your teammate's lane.</p>
+        <p class="m" id="pipPresence">Live preview of your teammate's side.</p>
         <ol class="prog" id="pipProg"></ol>
         <p class="m" id="pipTest"></p>
       </div>
     </div>
-    <div class="pn"><div class="row3 between"><div><h2 id="mTitle">Restore the Relay Grid</h2><p class="m" id="mWho"></p></div><div class="timer" id="timer" aria-label="Elapsed time">0:00</div></div>
-      <p class="m" id="mRules"></p></div>
-    <div class="cols">
-      <div class="lane mine"><h3 id="myLaneT">Your lane</h3><ol class="prog" id="myProg"></ol><p class="msg4" id="bErr" role="alert"></p>
-        <div class="row3 end">
-          <div class="fld3">Step<select id="bType"></select></div>
-          <div class="fld3" id="fSt">Station<select id="bSt"></select></div>
-          <div class="fld3" id="fK">Amount<select id="bK"></select></div>
-          <div class="fld3" id="fN" hidden>Times<select id="bN"></select></div>
-          <div class="fld3" id="fCmp" hidden>If station is<select id="bCmp"><option value="lt">less than</option><option value="gt">greater than</option><option value="eq">equal to</option></select></div>
-          <div class="fld3" id="fV" hidden>Value<input type="text" id="bV" size="3" value="10" aria-label="Compare value"></div>
-        </div>
-        <div id="innerBox" hidden class="row3 inner-line">
-          <div class="fld3">Inside step<select id="iKind"></select></div><div class="fld3" id="iStF">Station<select id="iSt"></select></div><div class="fld3" id="iKF">Amount<select id="iK"></select></div>
-          <button class="btn ghost sm" id="iAdd" type="button">Add inside</button><span id="iList" class="m"></span></div>
-        <div class="row3"><button class="btn" id="bAdd" type="button">Add step</button></div></div>
-      <div class="lane"><h3 id="pLaneT">Teammate's lane</h3><ol class="prog" id="pProg"></ol><p class="m" id="pPresence"></p></div>
+
+    <div class="pn">
+      <div class="row3 between"><div><h2 id="mTitle">Restore the Relay Grid</h2><p class="m" id="mWho"></p></div><div class="timer" id="timer" aria-label="Elapsed time">0:00</div></div>
+      <p class="m" id="mRules"></p>
+      <div class="cguide" id="cguide" hidden aria-live="polite">
+        <div class="cgmark" aria-hidden="true">?</div>
+        <div class="cgtext"><span class="cgstep" id="cgStep">1 of 5</span><b id="cgTitle"></b><p id="cgText"></p></div>
+        <div class="cgacts"><button class="btn ghost sm" id="cgNext" type="button" hidden>Finish tutorial</button><button class="btn ghost sm" id="cgSkip" type="button">Skip tutorial</button></div>
+      </div>
+      <div class="relayhead"><b>Relay grid</b><span class="shared" id="sharedChip"></span><span class="pill2" id="relayCount">0 of 11 match</span></div>
+      <div class="relay" id="relay" aria-live="polite"></div>
+      <p class="m relaycap" id="relayCap"></p>
     </div>
-    <div class="pn mt"><h2>Check your work</h2>
-      <div class="row3 actbar"><button class="btn ghost" id="testBtn" type="button">Test run</button><button class="btn" id="subBtn" type="button">Submit as a team</button><button class="btn ghost" id="mLeave" type="button">Leave mission</button></div>
-      <div class="scroll-x"><table class="st" id="stTable"></table></div><p class="m" id="preview"></p>
+
+    <div class="cols">
+      <div class="lane mine"><h3 id="myLaneT">Your side</h3><p class="m" id="myLaneHint"></p>
+        <div class="blocks" id="myBlocks"></div>
+        <p class="msg4" id="bErr" role="alert"></p>
+        <div class="palette" id="pal"></div>
+        <p class="m" id="palHint"></p></div>
+      <div class="lane"><h3 id="pLaneT">Teammate's side</h3><p class="m" id="pLaneHint"></p>
+        <div class="blocks ro" id="pBlocks"></div>
+        <p class="m" id="pPresence"></p></div>
+    </div>
+
+    <div class="pn mt"><h2>Test and submit</h2>
+      <div class="row3 actbar"><button class="btn ghost" id="testBtn" type="button">Test run</button><button class="btn" id="subBtn" type="button" disabled>Submit as a team</button><button class="btn ghost" id="mLeave" type="button">Leave mission</button></div>
+      <p class="m" id="subHint"></p>
+      <p class="m" id="preview"></p>
+      <details class="scroll-x" id="stWrap"><summary>Station table</summary><table class="st" id="stTable"></table></details>
       <p class="msg4" id="subMsg" role="status" aria-live="polite"></p>
       <div class="chat"><p class="m">Quick messages for your teammate:</p><div id="quick"></div><div id="log" aria-live="polite"></div></div></div>
   </div>
