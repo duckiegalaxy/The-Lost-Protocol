@@ -1,36 +1,23 @@
-/* =============================================================================
-   PRIVACY NOTICE  (privacy.html)
-
-   A single reading column built from the same card used on the Account page.
-   The only page-local rules are the width, the spacing between sections and
-   the long-form text styling; colours, fonts, header, footer and the card
-   itself come from css/style.css and css/pages/auth.css.
-   ============================================================================= */
-
-/* --- Page frame ----------------------------------------------------------- */
-
-/* Wider than the sign-in column so a long notice does not become a tall
-   ribbon of short lines, but still narrow enough to read comfortably. */
 .priv {
   max-width: 760px;
 }
 
-/* A little more padding than the Account card: this page is read, not filled
-   in, so the text gets room to breathe. */
+
+
 .priv .card2 {
   padding: 34px 34px 30px;
 }
 
-/* --- Text ----------------------------------------------------------------- */
 
-/* The date sits under the lead and marks which version of the notice applies. */
+
+
 .priv .updated {
   margin: 0 0 26px;
   font-size: 13px;
   color: var(--mut);
 }
 
-/* Each question is a heading, so the page can be skimmed and linked to. */
+
 .priv h2 {
   margin: 32px 0 10px;
   font: 800 21px var(--serif);
@@ -60,8 +47,8 @@
   margin-top: 6px;
 }
 
-/* Links inside the notice use the accent colour rather than the browser's
-   default blue, which would disappear against the dark card. */
+
+
 .priv a {
   color: var(--a);
   text-underline-offset: 3px;
@@ -72,14 +59,14 @@
   text-decoration-thickness: 2px;
 }
 
-/* The way back to the account page is separated from the last section. */
+
 .priv .back {
   margin: 34px 0 0;
   padding-top: 18px;
   border-top: 1px solid var(--line);
 }
 
-/* --- Responsive ----------------------------------------------------------- */
+
 
 @media (max-width: 560px) {
   .priv .card2 {

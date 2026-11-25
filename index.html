@@ -16,11 +16,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<script src="js/theme.js"></script>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/pages/home.css">
+<script src="js/theme.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/wheel.css?v=8">
+<link rel="stylesheet" href="css/pages/home.css?v=14">
+<link rel="stylesheet" href="css/premium.css?v=10">
 </head>
-<body data-music="home" data-activity="On the home page">
+<body class="page-home" data-music="home" data-activity="On the home page">
 <canvas id="rain"></canvas>
 <div id="scan"></div>
 <div class="aurora"></div><div id="prog"></div>
@@ -40,10 +42,10 @@
 </div>
 
 <header><nav><div class="wrap">
-  <a class="logo glitch" data-text="The Lost Protocol" href="#/">The Lost Protocol</a>
-  <a class="navlink" href="webgame.html"><span class="sp" aria-hidden="true"></span>Play game</a>
+  <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
+  <a class="navlink" href="webgame.html"><span class="sp" aria-hidden="true"></span>Play Game</a>
   <a class="navlink" href="leaderboard.html"><span class="sp" aria-hidden="true"></span>Leaderboards</a>
-  <a class="navlink" href="coop.html"><span class="sp" aria-hidden="true"></span>Co-op</a>
+  <span id="avSlot" class="av-slot"></span>
   <a class="navlink" href="auth.html" id="navAccount"><span class="sp" aria-hidden="true"></span>Account</a>
   <div class="tools" id="themes"><button id="install" class="fxb" type="button" hidden>install app</button><button id="volBtn" class="fxb" type="button">volume</button><button id="fx" class="fxb" aria-pressed="true">effects: on</button><small>mood:</small></div>
 </div></nav></header>
@@ -57,20 +59,23 @@
       <p class="lead">An interactive educational game that teaches programming through puzzles and missions. Challenges and rewards keep you going, and instant visual feedback shows what every decision does. Open it in your browser and start playing.</p>
       <div class="facts"><span><b>5</b>sections</span><span><b>20</b>chapters</span><span><b>5</b>guardians</span><span><b>0</b>coding experience needed</span></div>
       <p class="tally" id="tally"></p>
+      <p class="home-who" id="homeWho"></p>
     </div>
     <div class="home-cta">
+      <div id="homeLife"></div>
       <section class="todaycard" id="today" aria-labelledby="todayTitle" hidden>
         <div class="tc-head"><span id="todayTitle">Today</span><small id="tcWho"></small></div>
         <div class="tc-stats">
           <div class="tc-stat"><b id="tcStreak">0</b><span id="tcStreakNote">day streak</span></div>
           <div class="tc-stat"><b id="tcDaily">3</b><span id="tcDailyNote">daily goals today</span></div>
         </div>
-        <a class="tc-go" id="tcGo" href="webgame.html?continue=1"><span id="tcGoLabel">Start the first mission</span><i aria-hidden="true">→</i></a>
+        <a class="tc-go" id="tcGo" href="webgame.html?continue=1"><span id="tcGoLabel">Start the first mission</span><i aria-hidden="true">-></i></a>
       </section>
+      <div id="home-wotd"></div>
       <div class="label">Ready to play?</div>
       <a class="playcard" href="webgame.html">
         <div class="pc-main"><span class="pill live">Playable now</span><h3 class="glitch" data-text="Play in your browser">Play in your browser</h3><p>Five sections, twenty chapters and five guardians to defeat, plus optional Bonus sections: four Mastery missions and a sixth guardian. Nothing to install: open it, drag the blocks and start solving.</p></div>
-        <span class="pc-cta"><span class="lbl">Play now</span><i>→</i></span>
+        <span class="pc-cta"><span class="lbl">Play now</span><i>-></i></span>
       </a>
     </div>
   </div>
@@ -98,7 +103,7 @@
     <article class="pvcard">
       <div class="pvart pvb-run" aria-hidden="true">
         <span class="pvb-hearts"><i></i><i></i><i></i></span>
-        <span class="pvb-runline">Run <i>▶</i></span>
+        <span class="pvb-runline">Run <i>></i></span>
       </div>
       <b>Run and adjust</b>
       <p>Press run to watch your instructions play out. Miss the goal, change a block, try again.</p>
@@ -131,14 +136,14 @@
 <p id="installTip" role="status" hidden>Tap Share, then Add to Home Screen.</p>
 <div id="fb" class="fbm" hidden>
   <div class="fbp" role="dialog" aria-modal="true" aria-labelledby="fbt">
-    <button class="fbx" id="fbx" type="button" aria-label="Close">✕</button>
+    <button class="fbx" id="fbx" type="button" aria-label="Close">x</button>
     <div id="fbform">
       <h2 id="fbt">Tell us what you think</h2>
       <p class="fbs">It takes one minute and goes straight into the project notes.</p>
       <form id="fbf" autocomplete="off">
         <div class="fbl">How was it?</div>
         <div class="fbstars" id="fbstars" role="radiogroup" aria-label="Rating">
-          <button type="button" data-v="1" aria-label="1 star">★</button><button type="button" data-v="2" aria-label="2 stars">★</button><button type="button" data-v="3" aria-label="3 stars">★</button><button type="button" data-v="4" aria-label="4 stars">★</button><button type="button" data-v="5" aria-label="5 stars">★</button>
+          <button type="button" data-v="1" aria-label="1 star">*</button><button type="button" data-v="2" aria-label="2 stars">*</button><button type="button" data-v="3" aria-label="3 stars">*</button><button type="button" data-v="4" aria-label="4 stars">*</button><button type="button" data-v="5" aria-label="5 stars">*</button>
         </div>
         <div class="fbl">What fits? (optional)</div>
         <div class="fbchips" id="fbchips">
@@ -146,7 +151,7 @@
         </div>
         <div class="fbl"><label for="fbage">Age group (optional)</label></div>
         <select id="fbage" aria-label="Age group">
-          <option value="">Prefer not to say</option><option>Grades 1–6</option><option>Grades 7–10</option><option>Grades 11–12</option><option>College or adult</option><option>Parent or teacher</option>
+          <option value="">Prefer not to say</option><option>Grades 1-6</option><option>Grades 7-10</option><option>Grades 11-12</option><option>College or adult</option><option>Parent or teacher</option>
         </select>
         <textarea id="fbmsg" maxlength="800" rows="4" placeholder="What did you like? What was confusing? What should we add?"></textarea>
         <input id="fbname" maxlength="40" placeholder="Your name (optional)">
@@ -157,7 +162,7 @@
       </form>
     </div>
     <div id="fbok" class="fbok" hidden>
-      <div class="fbcheck">✓</div>
+      <div class="fbcheck">OK</div>
       <h2>Thank you!</h2>
       <p id="fbokmsg">Your feedback was sent.</p>
       <button class="btn" type="button" id="fbdone">Close</button>
@@ -165,12 +170,19 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/tlp-auth.js"></script>
-<script src="js/tlp-common.js"></script>
-<script src="js/tlp-presence.js"></script>
-<script src="js/streak.js"></script>
-<script src="js/music.js"></script>
-<script src="js/script.js"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-background.js?v=14"></script>
+<script src="js/tlp-presence.js?v=13"></script>
+<script src="js/streak.js?v=14"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/tlp-wotd.js?v=14"></script>
+<script src="js/tlp-avatar.js?v=23"></script>
+<script src="js/tlp-economy.js?v=15"></script>
+<script src="js/tlp-lifeline.js?v=13"></script>
+<script src="js/script.js?v=15"></script>
+<script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="assets/brand/icon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/brand/favicon-16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/brand/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>The Lost Protocol · Progress</title>
+<script src="js/theme.js?v=15"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-presence.js?v=13"></script>
+<script src="js/streak.js?v=14"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/tlp-avatar.js?v=23"></script>
+<script src="js/tlp-economy.js?v=15"></script>
+<script src="js/tlp-lifeline.js?v=13"></script>
+<script src="js/tlp-look.js?v=13"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/webgame.css?v=28">
+<link rel="stylesheet" href="css/pages/wheel.css?v=8">
+<link rel="stylesheet" href="css/pages/progress.css?v=5">
+<link rel="stylesheet" href="css/premium.css?v=10">
+</head>
+<body data-music="home" data-activity="Viewing progress">
+<div id="dim"></div><div id="achs"></div>
+<div class="wrap">
+  <div class="top"><a class="logo" href="index.html">The Lost Protocol</a>
+    <div class="tools" id="themes"><small>mood:</small></div>
+    <button class="btn ghost sm" id="topMenuToggle" type="button" title="Hide menu" aria-label="Toggle menu">Menu</button>
+    <div class="hud" id="hud">
+      <div class="hud-who"><span class="hud-eyebrow">Playing as</span><span id="avSlot" class="av-slot"></span><b id="pn">Player</b><span id="pathBadge" class="diff">Grades 7-10</span></div>
+      <nav class="hud-nav" aria-label="Game pages">
+        <a class="btn ghost sm" id="accountLink" href="auth.html" title="Account and sync">Account</a>
+        <a class="btn ghost sm" href="leaderboard.html">Leaderboards</a>
+        <a class="btn ghost sm" href="bonus.html">Bonus</a>
+        <a class="btn ghost sm" href="progress.html">Progress</a>
+      </nav>
+      <div class="hud-tools">
+        <button class="btn ghost sm" id="moreBtn" type="button" aria-expanded="false" aria-controls="hudMore">More</button>
+        <div class="hud-more" id="hudMore" hidden>
+          <a class="hm" href="auth.html">Account</a>
+          <button class="hm" id="avOpen" type="button">Avatar & style</button>
+          <a class="hm" href="friends.html">Friends</a>
+          <button class="hm" id="bugOpen" type="button">Report a bug</button>
+          <a class="hm" href="privacy.html">Privacy notice</a>
+          <button class="hm" id="fx" type="button" aria-pressed="false">Reduce visual effects: off</button>
+        </div>
+        <button class="btn ghost sm" id="sndg" type="button" title="Sound and music on or off" aria-label="Sound and music on or off"><i class=ic-volume></i></button>
+        <button class="btn ghost sm" id="adminPrev" type="button" hidden>Admin preview</button>
+      </div>
+      <div class="hud-score" title="Your score"><span>Score</span><b id="sc">0</b></div>
+      <button class="btn sm" id="exit" hidden>Exit to menu</button>
+      <button class="btn ghost sm" id="menuToggle" type="button" title="Hide menu" aria-label="Toggle menu"><</button>
+    </div>
+  </div>
+</div>
+
+<div id="menu">
+  <div class="hero"><span class="hand">web edition</span><h1>Your Progress</h1>
+    <p>Track your journey through The Lost Protocol — chapters, stars, streaks, sparks, and avatar collection.</p></div>
+  <div class="how"><span>1. View your chapter completion stats</span><span>2. See stars and spark earnings</span><span>3. Browse unlocked avatar items</span><span>4. Manage your streak and quests</span></div>
+  <div class="cont" id="cont" hidden>
+    <button class="btn" id="contBtn" type="button">Continue</button>
+    <span id="contName"></span>
+  </div>
+</div>
+
+<script src="js/pages/progress.js?v=1"></script>
+</body>
+</html>

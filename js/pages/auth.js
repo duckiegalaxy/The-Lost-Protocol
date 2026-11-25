@@ -1,55 +1,39 @@
-/* =============================================================================
-   ACCOUNT PAGE LOGIC  (js/pages/auth.js)
-
-   This file drives five mutually exclusive views on auth.html:
-
-     forms   sign in / create account                  (default)
-     session who is signed in, Player ID, delete       (when a session exists)
-     forgot  ask for a reset email                     (from "Forgot your password?")
-     reset   choose a new password                     (after the email link)
-     qr      one-time sign-in code                     (from the Parent area)
-
-   All backend work goes through window.TLP_AUTH (js/tlp-auth.js). Nothing here
-   talks to Supabase directly, so the page keeps working in local/offline mode
-   exactly as before.
-   ============================================================================= */
-
 const $ = (s) => document.querySelector(s);
 const A = () => window.TLP_AUTH;
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-/* -----------------------------------------------------------------------------
-   1. RECOVERY SIGNALS
 
-   Supabase returns the user from the email link with the token in the URL hash
-   (#access_token=...&type=recovery) or, if the project is configured for PKCE,
-   as a ?code= query parameter. The client library consumes and rewrites that
-   URL while it initialises, so it has to be read here, at parse time, before
-   any call to TLP_AUTH.init().
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
+
+
 const initialHash = window.location.hash.replace(/^#/, '');
 const hashParams = new URLSearchParams(initialHash);
 const queryParams = new URLSearchParams(window.location.search);
 
 const isRecoveryLink = hashParams.get('type') === 'recovery' || queryParams.get('type') === 'recovery';
 
-// A one-time sign-in code from the Parent area arrives as #qr=<code>. It is
-// read here, before any library call, so the page can ask before spending it.
+
+
 const qrRaw = String(hashParams.get('qr') || '');
 const qrCode = /^[A-Za-z0-9_-]{40,64}$/.test(qrRaw) ? qrRaw : '';
 
-// A link that has already been used or has timed out arrives with an error
-// instead of a token. Show the reason rather than an empty password form.
+
+
 const linkError = hashParams.get('error_description')
   ? decodeURIComponent(String(hashParams.get('error_description')).replace(/\+/g, ' '))
   : '';
 
-/* -----------------------------------------------------------------------------
-   2. SELECTION STATE FOR REGISTRATION
 
-   Age group and difficulty are plain variables until the form is submitted;
-   the cards below only update these values.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 const PATHS = [
   { id: 'g16', n: 'Grades 1 to 6', d: 'For primary-school learners. Each idea is introduced in the simplest possible way, with short explanations, generous hints and plenty of encouragement.' },
   { id: 'g710', n: 'Grades 7 to 10', d: 'For lower-secondary learners. Ideas are explained clearly, and the challenge increases steadily as the learner progresses.' },
@@ -62,13 +46,14 @@ const DIFFS = [
   { id: 'pro', n: 'Professional', d: 'For experienced learners. Hints are restricted and block limits apply. After finishing Professional, Beginner and Intermediate become available to revisit.' }
 ];
 let role = 'learner', pathId = 'g710', diffId = 'int';
+try { const _a = JSON.parse(localStorage.getItem('tlp-auth-sel') || 'null'); if (_a) { if (_a.role) role = _a.role; if (_a.pathId) pathId = _a.pathId; if (_a.diffId) diffId = _a.diffId; } } catch (e) {}
 
-/* -----------------------------------------------------------------------------
-   3. SHARED UI HELPERS
-   -------------------------------------------------------------------------- */
 
-// Write a message into the single alert strip at the top of the page.
-// kind is 'err' (default) or 'ok'.
+
+
+
+
+
 function say(msg, kind) {
   const a = $('#alert');
   a.textContent = msg || '';
@@ -76,7 +61,7 @@ function say(msg, kind) {
   if (msg) a.scrollIntoView({ block: 'nearest' });
 }
 
-// Exactly one of the views is visible at a time.
+
 function showView(which) {
   $('#formsView').hidden = which !== 'forms';
   $('#sessionView').hidden = which !== 'session';
@@ -85,7 +70,7 @@ function showView(which) {
   $('#qrView').hidden = which !== 'qr';
 }
 
-// Render a set of choice cards and keep aria-pressed in sync with the choice.
+
 function cards(el, list, current, onPick) {
   el.innerHTML = list.map((x) => '<button type="button" class="pick" data-id="' + x.id + '" aria-pressed="' + (x.id === current) + '"><b>' + esc(x.n) + '</b><span>' + esc(x.d) + '</span></button>').join('');
   el.querySelectorAll('.pick').forEach((b) => b.onclick = () => {
@@ -94,37 +79,38 @@ function cards(el, list, current, onPick) {
   });
 }
 function renderPaths() {
-  cards($('#pathCards'), PATHS, pathId, (v) => pathId = v);
+  cards($('#pathCards'), PATHS, pathId, (v) => { pathId = v; try { localStorage.setItem('tlp-auth-sel', JSON.stringify({ role, pathId, diffId })); } catch (e) {} });
 }
 renderPaths();
-cards($('#diffCards'), DIFFS, diffId, (v) => diffId = v);
+cards($('#diffCards'), DIFFS, diffId, (v) => { diffId = v; try { localStorage.setItem('tlp-auth-sel', JSON.stringify({ role, pathId, diffId })); } catch (e) {} });
 
-/* -----------------------------------------------------------------------------
-   4. SIGN IN / CREATE ACCOUNT SWITCHES
 
-   Top switch: sign in vs create account.
-   Second switch: email+password vs Player ID+password.
-   The account-type cards additionally decide which registration fields appear.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 function tab(up) {
   $('#tabIn').setAttribute('aria-pressed', !up);
   $('#tabUp').setAttribute('aria-pressed', up);
   $('#loginForm').hidden = up;
   $('#regForm').hidden = !up;
+  try { localStorage.setItem('tlp-auth-tab', up ? '1' : '0'); } catch (e) {}
   say('');
 }
 $('#tabIn').onclick = () => tab(false);
-// The Create account tab opens the privacy summary first; see below.
+
 $('#tabUp').onclick = () => openConsent();
 
-/* -----------------------------------------------------------------------------
-   4a. PRIVACY CONSENT BEFORE REGISTRATION
 
-   Registering sends a name, an email address and progress to the server, and
-   the learner's name appears on a public leaderboard, so the notice is shown
-   before the form rather than hidden in the footer. One acknowledgement per
-   page visit is enough; the form keeps its own visible checkbox as well.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
+
 let consentSeen = false;
 const pv = () => $('#pvM');
 
@@ -134,7 +120,7 @@ function closePv() {
 
 function openConsent() {
   if (consentSeen) return tab(true);
-  // An earlier half-finished visit must not leave the box ticked.
+
   $('#pvOk').checked = false;
   $('#pvGo').disabled = true;
   pv().hidden = false;
@@ -148,7 +134,7 @@ $('#pvOk').addEventListener('change', () => {
 $('#pvGo').onclick = () => {
   if (!$('#pvOk').checked) return;
   consentSeen = true;
-  // Carry the acknowledgement into the form's own visible checkbox.
+
   $('#rgConsent').checked = true;
   closePv();
   tab(true);
@@ -157,7 +143,7 @@ $('#pvGo').onclick = () => {
 
 $('#pvCancel').onclick = closePv;
 $('#pvX').onclick = closePv;
-// Clicking the dark backdrop closes the dialog, as on the volume panel.
+
 pv().addEventListener('click', (e) => { if (e.target === pv()) closePv(); });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && !pv().hidden) closePv();
@@ -168,44 +154,45 @@ function method(byId) {
   $('#mId').setAttribute('aria-pressed', byId);
   $('#fEmail').hidden = byId;
   $('#fId').hidden = !byId;
-  // A Player ID has no email address, so email recovery cannot help here.
+
   document.querySelector('.forgot-row').hidden = byId;
 }
 $('#mEmail').onclick = () => method(false);
 $('#mId').onclick = () => method(true);
 
-// Remember the last choice so the checkbox reflects what happens on the next
-// sign-in; the default is on.
+
+
 try { $('#liRemember').checked = localStorage.getItem('tlp-remember') !== '0'; } catch (e) {}
 
 document.querySelectorAll('#regForm .pick[data-role]').forEach((b) => b.onclick = () => {
   role = b.dataset.role;
   document.querySelectorAll('#regForm .pick[data-role]').forEach((o) => o.setAttribute('aria-pressed', o === b));
-  // The Adult learner card is a Learner account with the adult path already
-  // chosen. The plain Learner card restores the default path if adult was set.
+
+
   if (b.dataset.path) pathId = b.dataset.path;
   else if (pathId === 'adult') pathId = 'g710';
   renderPaths();
   $('#pathLabel').textContent = pathId === 'adult' ? 'Learning path' : 'Age group';
   $('#learnerFields').hidden = role !== 'learner';
+  try { localStorage.setItem('tlp-auth-sel', JSON.stringify({ role, pathId, diffId })); } catch (e) {}
   $('#rgNameLabel').textContent = role === 'parent' ? 'Full name' : 'Display name';
   $('#rgName').placeholder = role === 'parent' ? 'For example: Sandra Lewis' : 'Name shown on the leaderboards';
 });
 $('#rgName').placeholder = 'Name shown on the leaderboards';
 
-// Where a signed-in account belongs after login. The owner account can also be
-// a parent, so the administrator dashboard wins: that is the only destination
-// the session view offers it.
+
+
+
 function where(user) {
   return user.isAdmin ? 'admin.html' : user.role === 'parent' ? 'parent.html' : 'webgame.html';
 }
 
-/* -----------------------------------------------------------------------------
-   4b. PASSWORD STRENGTH METER
 
-   Local, instant feedback while typing. The real check (length, common list,
-   breach lookup) runs when the form is submitted, in js/password.js.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 function wireMeter(inputSel, meterSel, hintSel, idleText) {
   const input = $(inputSel), meter = $(meterSel), hint = $(hintSel);
   if (!input || !meter) return;
@@ -225,17 +212,17 @@ function wireMeter(inputSel, meterSel, hintSel, idleText) {
 wireMeter('#rgPw', '#rgMeter', '#rgHint', 'Three unrelated words make a strong, easy password.');
 wireMeter('#npPw', '#npMeter', '#npHint', 'Use at least 10 characters. Three unrelated words work well.');
 
-/* -----------------------------------------------------------------------------
-   5. SIGN IN
-   -------------------------------------------------------------------------- */
+
+
+
 $('#loginForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   say('');
   const btn = $('#liGo');
   btn.disabled = true;
   try {
-    // The session store reads this flag, so set it before signing in:
-    // "0" keeps the session in sessionStorage and signs out on browser close.
+
+
     try { localStorage.setItem('tlp-remember', $('#liRemember').checked ? '1' : '0'); } catch (e) {}
     const byId = !$('#fId').hidden;
     const r = byId
@@ -254,9 +241,9 @@ $('#loginForm').addEventListener('submit', async (e) => {
   }
 });
 
-/* -----------------------------------------------------------------------------
-   6. CREATE ACCOUNT
-   -------------------------------------------------------------------------- */
+
+
+
 $('#regForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   say('');
@@ -266,8 +253,8 @@ $('#regForm').addEventListener('submit', async (e) => {
   const btn = $('#rgGo');
   btn.disabled = true;
   try {
-    // Length, common-password and breach checks live in js/password.js. Only a
-    // confirmed breach blocks the form; a network failure lets the user through.
+
+
     const pw = $('#rgPw').value;
     const pwCheck = await window.TLP_PASSWORD.check(pw);
     if (!pwCheck.ok) return say(pwCheck.msg);
@@ -281,8 +268,18 @@ $('#regForm').addEventListener('submit', async (e) => {
       currentDiff: diffId
     });
     if (r.requiresEmailConfirmation) {
+
+      showView('forms');
       tab(false);
-      say('Your account has been created. A confirmation email has been requested. It can take a few minutes, so please also check your spam folder. After confirming, sign in here.', 'ok');
+      const alertEl = $('#alert');
+      alertEl.className = 'alert show ok';
+      alertEl.innerHTML = `
+        <div style="text-align:center;padding:8px 0">
+          <div style="font-size:40px;margin-bottom:8px">✉️</div>
+          <strong style="font-size:17px;display:block;margin-bottom:6px">Check your inbox</strong>
+          <span>A confirmation email is on its way to <b>${esc($('#rgEmail').value)}</b>. It can take a few minutes — check your spam folder too. Once you click the link in the email, come back here and sign in.</span>
+        </div>`;
+      alertEl.scrollIntoView({ block: 'nearest' });
     } else {
       location.href = where(r.user);
     }
@@ -293,17 +290,17 @@ $('#regForm').addEventListener('submit', async (e) => {
   }
 });
 
-/* -----------------------------------------------------------------------------
-   7. PASSWORD RECOVERY — STEP 1: ASK FOR THE EMAIL
 
-   The wording of the success message is deliberately the same whether or not
-   the address belongs to an account, so this form cannot be used to test which
-   emails are registered.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 $('#forgotLink').onclick = () => {
   say('');
   showView('forgot');
-  // Carry the address over if one was already typed on the sign-in form.
+
   $('#fpEmail').value = $('#liEmail').value.trim();
   $('#fpEmail').focus();
 };
@@ -330,13 +327,13 @@ $('#forgotForm').addEventListener('submit', async (e) => {
   }
 });
 
-/* -----------------------------------------------------------------------------
-   8. PASSWORD RECOVERY — STEP 2: SAVE THE NEW PASSWORD
 
-   Reached only through the email link, which gives this tab a short-lived
-   recovery session. TLP_AUTH.updatePassword() replaces the password on that
-   session, so the user is signed in normally afterwards.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 $('#resetForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   say('');
@@ -357,17 +354,17 @@ $('#resetForm').addEventListener('submit', async (e) => {
   }
 });
 
-/* -----------------------------------------------------------------------------
-   8b. ONE-TIME SIGN-IN CODE
 
-   Reached from a code made in the Parent area. The code is spent only when
-   Sign in is pressed, so opening the link by accident costs nothing. The
-   server returns a one-time magic-link token, and completeLearnerSignIn()
-   exchanges it for a normal session on this device.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
+
 $('#qrBack').onclick = () => {
-  // Drop the code from the address bar, then show what this browser knows:
-  // the signed-in summary, or the normal sign-in form.
+
+
   try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
   say('');
   refresh();
@@ -384,7 +381,7 @@ $('#qrGo').onclick = async () => {
     spent = true;
     await A().completeLearnerSignIn(r.magicToken, $('#qrRemember').checked);
     $('#qrIntro').textContent = 'Signed in as ' + r.learner.name + ' (' + r.learner.playerId + '). Opening the game…';
-    // A reload must not replay a code that has just been spent.
+
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
     setTimeout(() => { location.href = 'webgame.html'; }, 900);
   } catch (err) {
@@ -398,12 +395,12 @@ $('#qrGo').onclick = async () => {
   }
 };
 
-/* -----------------------------------------------------------------------------
-   9. SIGNED-IN VIEW
 
-   Fills the account summary and wires the destructive action. The delete button
-   stays disabled until the exact confirmation sentence has been typed.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 async function refresh() {
   await A().init();
   if (!A().isCloudConfigured()) say('The online service is not configured, so accounts are stored only in this browser.', 'err');
@@ -424,11 +421,11 @@ async function refresh() {
   $('#goMain').href = u.role === 'parent' ? 'parent.html' : 'webgame.html';
   if (u.isAdmin) $('#goMain').hidden = true;
 
-  // The delete section is only offered to accounts the database allows to be
-  // deleted, so an administrator never sees a control that cannot work.
+
+
   const danger = document.querySelector('.acct .danger');
   if (danger) danger.hidden = !!u.isAdmin;
-  // Player IDs only belong to learner profiles.
+
   $('#sId').hidden = true;
 
   if (u.role === 'learner' && l && !l.isGuest) {
@@ -477,16 +474,16 @@ $('#copyPid').onclick = () => {
   } catch (e) {}
 };
 
-/* -----------------------------------------------------------------------------
-   10. BOOT
 
-   Order matters:
-   - an error in the link means the token is spent, so show the forms with the
-     reason instead of an unusable password form;
-   - a recovery link goes straight to the new-password view, but init() still
-     has to run so the recovery session is established;
-   - otherwise the normal signed-in / signed-out decision is made.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
+
+
+
 (async function boot() {
   if (qrRaw) {
     if (!qrCode) {
@@ -495,8 +492,8 @@ $('#copyPid').onclick = () => {
       return;
     }
     showView('qr');
-    // Nothing about the learner is known until the code is redeemed, so the
-    // confirmation stays general. Only a session already open here is named.
+
+
     try { await A().init(); } catch (e) {}
     const other = $('#qrOther');
     const u = A().getCurrentUser();
@@ -524,5 +521,24 @@ $('#copyPid').onclick = () => {
     }
     return;
   }
+
+  try {
+    await A().init();
+    const confirmStatus = await A().getEmailConfirmationStatus();
+    if (confirmStatus && confirmStatus.confirmed) {
+      const alertEl = $('#alert');
+      alertEl.className = 'alert show ok';
+      alertEl.innerHTML = `
+        <div style="text-align:center;padding:6px 0">
+          <div style="font-size:32px;margin-bottom:6px">🎉</div>
+          <strong style="font-size:16px;display:block;margin-bottom:4px">Email confirmed!</strong>
+          <span>Your account is active. You are now signed in — heading to the game.</span>
+        </div>`;
+      alertEl.scrollIntoView({ block: 'nearest' });
+      const u = A().getCurrentUser();
+      setTimeout(() => { location.href = u ? where(u) : 'webgame.html'; }, 1800);
+      return;
+    }
+  } catch (e) {}
   refresh();
 })();

@@ -1,10 +1,3 @@
-/* =============================================================================
-   THE LOST PROTOCOL — SHARED SITE SCRIPT (load AFTER tlp-auth.js on every page)
-   - Reduce visual effects toggle (persistent, respects the OS setting)
-   - Idle prompt ("Are you still there?")
-   - Calm, slightly robotic narration helper (browser speech only, no paid voices)
-   - Bug-report window (saved through TLP_AUTH to Supabase)
-   ============================================================================= */
 (function () {
   'use strict';
   if (window.TLP) return;
@@ -16,21 +9,21 @@
   };
   var osReduce = function () { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); };
 
-  /* ------------------------------ Volume ------------------------------
-     Four independent levels: master, music, narration and effects. Each one is
-     stored as a whole number from 0 to 100 in one small JSON blob, so every
-     page and every sound engine reads the same values.
 
-     A channel's real level is master × channel, which is why 50% master and
-     50% music gives a quarter of the full music loudness. The music engine,
-     the narration voice and the game's sound effects all call factor() just
-     before they play something, so moving a slider takes effect immediately. */
+
+
+
+
+
+
+
+
   var VOL_KEY = 'tlp-volumes';
   var VOL_DEF = { master: 85, music: 60, narr: 100, fx: 80 };
   var VOL_LABEL = { master: 'Master volume', music: 'Music', narr: 'Narration voice', fx: 'Game sounds' };
   var VOL_DESC = {
     master: 'Moves everything up or down at once.',
-    music: 'The background music, including co-op.',
+    music: 'The background music.',
     narr: 'The voice that reads text aloud.',
     fx: 'Clicks, alarms and reward sounds.'
   };
@@ -53,12 +46,12 @@
       Vol.apply(all);
       try { window.dispatchEvent(new CustomEvent('tlp-vol-change', { detail: all })); } catch (e) {}
     },
-    // 0..1 multiplier for one channel (or for the master when no channel is given).
+
     factor: function (channel) {
       var all = Vol.get(), m = all.master / 100;
       return channel ? m * (all[channel] / 100) : m;
     },
-    // Keep every slider and percentage readout on the page in sync.
+
     apply: function (all) {
       all = all || Vol.get();
       var outs = document.querySelectorAll('[data-vol-out]');
@@ -74,7 +67,7 @@
       }
       try { if (window.TLP_MUSIC && window.TLP_MUSIC.setVolume) window.TLP_MUSIC.setVolume(); } catch (e) {}
     },
-    // Shared markup so the game settings and the site volume panel cannot drift.
+
     ui: function () {
       var all = Vol.get();
       return '<div class="volset">' + Object.keys(VOL_DEF).map(function (k) {
@@ -102,14 +95,18 @@
     }
   };
 
-  /* ------------------------------ Reduce effects ------------------------------ */
+
   var FX = {
     get: function () {
       var v = store.get('tlp-reduce-fx');
       if (v === '1') return true;
       if (v === '0') return false;
-      if (store.get('tlp-fx') === 'off') return true; // older home-page setting
-      return osReduce();
+      if (store.get('tlp-fx') === 'off') return true;
+      if (store.get('tlp-fx') === 'on') return false;
+
+
+
+      return true;
     },
     set: function (on) {
       store.set('tlp-reduce-fx', on ? '1' : '0');
@@ -126,31 +123,59 @@
     }
   };
 
-  /* ------------------------------ Narration voice ------------------------------ */
+
   var Voice = {
-    pick: function () {
+    _isKid: function () {
+
+      try {
+        if (document.body && document.body.classList.contains('path-g16')) return true;
+        return (localStorage.getItem('tlp-path') || '') === 'g16';
+      } catch (e) { return false; }
+    },
+    localize: function (text) {
+      var clean = String(text == null ? '' : text).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      return window.TLP_ARABIC && window.TLP_ARABIC.isActive() ? window.TLP_ARABIC.t(clean) : clean;
+    },
+    pick: function (arabic) {
       var vs = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+      if (arabic) return vs.filter(function (v) { return /^ar/i.test(v.lang); })[0] || null;
       var en = vs.filter(function (v) { return /^en/i.test(v.lang); });
-      var pref = en.filter(function (v) { return /(google uk english male|daniel|alex|microsoft (guy|david|mark)|male)/i.test(v.name); })[0];
+      var pref;
+      if (Voice._isKid()) {
+
+        pref = en.filter(function (v) {
+          return /(samantha|victoria|karen|moira|fiona|google us english|zira|hazel|susan|female|zoe|aria|jenny|sonia|ava)/i.test(v.name);
+        })[0];
+
+        if (!pref) pref = en.filter(function (v) {
+          return !/(male|man|david|mark|guy|daniel|alex)/i.test(v.name);
+        })[0];
+      } else {
+
+        pref = en.filter(function (v) {
+          return /(google uk english male|daniel|alex|microsoft (guy|david|mark)|male)/i.test(v.name);
+        })[0];
+      }
       return pref || en[0] || null;
     },
     speak: function (text, onend) {
       if (!window.speechSynthesis) { if (onend) onend(); return; }
       if (Vol.factor('narr') <= 0) { if (onend) onend(); return; }
       Voice.stop();
-      var clean = String(text).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      var clean = Voice.localize(text);
+      var arabic = /[\u0600-\u06ff]/.test(clean);
       var parts = clean.match(/[^.!?]+[.!?]*/g) || [clean];
-      var voice = Voice.pick(), i = 0;
+      var voice = Voice.pick(arabic), i = 0;
       var next = function () {
         if (i >= parts.length) { if (onend) onend(); return; }
         var t = parts[i++].trim();
         if (!t) return next();
         var u = new SpeechSynthesisUtterance(t);
-        if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = 'en-US'; }
-        u.rate = 0.92;   // calm and clear
-        u.pitch = 0.75;  // slightly low = subtly robotic
+        if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = arabic ? 'ar-SA' : 'en-US'; }
+        u.rate = Voice._isKid() ? 0.82 : 0.92;
+        u.pitch = Voice._isKid() ? 1.15 : 0.75;
         u.volume = Vol.factor('narr');
-        u.onend = function () { setTimeout(next, 160); }; // short pause between sentences
+        u.onend = function () { setTimeout(next, 160); };
         u.onerror = function () { setTimeout(next, 0); };
         speechSynthesis.speak(u);
       };
@@ -158,11 +183,11 @@
     },
     stop: function () { try { speechSynthesis.cancel(); } catch (e) {} }
   };
-  /* Same voice as speak(), but calls back before each sentence so a picture can
-     change in step with the words. Used by the lesson explainers. */
+
+
   Voice.speakSteps = function (texts, onstep, onend) {
     var list = (texts || []).map(function (t) {
-      return String(t).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+      return Voice.localize(t);
     });
     if (!window.speechSynthesis) {
       list.forEach(function (_, i) { setTimeout(function () { if (onstep) onstep(i); }, i * 2100); });
@@ -175,16 +200,18 @@
       return;
     }
     Voice.stop();
-    var voice = Voice.pick(), i = 0;
+    var i = 0;
     var next = function () {
       if (i >= list.length) { if (onend) onend(); return; }
       if (onstep) onstep(i);
       var t = list[i++];
       if (!t) return next();
+      var arabic = /[\u0600-\u06ff]/.test(t);
+      var voice = Voice.pick(arabic);
       var u = new SpeechSynthesisUtterance(t);
-      if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = 'en-US'; }
-      u.rate = 0.92;
-      u.pitch = 0.75;
+      if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = arabic ? 'ar-SA' : 'en-US'; }
+      u.rate = Voice._isKid() ? 0.82 : 0.92;
+      u.pitch = Voice._isKid() ? 1.15 : 0.75;
       u.volume = Vol.factor('narr');
       u.onend = function () { setTimeout(next, 160); };
       u.onerror = function () { setTimeout(next, 0); };
@@ -194,7 +221,7 @@
   };
   if (window.speechSynthesis && speechSynthesis.onvoiceschanged !== undefined) speechSynthesis.onvoiceschanged = function () {};
 
-  /* ------------------------------ Who is signed in ------------------------------ */
+
   function profileName() {
     try {
       var A = window.TLP_AUTH;
@@ -204,24 +231,24 @@
         var n = (l && l.name && l.name !== 'default' && !l.isGuest ? l.name : '') || u.displayName || '';
         if (n) return String(n).trim().slice(0, 30);
       }
-      // A guest who typed a name in the game keeps it in local storage; the
-      // idle prompt should greet that name even before an account exists.
+
+
       var local = '';
       try { local = localStorage.getItem('tlp-name') || ''; } catch (e2) {}
       local = String(local).trim();
       return local && local !== 'Player' ? local.slice(0, 30) : '';
     } catch (e) { return ''; }
   }
-  // The idle prompt only ever shows the player's own name. Some saved names
-  // carry the age group, the difficulty or a QA test tag, so those labels are
-  // stripped before the name reaches the bubble and the voice.
+
+
+
   function idleName() {
     var n = profileName();
     if (!n) return '';
     var s = ' ' + n + ' ';
-    s = s.replace(/\([^)]*\)|\[[^\]]*\]/g, ' ');                                  // anything in brackets
-    s = s.replace(/\b(grades?|level|class|year|stage)\s*\d{1,2}(?:\s*(?:[-\u2013\u2014]+|to)\s*\d{1,2})?\b/gi, ' '); // "Grades 7–10", "Level 3"
-    s = s.replace(/\b\d{1,2}\s*(?:[-\u2013\u2014]+|to)\s*\d{1,2}\b/g, ' ');   // a bare range such as "11–12"
+    s = s.replace(/\([^)]*\)|\[[^\]]*\]/g, ' ');
+    s = s.replace(/\b(grades?|level|class|year|stage)\s*\d{1,2}(?:\s*(?:[-\u2013\u2014]+|to)\s*\d{1,2})?\b/gi, ' ');
+    s = s.replace(/\b\d{1,2}\s*(?:[-\u2013\u2014]+|to)\s*\d{1,2}\b/g, ' ');
     s = s.replace(/\b(beginner|intermediate|professional|pro|adult|college|university|learner|qa|test|beg|int)\b/gi, ' ');
     s = s.replace(/[|·•,;/\\:_-]+/g, ' ');
     s = s.replace(/\s+/g, ' ').trim();
@@ -230,7 +257,7 @@
   }
 
 
-  /* ------------------------------ Icons (drawn shapes, no emoji) ------------------------------ */
+
   var IC = {
     star: '<polygon fill="black" points="12,2 15,9 22,9.3 16.5,14 18.2,21 12,17.2 5.8,21 7.5,14 2,9.3 9,9"/>',
     heart: '<path fill="black" d="M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z"/>',
@@ -268,13 +295,36 @@
   iconCss += '.navlink .sp{font-size:0;width:7px;height:7px;background:var(--a,#35c9e8);transform:rotate(45deg);border-radius:1px;display:inline-block}';
   var ico = function (n) { return '<i class="ic ic-' + n + '" aria-hidden="true"></i>'; };
 
-  /* ------------------------------ Styles ------------------------------ */
+
   var css = '' +
     'html.reduce-fx *,html.reduce-fx *::before,html.reduce-fx *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;scroll-behavior:auto!important}' +
-    'html.reduce-fx #rain,html.reduce-fx #scan,html.reduce-fx .aurora,html.reduce-fx .spark{display:none!important}' +
+
+
+    'html.reduce-fx #rain,html.reduce-fx #scan,html.reduce-fx .spark{display:none!important}' +
+    'html.reduce-fx .aurora,html.reduce-fx #ambOrbs i{animation:none!important}' +
+
+
+
+    '#bgGrid{display:none;position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(color-mix(in srgb,var(--a,#35c9e8) 9%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--a,#35c9e8) 9%,transparent) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(ellipse 90% 80% at 50% 40%,#000 30%,transparent 100%);mask-image:radial-gradient(ellipse 90% 80% at 50% 40%,#000 30%,transparent 100%)}' +
+    'body.bg-grid #bgGrid{display:block}' +
+    'body.bg-grid #ambOrbs{opacity:.4}' +
+    'body.bg-orbs #ambOrbs i{opacity:.3;filter:blur(100px)}' +
+    'body.bg-aurora #ambOrbs i{opacity:.3;filter:blur(90px) saturate(1.4);animation-duration:22s,30s}' +
+    'body.bg-aurora #ambOrbs{filter:hue-rotate(0deg);animation:bgAuroraHue 26s linear infinite}' +
+    'body.bg-none #ambOrbs,body.bg-none #bgGrid,body.bg-none #ambientCanvas{display:none!important}' +
+    '@keyframes bgAuroraHue{0%{filter:hue-rotate(0deg)}50%{filter:hue-rotate(60deg)}100%{filter:hue-rotate(0deg)}}' +
+
+
+    '#ambOrbs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}' +
+    '#ambOrbs i{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;animation:ambOrbA 30s ease-in-out infinite,ambOrbB 38s ease-in-out infinite}' +
+    '#ambOrbs i:nth-child(1){width:46vmax;height:46vmax;left:-14vmax;top:-12vmax;background:radial-gradient(circle,var(--a,#35c9e8),transparent 66%)}' +
+    '#ambOrbs i:nth-child(2){width:38vmax;height:38vmax;right:-12vmax;top:28%;background:radial-gradient(circle,#a78bfa,transparent 66%);animation-delay:-11s,-17s}' +
+    '#ambOrbs i:nth-child(3){width:32vmax;height:32vmax;left:32%;bottom:-16vmax;background:radial-gradient(circle,#34d399,transparent 66%);animation-delay:-21s,-8s}' +
+    '@keyframes ambOrbA{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(7vmax,-4vmax) scale(1.12)}}' +
+    '@keyframes ambOrbB{0%,100%{transform:translate(0,0)}50%{transform:translate(-6vmax,5vmax)}}' +
     '#tlpFxBtn{position:fixed;left:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:40;min-height:36px;padding:6px 14px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:color-mix(in srgb,var(--bg,#0b0f14) 80%,transparent);color:var(--fg,#f3efe8);font:600 13px var(--sans,system-ui,sans-serif);cursor:pointer}' +
     '#tlpFxBtn:focus-visible{outline:2px solid var(--a,#35c9e8);outline-offset:2px}' +
-    /* idle prompt: full screen, a robot with a speech bubble */
+
     '#tlpIdle{position:fixed;inset:0;z-index:95;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;background:rgba(5,8,12,.82);color:#f3efe8;font-family:var(--sans,system-ui,sans-serif);animation:tlpFade .4s ease both}' +
     '#tlpIdle.out{animation:tlpFadeOut .5s ease both}' +
     '@keyframes tlpFade{from{opacity:0}to{opacity:1}}@keyframes tlpFadeOut{to{opacity:0}}' +
@@ -292,8 +342,8 @@
     '@keyframes tlpSway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}' +
     '#tlpIdle button{min-height:52px;padding:0 34px;border-radius:999px;border:0;background:var(--a,#35c9e8);color:#0b0f14;font:800 18px var(--sans,system-ui,sans-serif);cursor:pointer}' +
     '#tlpIdle button:focus-visible{outline:3px solid #fff;outline-offset:3px}' +
-    /* Adult-only AFK surprise. One entrance flash, no repeated strobing, and it
-       never runs when reduced effects are on (the calm prompt is used instead). */
+
+
     '#tlpIdle.idle-jump{background:#02040a;animation:jdFade .5s ease-out both,jdQuake .62s .04s cubic-bezier(.36,.07,.19,.97) 1}' +
     '#tlpIdle.idle-jump .jd-face{position:relative;width:clamp(150px,30vw,230px);height:clamp(150px,30vw,230px);border-radius:42% 42% 38% 38%;background:#0b0f14;border:3px solid #ff3355;box-shadow:0 0 44px #ff335566,inset 0 0 44px #000;display:grid;grid-template-columns:1fr 1fr;align-content:center;gap:20px;padding:32px;animation:jdShake .5s .05s 1}' +
     '#tlpIdle.idle-jump .jd-eye{height:clamp(18px,3.4vw,26px);border-radius:50%;background:#ff3355;box-shadow:0 0 18px #ff3355;animation:jdBlink 1.8s .5s infinite}' +
@@ -308,8 +358,8 @@
     '@keyframes jdShake{0%,100%{transform:translate(0,0)}20%{transform:translate(-9px,4px)}40%{transform:translate(8px,-5px)}60%{transform:translate(-6px,-3px)}80%{transform:translate(4px,3px)}}' +
     '@keyframes jdQuake{0%,100%{transform:translate(0,0)}10%{transform:translate(-12px,6px)}20%{transform:translate(11px,-8px)}30%{transform:translate(-9px,-5px)}40%{transform:translate(10px,7px)}50%{transform:translate(-7px,4px)}60%{transform:translate(6px,-5px)}70%{transform:translate(-4px,3px)}80%{transform:translate(3px,-2px)}90%{transform:translate(-2px,1px)}}' +
     '@keyframes jdBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.08)}}' +
-    /* Child check-in: a bright toy palette and a bobbing robot. Same overlay,
-       no scare, and the sound is a soft boing rather than a low sting. */
+
+
     '#tlpIdle.idle-kid{background:radial-gradient(circle at 50% 35%,#24163a,#0a0714 70%);animation:tlpFade .4s ease both}' +
     '#tlpIdle.idle-kid .bubble{background:#ffe9f3;color:#3a1230;border:2px dashed #ff9ec7;box-shadow:0 10px 30px #ff9ec733}' +
     '#tlpIdle.idle-kid .bubble:after{border-top-color:#ffe9f3}' +
@@ -322,7 +372,7 @@
     'html.reduce-fx #tlpIdle.idle-jump{animation:jdFade .5s ease-out both}' +
     'html.reduce-fx #tlpIdle.idle-kid .rb{animation:none}' +
     'html.reduce-fx #tlpIdle.idle-jump .jd-eye{animation:none}' +
-    /* modal */
+
     '.tlpm{position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:16px;background:rgba(5,8,12,.72)}' +
     '.tlpm[hidden]{display:none!important}' +
     '.tlpm-pan{position:relative;width:min(520px,100%);max-height:92vh;overflow:auto;padding:24px 22px;border-radius:20px;border:1px solid var(--a,#35c9e8);background:var(--bg,#0b0f14);color:var(--fg,#f3efe8);font-family:var(--sans,system-ui,sans-serif)}' +
@@ -331,21 +381,25 @@
     '.tlpm-x{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line,rgba(255,255,255,.2));background:transparent;color:inherit;font-size:18px;cursor:pointer}' +
     '.tlpm-pan label{display:block;margin:12px 0 4px;font:700 12px var(--sans,system-ui,sans-serif);letter-spacing:.06em;text-transform:uppercase;color:var(--mut,#aab)}' +
     '.tlpm-pan input,.tlpm-pan select,.tlpm-pan textarea{width:100%;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid var(--line,rgba(255,255,255,.2));background:transparent;color:inherit;font:15px var(--sans,system-ui,sans-serif)}' +
-    '.tlpm-pan select option{color:#111}' +
+    '.tlpm-pan select option{color:var(--fg,#111)}' +
     '.tlpm-row{display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap}' +
     '.tlpm-btn{min-height:44px;padding:0 22px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.25));background:transparent;color:inherit;font:700 15px var(--sans,system-ui,sans-serif);cursor:pointer}' +
     '.tlpm-btn.pri{background:var(--a,#35c9e8);border-color:transparent;color:var(--ink,#0b0f14)}' +
     '.tlpm-btn:disabled{opacity:.6;cursor:default}' +
     '.tlpm-note{min-height:1.2em;margin-top:10px;font-size:14px}' +
-    /* A plain link inside a dialog (privacy notice) uses the accent colour. */
+
     '.tlpm-pan a{color:var(--a,#35c9e8);text-underline-offset:3px}' +
-    /* story lines */
-    '.story{margin:12px 0;padding:10px 12px;border-left:3px solid var(--a,#35c9e8);border-radius:8px;background:color-mix(in srgb,var(--a,#35c9e8) 8%,transparent)}' +
-    '.sline{display:flex;flex-direction:column;gap:2px;margin:6px 0;font-size:14px;line-height:1.45}' +
+
+    '.story{margin:14px 0;padding:14px 16px;border:1px solid color-mix(in srgb,var(--a,#35c9e8) 30%,transparent);border-left:3px solid var(--a,#35c9e8);border-radius:14px;background:linear-gradient(160deg,color-mix(in srgb,var(--a,#35c9e8) 11%,transparent),color-mix(in srgb,var(--a,#35c9e8) 4%,transparent));box-shadow:0 8px 24px rgba(0,0,0,.18);animation:storyPanelIn .5s ease both}' +
+    '.sline{position:relative;display:flex;flex-direction:column;gap:2px;margin:9px 0 9px 14px;padding-left:13px;font-size:14px;line-height:1.5;border-left:2px solid color-mix(in srgb,var(--a,#35c9e8) 30%,transparent)}' +
+    '.sline:before{content:"";position:absolute;left:-5px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--a,#35c9e8);box-shadow:0 0 8px var(--a,#35c9e8)}' +
+    '.sp-l:before{background:#f2c94c;box-shadow:0 0 8px #f2c94c}.sp-u:before{background:#3ddc84;box-shadow:0 0 8px #3ddc84}.sp-r:before{background:#35c9e8;box-shadow:0 0 8px #35c9e8}.sp-s:before{background:#ef7a8c;box-shadow:0 0 8px #ef7a8c}' +
     '.sline b{font:800 11px var(--sans,system-ui,sans-serif);letter-spacing:.08em;text-transform:uppercase;opacity:.8}' +
     '.sp-l b{color:#f2c94c}.sp-u b{color:#3ddc84}.sp-r b{color:#35c9e8}.sp-s b{color:#ef7a8c}' +
-    /* Shared menu: one button, one tidy panel. Created by setupNav() so every
-       page gets the same navigation without repeating markup. */
+    '@keyframes storyPanelIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}' +
+    '@keyframes storyLineIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}' +
+
+
     'header nav .wrap{position:relative}' +
     '.navmenu-btn{display:inline-flex;align-items:center;gap:9px;height:40px;padding:0 17px;border-radius:999px;border:1px solid var(--line,rgba(255,255,255,.2));background:color-mix(in srgb,var(--a,#35c9e8) 10%,transparent);color:var(--fg,#f3efe8);font:700 13px var(--sans,system-ui,sans-serif);letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,background .2s}' +
     '.navmenu-btn:hover,.navmenu-btn[aria-expanded=true]{border-color:var(--a,#35c9e8);background:color-mix(in srgb,var(--a,#35c9e8) 20%,transparent)}' +
@@ -369,7 +423,10 @@
     '.navpanel .tools{display:flex;flex-wrap:wrap;gap:9px;align-items:center;width:100%}' +
     'header nav .wrap.has-menu{height:60px;flex-wrap:nowrap;justify-content:space-between;gap:10px;padding-top:0;padding-bottom:0}' +
     '@media(max-width:900px){header nav .wrap.has-menu{height:56px;padding-top:0;padding-bottom:0}header nav .wrap.has-menu .logo{flex:0 1 auto;text-align:left;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}' +
-    /* Volume panel and the sliders reused inside game Settings. */
+    '@media(max-width:620px){header nav .wrap.has-menu .navmenu-btn{padding:0 11px}}' +
+    '@media(max-width:520px){header nav .wrap.has-menu .themetog{width:34px;height:34px;padding:0;justify-content:center}header nav .wrap.has-menu .themetog span{width:26px;height:26px}header nav .wrap.has-menu .themetog span:not(.on){display:none}}' +
+    '@media(max-width:420px){header nav .wrap.has-menu .navmenu-btn{width:40px;padding:0;justify-content:center}header nav .wrap.has-menu .navmenu-btn>span:not(.mbars){display:none}}' +
+
     '.volset{display:grid;gap:10px;margin:6px 0 2px}' +
     '.volrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 12px;padding:10px 12px;border:1px solid var(--line,rgba(255,255,255,.2));border-radius:13px;background:color-mix(in srgb,var(--bg,#0b0f14) 55%,transparent)}' +
     '.volrow .volhead{display:grid;gap:1px;grid-column:1;cursor:pointer}' +
@@ -389,7 +446,7 @@
   st.textContent = css + iconCss;
   document.head.appendChild(st);
 
-  /* ------------------------------ Bug report window ------------------------------ */
+
   function openBugReport(area) {
     var m = $('#tlpBug');
     if (!m) {
@@ -442,33 +499,33 @@
         } finally { btn.disabled = false; }
       });
     }
-    if (area) { var sel = $('#tbArea'); for (var i = 0; i < sel.options.length; i++) if (sel.options[i].text === area) sel.selectedIndex = i; }
+    if (area) { var sel = $('#tbArea'); for (var i = 0; i < sel.options.length; i++) if (sel.options[i].text === area || sel.options[i].getAttribute('data-tlp-ar-option') === area) sel.selectedIndex = i; }
     m.hidden = false;
     setTimeout(function () { var t = $('#tbTitle'); if (t) t.focus(); }, 30);
   }
 
-  /* ------------------------------ Idle prompt ------------------------------ */
+
   var IDLE_MS = 60000, idleT = null, isDown = false;
-  try { var qi = parseInt(new URLSearchParams(location.search).get('idle'), 10); if (qi >= 3 && qi <= 600) IDLE_MS = qi * 1000; } catch (e) {} // ?idle=8 shows it after 8 seconds (for testing)
+  try { var qi = parseInt(new URLSearchParams(location.search).get('idle'), 10); if (qi >= 3 && qi <= 600) IDLE_MS = qi * 1000; } catch (e) {}
   function idleOk() {
     if (document.hidden) return false;
-    if (isDown) return false;                                   // dragging or pressing
+    if (isDown) return false;
     var a = document.activeElement;
-    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && (a.value || '').length) return false; // typing
+    if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && (a.value || '').length) return false;
     if (a && a.isContentEditable) return false;
-    if (window.TLP_BUSY) return false;                          // set by the game while it is animating
-    if ($('#cine') || $('.tlpm:not([hidden])')) return false;   // cutscene or dialog open
+    if (window.TLP_BUSY) return false;
+    if ($('#cine') || $('.tlpm:not([hidden])')) return false;
     return true;
   }
   function hideIdle() { var p = $('#tlpIdle'); if (p) p.remove(); }
-  // The adult paths wait longer than the calm default before checking in.
+
   function idleWait() { try { return (window.TLP_AFK && window.TLP_AFK.ms) || IDLE_MS; } catch (e) { return IDLE_MS; } }
   function jumpOn() {
     try { return !!(window.TLP_AFK && window.TLP_AFK.enabled && window.TLP_AFK.enabled() && !FX.get()); }
     catch (e) { return false; }
   }
-  // A short, low-volume sting. It respects the game's sound switch and keeps
-  // the gain low on purpose: this should make someone jump, not hurt their ears.
+
+
   function jumpSting() {
     if (store.get('tlp-mute') === '1') return;
     var lv = Vol.factor('fx');
@@ -484,7 +541,7 @@
       g.gain.exponentialRampToValueAtTime(.001, t + .72);
       o.connect(g); g.connect(AC.destination);
       o.start(t); o.stop(t + .78);
-      // A dry metallic scrape under the drop. Short noise, band-passed, quiet.
+
       var dur = .22, buf = AC.createBuffer(1, Math.floor(AC.sampleRate * dur), AC.sampleRate), d = buf.getChannelData(0);
       for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
       var src = AC.createBufferSource(), bp = AC.createBiquadFilter(), ng = AC.createGain();
@@ -494,8 +551,8 @@
       o.onended = function () { try { AC.close(); } catch (e) {} };
     } catch (e) {}
   }
-  // The youngest players get a toy-box answer instead of a scare: a rising
-  // boing and three soft bell notes. No scream and nothing above a gentle gain.
+
+
   function kidSting() {
     if (store.get('tlp-mute') === '1') return;
     var lv = Vol.factor('fx');
@@ -518,9 +575,9 @@
       setTimeout(function () { try { AC.close(); } catch (e) {} }, 1100);
     } catch (e) {}
   }
-  // Spoken check-in. The adult line is a slow, low, sinister robot; the child
-  // line is bright and playful. It reuses the browser voice so there is no file
-  // to download and it stays silent when sound is switched off.
+
+
+
   function sayIdle(text, pitch, rate) {
     if (store.get('tlp-mute') === '1' || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
     var nv = Vol.factor('narr');
@@ -528,8 +585,12 @@
     try {
       var s = window.speechSynthesis;
       s.cancel();
-      var u = new SpeechSynthesisUtterance(text);
-      u.pitch = pitch; u.rate = rate; u.volume = .95 * nv; u.lang = 'en-US';
+      var spoken = Voice.localize(text);
+      var arabic = /[\u0600-\u06ff]/.test(spoken);
+      var voice = Voice.pick(arabic);
+      var u = new SpeechSynthesisUtterance(spoken);
+      u.pitch = pitch; u.rate = rate; u.volume = .95 * nv;
+      if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = arabic ? 'ar-SA' : 'en-US'; }
       s.speak(u);
     } catch (e) {}
   }
@@ -585,15 +646,15 @@
   function resetIdle() {
     clearTimeout(idleT);
     idleT = setTimeout(function () {
-      if (idleOk()) showIdle(); else resetIdle(); // never interrupt: try again later
+      if (idleOk()) showIdle(); else resetIdle();
     }, idleWait());
   }
   function onActivity(e) {
-    if ($('#tlpIdle')) return; // while the robot is showing, only its button closes it
+    if ($('#tlpIdle')) return;
     resetIdle();
   }
 
-  /* ------------------------------ Volume panel ------------------------------ */
+
   function openVolume() {
     var m = $('#tlpVol');
     if (!m) {
@@ -627,11 +688,11 @@
     setTimeout(function () { var s = m.querySelector('input[data-vol]'); if (s) s.focus(); }, 40);
   }
 
-  /* ------------------------------ Menu ------------------------------
-     The header links are moved into one panel behind a single Menu button.
-     Every page keeps its own links and its current-page marker; only the
-     arrangement changes, so the navigation is roomy on a phone and on a
-     desktop alike. */
+
+
+
+
+
   function setupNav() {
     var wrap = $('header nav .wrap');
     if (!wrap || wrap.querySelector('.navmenu-btn')) return;
@@ -645,6 +706,7 @@
     btn.className = 'navmenu-btn';
     btn.setAttribute('aria-expanded', 'false');
     btn.setAttribute('aria-controls', 'navPanel');
+    btn.setAttribute('aria-label', 'Menu');
     btn.innerHTML = '<span class="mbars" aria-hidden="true"><i></i><i></i><i></i></span><span>Menu</span>';
     var panel = document.createElement('div');
     panel.className = 'navpanel';
@@ -673,8 +735,8 @@
       panel.hidden = !panel.hidden;
       btn.setAttribute('aria-expanded', panel.hidden ? 'false' : 'true');
     };
-    // Any choice closes the panel: links go to a new page and buttons open a
-    // dialog, so leaving the menu covering it would only get in the way.
+
+
     panel.addEventListener('click', function (e) {
       if (e.target.closest && e.target.closest('a,button')) close();
     });
@@ -684,10 +746,10 @@
     });
   }
 
-  /* ------------------------------ Offline ------------------------------ */
-  /* The app shell is cached after the first visit so a lesson already opened
-     keeps working without a connection. Only the static site is stored here;
-     sign-in, scores and co-op still go straight to Supabase. */
+
+
+
+
   function setupOffline() {
     if (!('serviceWorker' in navigator)) return;
     if (location.protocol !== 'https:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
@@ -696,7 +758,7 @@
     });
   }
 
-  /* ------------------------------ Init ------------------------------ */
+
   async function addAdminLink() {
     try {
       var A = window.TLP_AUTH; if (!A || !A.init) return;
@@ -706,16 +768,310 @@
         var a = document.createElement('a');
         a.id = 'navAdmin'; a.className = 'navlink'; a.href = 'admin.html';
         a.innerHTML = '<span class="sp" aria-hidden="true">✦</span>Admin';
-        // The admin link belongs with the main header links. The Parent link
-        // lives in the footer, so use the Account link as the insertion point.
+
+
         var after = $('#navAccount'); if (after && after.parentNode) after.parentNode.insertBefore(a, after.nextSibling); else host.appendChild(a);
       }
     } catch (e) {}
   }
+
+
+
+
+
+
+
+
+
+
+  var siteCv = null, siteParts = [], siteNeb = [], siteDrop = [], siteBok = [], siteComet = [], siteFly = [], siteRAF = 0;
+  var SITE_PAL = ['#35c9e8', '#9b5cf0', '#ff6b7f', '#3ddc84', '#ffd36a'];
+  function sitePref() {
+    try {
+      var id = 'guest';
+      var l = window.TLP_AUTH && TLP_AUTH.getActiveLearner && TLP_AUTH.getActiveLearner();
+      if (l && l.id) id = l.id;
+      var p = JSON.parse(localStorage.getItem('tlp-settings:' + id) || '{}');
+      var merged = {};
+      if (id !== 'default') {
+        try { merged = JSON.parse(localStorage.getItem('tlp-settings:default') || '{}'); } catch (e) {}
+      }
+
+      try {
+        var lk = l && l.avatar && l.avatar.look;
+        if (lk && typeof lk === 'object') merged = Object.assign(merged, lk);
+      } catch (e) {}
+      p = Object.assign(merged, p);
+      var m = p.sitebg || 'auto';
+      return ['auto','stars','aurora','waves','nebula','matrix','bokeh','orbit','comets','fireflies','prism','none'].indexOf(m) > -1 ? m : 'auto';
+    } catch (e) { return 'auto'; }
+  }
+  function siteSeed() {
+    siteParts = []; siteNeb = []; siteDrop = []; siteBok = [];
+    var w = window.innerWidth || 1200, h = window.innerHeight || 800;
+    for (var i = 0; i < 140; i++) siteParts.push({ x: Math.random()*w, y: Math.random()*h, r: .5+Math.random()*1.9, ph: Math.random()*6.28, v: .15+Math.random()*.5 });
+    for (var j = 0; j < 9; j++) siteNeb.push({ x: Math.random()*w, y: Math.random()*h, r: 110+Math.random()*160, c: SITE_PAL[j % SITE_PAL.length], vx: (Math.random()-.5)*.34, vy: (Math.random()-.5)*.24, ph: j * 1.3 });
+    var cols = Math.floor(w / 26);
+    for (var k = 0; k < cols; k++) siteDrop.push({ x: k * 26 + 8, y: Math.random()*h, v: 1.1+Math.random()*2.8, ch: Math.random() });
+    for (var m = 0; m < 36; m++) siteBok.push({ x: Math.random()*w, y: Math.random()*h, r: 14+Math.random()*48, c: SITE_PAL[m % SITE_PAL.length], v: .2+Math.random()*.55, ph: Math.random()*6.28 });
+    for (var n = 0; n < 10; n++) siteComet.push({ x: Math.random()*w, y: Math.random()*h*.7, vx: 3.6+Math.random()*3.8, vy: 1.2+Math.random()*1.4, life: Math.random(), c: SITE_PAL[n % SITE_PAL.length] });
+    for (var q = 0; q < 56; q++) siteFly.push({ x: Math.random()*w, y: Math.random()*h, r: 1.2+Math.random()*2.6, c: SITE_PAL[q % SITE_PAL.length], ph: Math.random()*6.28, sp: .5+Math.random()*1.1 });
+  }
+  function siteFrame(t) {
+    var c = siteCv; if (!c) return;
+    var x = c.getContext('2d'), w = c.width, h = c.height, mode = document.body.dataset.sitebg || 'auto';
+    x.clearRect(0, 0, w, h);
+    if (mode === 'stars') {
+      siteParts.forEach(function (p) {
+        p.y -= p.v; if (p.y < -4) { p.y = h + 4; p.x = Math.random()*w; }
+        x.globalAlpha = .18 + .3 * Math.abs(Math.sin(t/1100 + p.ph));
+        x.fillStyle = '#cfe8ff';
+        x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.283); x.fill();
+      });
+      x.globalAlpha = 1;
+    } else if (mode === 'waves') {
+      for (var k = 0; k < 5; k++) {
+        x.beginPath();
+        for (var px = 0; px <= w; px += 10) {
+          var y = h * (.5 + k * .07) + Math.sin(px * .011 + t/1600 + k * 1.9) * (10 + k * 5);
+          if (px === 0) x.moveTo(px, y); else x.lineTo(px, y);
+        }
+        x.strokeStyle = 'rgba(110,200,255,' + (.04 + .028 * k) + ')';
+        x.lineWidth = 1.2; x.stroke();
+      }
+    } else if (mode === 'nebula') {
+      siteNeb.forEach(function (n) {
+        n.x += n.vx; n.y += n.vy; n.ph += .006;
+        if (n.x < -n.r) n.x = w + n.r; if (n.x > w + n.r) n.x = -n.r;
+        if (n.y < -n.r) n.y = h + n.r; if (n.y > h + n.r) n.y = -n.r;
+        var g = x.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+        g.addColorStop(0, n.c + '30'); g.addColorStop(.6, n.c + '12'); g.addColorStop(1, n.c + '00');
+        x.fillStyle = g; x.beginPath(); x.arc(n.x, n.y, n.r, 0, 6.283); x.fill();
+      });
+    } else if (mode === 'matrix') {
+      x.font = '12px monospace'; x.textAlign = 'center';
+      var GL = 'アイウエオカキクケコサシスセソ0123456789{}<>/=+*';
+      siteDrop.forEach(function (d) {
+        d.y += d.v; d.ch += .02;
+        if (d.y > h + 20) { d.y = -20; d.x = Math.floor(Math.random() * (w / 26)) * 26 + 8; }
+        var head = Math.floor(d.ch * GL.length) % GL.length;
+        x.globalAlpha = .5; x.fillStyle = '#3ddc84';
+        x.fillText(GL[head], d.x, d.y);
+        x.globalAlpha = .14;
+        for (var t = 1; t < 7; t++) x.fillText(GL[(head + t * 7) % GL.length], d.x, d.y - t * 13);
+      });
+      x.globalAlpha = 1; x.textAlign = 'left';
+    } else if (mode === 'bokeh') {
+      siteBok.forEach(function (b) {
+        b.y -= b.v; b.x += Math.sin(t/2400 + b.ph) * .2;
+        if (b.y < -b.r * 2) { b.y = h + b.r * 2; b.x = Math.random() * w; }
+        var a = .05 + .07 * Math.abs(Math.sin(t/1600 + b.ph));
+        var g = x.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+        g.addColorStop(0, b.c); g.addColorStop(1, b.c + '00');
+        x.globalAlpha = a; x.fillStyle = g;
+        x.beginPath(); x.arc(b.x, b.y, b.r, 0, 6.283); x.fill();
+      });
+      x.globalAlpha = 1;
+    } else if (mode === 'orbit') {
+      var LINK = 120;
+      for (var i = 0; i < siteParts.length; i++) {
+        var a = siteParts[i];
+        a.ph += .012;
+        for (var j = i + 1; j < siteParts.length; j++) {
+          var b = siteParts[j], dx = a.x - b.x, dy = a.y - b.y, d2 = dx*dx + dy*dy;
+          if (d2 > LINK*LINK) continue;
+          var kk = 1 - Math.sqrt(d2) / LINK;
+          x.strokeStyle = 'rgba(140,180,255,' + (kk * .09).toFixed(3) + ')';
+          x.lineWidth = 1; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke();
+        }
+        var gl = x.createRadialGradient(a.x, a.y, 0, a.x, a.y, a.r * 4);
+        gl.addColorStop(0, SITE_PAL[i % SITE_PAL.length]); gl.addColorStop(.35, SITE_PAL[i % SITE_PAL.length] + 'aa'); gl.addColorStop(1, SITE_PAL[i % SITE_PAL.length] + '00');
+        x.globalAlpha = .45 + Math.sin(a.ph) * .15; x.fillStyle = gl;
+        x.beginPath(); x.arc(a.x, a.y, a.r * 4, 0, 6.283); x.fill();
+      }
+      x.globalAlpha = 1;
+    } else if (mode === 'comets') {
+      siteComet.forEach(function (cm) {
+        cm.x += cm.vx; cm.y += cm.vy; cm.life += .004;
+        if (cm.life > 1 || cm.x > w + 80 || cm.y > h + 60) { cm.x = -60 - Math.random()*160; cm.y = Math.random()*h*.6; cm.life = 0; }
+        var tail = 26;
+        var g = x.createLinearGradient(cm.x, cm.y, cm.x - cm.vx * tail, cm.y - cm.vy * tail);
+        g.addColorStop(0, cm.c); g.addColorStop(1, cm.c + '00');
+        x.globalAlpha = .8 * (1 - cm.life * .6); x.strokeStyle = g; x.lineWidth = 2;
+        x.beginPath(); x.moveTo(cm.x, cm.y); x.lineTo(cm.x - cm.vx * tail, cm.y - cm.vy * tail); x.stroke();
+        x.fillStyle = '#fff'; x.beginPath(); x.arc(cm.x, cm.y, 2, 0, 6.283); x.fill();
+      });
+      x.globalAlpha = 1;
+    } else if (mode === 'fireflies') {
+      siteFly.forEach(function (f) {
+        f.ph += .015 * f.sp;
+        var fx = f.x + Math.sin(f.ph * .7) * 46, fy = f.y + Math.cos(f.ph * .5) * 34;
+        var a = .25 + .55 * Math.abs(Math.sin(f.ph));
+        var g = x.createRadialGradient(fx, fy, 0, fx, fy, f.r * 5);
+        g.addColorStop(0, f.c); g.addColorStop(.4, f.c + '88'); g.addColorStop(1, f.c + '00');
+        x.globalAlpha = a; x.fillStyle = g;
+        x.beginPath(); x.arc(fx, fy, f.r * 5, 0, 6.283); x.fill();
+      });
+      x.globalAlpha = 1;
+    } else if (mode === 'prism') {
+      x.globalCompositeOperation = 'lighter';
+      for (var pi = 0; pi < 3; pi++) {
+        var ang = t / 9000 + pi * 2.09;
+        var px2 = w / 2 + Math.cos(ang) * w * .34, py2 = h / 2 + Math.sin(ang) * h * .34;
+        var pg = x.createRadialGradient(px2, py2, 0, px2, py2, Math.max(w, h) * .55);
+        pg.addColorStop(0, SITE_PAL[pi] + '2e'); pg.addColorStop(1, SITE_PAL[pi] + '00');
+        x.fillStyle = pg; x.beginPath(); x.arc(px2, py2, Math.max(w, h) * .55, 0, 6.283); x.fill();
+      }
+      x.globalCompositeOperation = 'source-over';
+    }
+
+
+    if (window.TLP && TLP.FX && TLP.FX.get()) siteRAF = 0;
+    else siteRAF = requestAnimationFrame(siteFrame);
+  }
+  function applySiteBg() {
+    var mode = sitePref();
+    document.body.dataset.sitebg = mode;
+    document.body.classList.remove('sbg-stars','sbg-aurora','sbg-waves','sbg-none','sbg-auto');
+    document.body.classList.add('sbg-' + mode);
+    var orbs = $('#ambOrbs'), grid = $('#bgGrid');
+    if (orbs) orbs.style.display = (mode === 'auto' || mode === 'aurora' || mode === 'waves') ? '' : 'none';
+    if (grid) grid.style.display = mode === 'auto' ? '' : 'none';
+    var canvasModes = ['stars','waves','nebula','matrix','bokeh','orbit','comets','fireflies','prism'];
+    var needCanvas = canvasModes.indexOf(mode) > -1;
+    if (needCanvas) {
+      if (!siteCv) {
+        siteCv = document.createElement('canvas');
+        siteCv.id = 'siteBgCanvas'; siteCv.setAttribute('aria-hidden', 'true');
+        document.body.insertBefore(siteCv, document.body.firstChild);
+        siteSeed();
+      }
+      siteCv.width = window.innerWidth; siteCv.height = window.innerHeight;
+      siteCv.style.display = 'block';
+      if (siteRAF) cancelAnimationFrame(siteRAF);
+      siteRAF = requestAnimationFrame(siteFrame);
+    } else {
+      if (siteCv) siteCv.style.display = 'none';
+      if (siteRAF) { cancelAnimationFrame(siteRAF); siteRAF = 0; }
+    }
+  }
+  window.addEventListener('resize', function () {
+    if (siteCv && siteCv.style.display !== 'none') { siteCv.width = window.innerWidth; siteCv.height = window.innerHeight; siteSeed(); }
+  });
+  window.addEventListener('tlp-prefs-change', applySiteBg);
+  window.addEventListener('tlp-auth-ready', applySiteBg);
+  window.addEventListener('tlp-fx-change', applySiteBg);
+
+
+
+  var SITE_BG_LIST = [
+    ['auto','Classic orbs + grid'],['stars','Starfield'],['aurora','Aurora sky'],
+    ['waves','Wave lines'],['nebula','Nebula drift'],['matrix','Digital rain'],
+    ['bokeh','Bokeh'],['orbit','Orbit nodes'],['comets','Comet shower'],['fireflies','Fireflies'],['prism','Prism'],['none','Clean flat']
+  ];
+  function siteSetBg(m) {
+    try {
+      var id = 'guest';
+      var l = window.TLP_AUTH && TLP_AUTH.getActiveLearner && TLP_AUTH.getActiveLearner();
+      if (l && l.id) id = l.id;
+      var k = 'tlp-settings:' + id;
+      var p = JSON.parse(localStorage.getItem(k) || '{}');
+      p.sitebg = m;
+      localStorage.setItem(k, JSON.stringify(p));
+    } catch (e) {}
+    applySiteBg();
+    try { window.dispatchEvent(new Event('tlp-prefs-change')); } catch (e) {}
+    try { if (window.TLP_AVATAR && TLP_AVATAR.setLook) TLP_AVATAR.setLook({ sitebg: m }); } catch (e) {}
+  }
+
+
+  function siteBgLocked(m) {
+    var need = { matrix: function (s) { return s.stars >= 20; }, nebula: function (s) { return s.streak >= 5; }, orbit: function (s) { return s.ch >= 3; }, comets: function (s) { return s.stars >= 30; }, fireflies: function (s) { return s.streak >= 7; }, prism: function (s) { return s.ch >= 10; } };
+    if (!need[m]) return false;
+    try { if (window.TLP_AUTH && TLP_AUTH.isCurrentUserAdmin && TLP_AUTH.isCurrentUserAdmin()) return false; } catch (e) {}
+    var st = { ch: 0, stars: 0, streak: 0 };
+    try { if (window.TLP_AVATAR && TLP_AVATAR.stats) st = Object.assign(st, TLP_AVATAR.stats()); } catch (e) {}
+    try {
+      var born = +localStorage.getItem('tlp-firstseen') || 0;
+      if (!born) { born = Date.now(); localStorage.setItem('tlp-firstseen', String(born)); }
+      var l = window.TLP_AUTH && TLP_AUTH.getActiveLearner && TLP_AUTH.getActiveLearner();
+      var c = l && (l.created_at || l.createdAt);
+      if (c) { var t = +new Date(c); if (t > born) born = t; }
+      st.age = born ? Math.floor((Date.now() - born) / 86400000) : 0;
+    } catch (e) {}
+    return !need[m](st);
+  }
+  function setupSiteBgBtn() {
+    if ($('#siteBgBtn')) return;
+    var btn = document.createElement('button');
+    btn.id = 'siteBgBtn'; btn.type = 'button';
+    btn.setAttribute('aria-label', 'Choose site background');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = 'Backdrop';
+    var menu = document.createElement('div');
+    menu.id = 'siteBgMenu'; menu.hidden = true;
+    menu.innerHTML = SITE_BG_LIST.map(function (m) {
+      return '<button type="button" class="sbgi" data-m="' + m[0] + '"><i></i>' + m[1] + '</button>';
+    }).join('') +
+      '<div class="sbg-sep"></div>' +
+      '<button type="button" class="sbgi sbg-motion" id="sbgMotion"><i></i><span id="sbgMotionLbl">Motion</span></button>';
+    document.body.appendChild(btn);
+    document.body.appendChild(menu);
+    function sync() {
+      var cur = sitePref();
+      menu.querySelectorAll('.sbgi[data-m]').forEach(function (b) {
+        var locked = siteBgLocked(b.dataset.m);
+        b.classList.toggle('on', b.dataset.m === cur);
+        b.classList.toggle('locked', locked);
+        b.title = locked ? 'Locked — earn it by playing' : '';
+      });
+      var mot = $('#sbgMotion'), lbl = $('#sbgMotionLbl');
+      var calm = FX.get();
+      if (mot) {
+        mot.classList.toggle('on', !calm);
+        mot.setAttribute('aria-pressed', calm ? 'false' : 'true');
+        mot.title = calm ? 'Ambient motion is off. Turn it on for rain, orbs and glitch effects.' : 'Ambient motion is on.';
+      }
+      if (lbl) lbl.textContent = calm ? 'Motion: calm (tap for full)' : 'Motion: full (tap for calm)';
+    }
+    btn.onclick = function (e) {
+      e.stopPropagation();
+      menu.hidden = !menu.hidden;
+      btn.setAttribute('aria-expanded', String(!menu.hidden));
+      if (!menu.hidden) sync();
+    };
+    menu.onclick = function (e) {
+      if (e.target.closest('#sbgMotion')) { FX.set(!FX.get()); sync(); return; }
+      var b = e.target.closest('.sbgi[data-m]'); if (!b) return;
+      if (siteBgLocked(b.dataset.m)) { b.classList.add('shake'); setTimeout(function () { b.classList.remove('shake'); }, 400); return; }
+      siteSetBg(b.dataset.m);
+      menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); sync();
+    };
+    document.addEventListener('pointerdown', function (e) {
+      if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) {
+        menu.hidden = true; btn.setAttribute('aria-expanded', 'false');
+      }
+    }, true);
+    sync();
+  }
+
   function init() {
     FX.apply();
+    if (!$('#ambOrbs')) {
+      var ob = document.createElement('div');
+      ob.id = 'ambOrbs'; ob.setAttribute('aria-hidden', 'true');
+      ob.innerHTML = '<i></i><i></i><i></i>';
+      document.body.insertBefore(ob, document.body.firstChild);
+    }
+    if (!$('#bgGrid')) {
+      var bg = document.createElement('div');
+      bg.id = 'bgGrid'; bg.setAttribute('aria-hidden', 'true');
+      document.body.insertBefore(bg, document.body.firstChild);
+    }
+    applySiteBg();
+    setupSiteBgBtn();
     setupNav();
-    // The appearance switch waits for the shared menu so it can sit beside it.
+
     try { window.dispatchEvent(new Event('tlp-nav-ready')); } catch (e) {}
     var fxb = $('#fx'); if (fxb) fxb.onclick = function () { FX.set(!FX.get()); };
     var vb = $('#volBtn'); if (vb) vb.onclick = openVolume;
@@ -729,7 +1085,7 @@
   }
   window.TLP = { HIDDEN: { g16: [17, 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29], g710: [17, 18, 20, 21, 22, 23, 24] }, BOSS_CH: [3, 9, 14, 19, 24, 29], FX: FX, VOL: Vol, Voice: Voice, openBugReport: openBugReport, openVolume: openVolume, profileName: profileName, idleName: idleName, esc: esc, ico: ico, IC: IC, testIdle: function () { showIdle(); } };
   window.TLP_VOL = Vol;
-  // apply the saved effects setting as early as possible (avoids a flash of motion)
+
   document.documentElement.classList.toggle('reduce-fx', FX.get());
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -1,17 +1,3 @@
-/* =============================================================================
-   PARENT AND EDUCATOR LOGIC  (js/pages/parent.js)
-   -----------------------------------------------------------------------------
-   Powers parent.html. A parent or teacher account creates learner profiles here
-   and reads their progress. The account itself never plays the game.
-   
-   Generated passwords are shown once so they can be handed to the learner; they
-   are never stored in plain text in this file.
-   Areas in this file:
-     - card open/close helpers
-     - the per-learner progress summary
-     - password generation
-     - loading the learner list and their records
-   ============================================================================= */
 const $ = (s) => document.querySelector(s);
 const A = () => window.TLP_AUTH;
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -20,8 +6,8 @@ const DN = { beg: 'Beginner', int: 'Intermediate', pro: 'Professional' };
 const DHELP = { beg: 'Beginner: the learner completes Beginner first. Finishing it unlocks Intermediate, then Professional.',
   int: 'Intermediate: finishing it unlocks Professional. Beginner unlocks only after the whole game is finished on Professional.',
   pro: 'Professional: hints are restricted. After finishing, Beginner and Intermediate become available.' };
-// The five story guardians. Mastery (The Origin) is an optional bonus mission
-// and is never counted against a learner's progress.
+
+
 const BOSS_KEYS = ['3-0', '9-0', '14-0', '19-0', '24-0'];
 let learners = [], selected = null;
 
@@ -31,12 +17,12 @@ $('#aCancel').onclick = () => close('#addM'); $('#pwCancel').onclick = () => clo
 $('#qrClose').onclick = () => { close('#qrM'); qrShut(); };
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { ['#addM', '#pwM', '#delM', '#qrM'].forEach(close); qrShut(); } });
 
-/* -----------------------------------------------------------------------------
-   Progress summary
-   Turns raw progress records into the small bars and counts shown on each
-   learner card. Missing records are treated as "not started", never as zero
-   achievement.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 function summarize(l, recs) {
   const mine = recs.filter((r) => r.learner_id === l.id);
   const cur = mine.find((r) => r.learning_path === (l.assigned_path) && r.game_diff === l.current_diff) || mine[0];
@@ -48,13 +34,13 @@ function summarize(l, recs) {
   return { stars, missions: vals.length, bosses, score: stars * 100, below, lastActive: (cur && cur.updated_at) || null };
 }
 
-/* -----------------------------------------------------------------------------
-   Daily report
-   The cloud keeps one progress row per learner, not a history, so today's work
-   is measured against a small snapshot this browser takes on the first visit of
-   each day. A missing snapshot simply makes today's gain zero; it never invents
-   progress. The grade is deliberately simple and explained in the card.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
+
 const GRADE_WHY = {
   A: 'A strong session today: 300 or more points, or a guardian defeated.',
   B: 'Progress today: new stars or missions.',
@@ -101,7 +87,7 @@ function adviceFor(l, s) {
   if (s.below > 0) return 'Replay ' + s.below + ' mission' + (s.below === 1 ? '' : 's') + ' that scored below three stars. Fewer blocks and a first-try clear raise the score fastest.';
   if (s.bosses < 5) return 'Every finished mission is at three stars. The next guardian is the right step up.';
   if (l.assigned_path === 'g1112' || l.assigned_path === 'adult') return 'All three stars everywhere. Try the next difficulty, then switch on Hardcore mode for the 1.5x score bonus.';
-  return 'Every mission is at three stars. The Bonus sections and co-op missions are the next challenge.';
+  return 'Every mission is at three stars. The Bonus sections and practice missions are the next challenge.';
 }
 function reportText(l, s) {
   const g = dailyDigest(l, s);
@@ -118,20 +104,20 @@ function reportText(l, s) {
   ].join('\n');
 }
 
-/* -----------------------------------------------------------------------------
-   Password generation
-   Local-only helper for educator-created accounts. The value is displayed for
-   the adult to copy; the server stores only a hash.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 function genPw() {
   const w = ['Robot', 'Signal', 'Comet', 'Circuit', 'Planet', 'Rocket', 'Pixel', 'Orbit'];
   return w[Math.floor(Math.random() * w.length)] + (100 + Math.floor(Math.random() * 900)) + w[Math.floor(Math.random() * w.length)].slice(0, 3).toLowerCase();
 }
 
-/* -----------------------------------------------------------------------------
-   Load
-   Fetches learners for the signed-in educator and renders one card each.
-   -------------------------------------------------------------------------- */
+
+
+
+
 let sums = [];
 function paint() {
   const q = ($('#pSearch').value || '').trim().toLowerCase();
@@ -159,6 +145,7 @@ function paint() {
 }
 
 async function load() {
+  try { const v = localStorage.getItem('tlp-parent-search'); if (v) { const inp = $('#pSearch'); if (inp) inp.value = v; } } catch (e) {}
   $('#list').innerHTML = '<p class="meta">Loading...</p>';
   const all = await A().getLearners();
   learners = all.filter((l) => l.parent_user_id === A().getCurrentUser().id);
@@ -198,12 +185,12 @@ $('#list').addEventListener('click', (e) => {
   }
 });
 
-/* -----------------------------------------------------------------------------
-   One-time sign-in QR
-   The learner-qr function makes a code that signs one device in without a
-   Player ID and password. The parent sees the code here; only its hash is kept
-   on the server, so the dialog is the one chance to scan or copy the link.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 let qrLearner = null, qrToken = '', qrExpires = 0, qrCount = null, qrPoll = null, qrSeq = 0;
 
 function qrStop() {
@@ -212,8 +199,8 @@ function qrStop() {
   qrCount = qrPoll = null;
 }
 
-// Closing the dialog abandons any request still in flight, so a late answer
-// cannot reopen a code on a dialog the parent has already dismissed.
+
+
 function qrShut() {
   qrStop();
   qrSeq += 1;
@@ -231,7 +218,7 @@ function qrTick() {
   $('#qrStatus').textContent = 'Waiting for the learner · expires in ' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 }
 
-// Dialog messages are the announced ones; the countdown above stays silent.
+
 function qrNote(text, ok) {
   const m = $('#qrMsg');
   m.textContent = text;
@@ -254,7 +241,7 @@ async function qrCheck() {
       $('#qrStatus').textContent = '';
       qrNote('This code has expired. Make a new one.');
     }
-  } catch (e) { /* The countdown keeps running if a check fails. */ }
+  } catch (e) {                                                     }
 }
 
 async function qrMake(l) {
@@ -339,7 +326,7 @@ $('#delGo').onclick = async () => {
   catch (err) { $('#delMsg').textContent = 'Could not delete: ' + err.message; $('#delGo').disabled = false; }
 };
 
-$('#pSearch').addEventListener('input', paint);
+$('#pSearch').addEventListener('input', () => { try { localStorage.setItem('tlp-parent-search', $('#pSearch').value || ''); } catch (e) {} paint(); });
 $('#pPrint').onclick = () => window.print();
 
 (async function boot() {

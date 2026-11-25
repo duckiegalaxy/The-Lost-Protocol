@@ -1,25 +1,3 @@
-/* =============================================================================
-   THE LOST PROTOCOL — MUSIC ENGINE  (js/music.js)
-   -----------------------------------------------------------------------------
-   Every note is generated in the browser with the Web Audio API. There are no
-   audio files to download and nothing is copyrighted: each theme is a short
-   procedural loop built from a scale, a chord pattern and simple instruments.
-
-   Themes are chosen by age so the whole site has one mood but never the same
-   soundtrack for a 7 year old and a college student:
-     home   calm, curious          g16     bright and bouncy
-     g710   upbeat game            g1112   darker, faster arpeggios
-     adult  slow operations room   boss    tense
-     coop   fast and driving       admin   quiet console
-
-   Rules kept deliberately:
-     - No autoplay. Sound starts after the first tap or key press, as browsers
-       require, and only when the visitor has music switched on.
-     - The existing sound switch (tlp-mute) silences music too.
-     - Music pauses when the tab is hidden and resumes when it comes back.
-     - Nothing here is required for the game to work. If the browser has no
-       Web Audio support, every call is a no-op.
-   ============================================================================= */
 (function () {
   'use strict';
   if (window.TLP_MUSIC) return;
@@ -29,28 +7,28 @@
   var timer = null, step = 0, nextT = 0, cur = 'home', playing = false, armed = false;
   var LOOK = 0.14, TICK = 25;
 
-  /* ------------------------------ Preferences ------------------------------ */
+
   function allowed() { try { return localStorage.getItem(STORE) !== '0'; } catch (e) { return true; } }
   function muted() { try { return localStorage.getItem('tlp-mute') === '1'; } catch (e) { return false; } }
-  // Master × music from the shared volume panel. Read on every tick so moving
-  // a slider is heard at once, without restarting the loop.
+
+
   function volF(kind) {
     try { return window.TLP_VOL ? window.TLP_VOL.factor(kind) : 1; } catch (e) { return 1; }
   }
   function musicLevel() { return Math.max(.0001, .9 * volF('music')); }
 
-  /* ------------------------------ Theme data -------------------------------
-     bpm    beats per minute
-     root   MIDI note of the home note
-     scale  semitone offsets (5 notes = pentatonic, 7 = full scale)
-     prog   one chord root per bar, as a scale degree
-     wave   lead waveform
-     pad    chord pad amount (0..1)
-     drums  1 = light kit, 0 = no kit
-     arp    arpeggio density (0..1)
-     melo   melody chance (0..1)
-     gain   overall volume trim
-     -------------------------------------------------------------------------- */
+
+
+
+
+
+
+
+
+
+
+
+
   var THEMES = {
     home:  { bpm: 82,  root: 57, scale: [0, 2, 4, 7, 9],          prog: [0, 3, 1, 4], wave: 'triangle', pad: 1,    drums: 0, arp: .28, melo: .16, gain: .085 },
     g16:   { bpm: 98,  root: 60, scale: [0, 2, 4, 7, 9],          prog: [0, 3, 2, 4], wave: 'triangle', pad: .7,   drums: 1, arp: .5,  melo: .34, gain: .095 },
@@ -58,18 +36,10 @@
     g1112: { bpm: 124, root: 62, scale: [0, 2, 3, 5, 7, 8, 10],   prog: [0, 5, 3, 4], wave: 'sawtooth', pad: .75,  drums: 1, arp: .85, melo: .48, gain: .095 },
     adult: { bpm: 72,  root: 45, scale: [0, 2, 3, 5, 7, 8, 10],   prog: [0, 5, 3, 6], wave: 'sine',     pad: 1,    drums: 0, arp: .2,  melo: .11, gain: .09  },
     boss:  { bpm: 140, root: 48, scale: [0, 2, 3, 5, 7, 8, 11],   prog: [0, 5, 4, 6], wave: 'sawtooth', pad: .7,   drums: 1, arp: 1,   melo: .5,  gain: .10  },
-    coop:  { bpm: 154, root: 54, scale: [0, 3, 5, 7, 10],         prog: [0, 4, 5, 3], wave: 'square',   pad: .5,   drums: 1, arp: 1,   melo: .6,  gain: .105 },
-    // Co-op keeps the same driving idea but shifts with age: bright and bouncy
-    // for the youngest, faster and darker for teenagers, and a heavy pulse for
-    // the adult and college group. Chosen when the co-op page knows the path.
-    'coop-g16':   { bpm: 132, root: 60, scale: [0, 2, 4, 7, 9],    prog: [0, 3, 2, 4], wave: 'triangle', pad: .45,  drums: 1, arp: .9,  melo: .62, gain: .10  },
-    'coop-g710':  { bpm: 152, root: 57, scale: [0, 3, 5, 7, 10],   prog: [0, 4, 5, 3], wave: 'square',   pad: .5,   drums: 1, arp: 1,   melo: .58, gain: .105 },
-    'coop-g1112': { bpm: 166, root: 50, scale: [0, 2, 3, 5, 7, 8, 10], prog: [0, 5, 3, 4], wave: 'sawtooth', pad: .6, drums: 1, arp: 1, melo: .64, gain: .105 },
-    'coop-adult': { bpm: 144, root: 45, scale: [0, 2, 3, 5, 7, 8, 11], prog: [0, 5, 4, 6], wave: 'sawtooth', pad: .7, drums: 1, arp: 1,  melo: .5, gain: .10  },
     admin: { bpm: 88,  root: 55, scale: [0, 3, 5, 7, 10],         prog: [0, 3, 4, 2], wave: 'triangle', pad: .55,  drums: 0, arp: .4,  melo: .18, gain: .07  }
   };
 
-  /* ------------------------------ Small helpers ------------------------------ */
+
   function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
   function T() { return THEMES[cur] || THEMES.home; }
   function degree(d) {
@@ -83,7 +53,7 @@
     return (n >>> 0) / 4294967296;
   }
 
-  /* ------------------------------ Audio graph ------------------------------ */
+
   function boot() {
     if (ctx) return true;
     var AC = window.AudioContext || window.webkitAudioContext;
@@ -95,8 +65,8 @@
       comp.ratio.value = 4; comp.attack.value = .006; comp.release.value = .22;
       master = ctx.createGain(); master.gain.value = .0001;
       master.connect(comp); comp.connect(ctx.destination);
-      // Interface blips have their own bus so the effects slider controls them
-      // without touching the music level.
+
+
       fxBus = ctx.createGain(); fxBus.gain.value = 1; fxBus.connect(comp);
       var len = Math.floor(ctx.sampleRate * .6);
       noise = ctx.createBuffer(1, len, ctx.sampleRate);
@@ -165,10 +135,10 @@
     s.start(t); s.stop(t + (dur || .1) + .02);
   }
 
-  /* ------------------------------ Sequencing ------------------------------
-     A 16th-note clock schedules ahead of time so timing stays smooth even when
-     the main thread is busy drawing the game.
-     -------------------------------------------------------------------------- */
+
+
+
+
   var MOTIF = [0, 2, 4, 2, 1, 3, 5, 3, 2, 4, 6, 4, 1, 2, 4, 0];
 
   function barStep(s, t) {
@@ -181,11 +151,11 @@
       if (th.pad) pad(mtof(degree(chordDeg) - 12), t, stepDur * 15.5, .028 * th.pad);
       if (!th.drums) osc(mtof(degree(chordDeg) - 12), t, stepDur * 7, 'sine', .05 * gain, 700);
     }
-    if (q === 0 || q === 8 || (th === THEMES.coop && q % 4 === 0)) {
+    if (q === 0 || q === 8) {
       osc(mtof(degree(chordDeg) - 24), t, stepDur * 1.8, th.bass || 'triangle', .10 * gain, 420);
     }
     if (th.drums) {
-      if (q === 0 || q === 8 || (th === THEMES.coop && q === 6) || (th === THEMES.coop && q === 14)) kick(t);
+      if (q === 0 || q === 8) kick(t);
       if (q === 4 || q === 12) { kick(t); hit(t, 1700, .9, .05 * gain, .11); }
       if (q % 2 === 0) hit(t, 7800, .8, .018 * gain, .035);
     }
@@ -216,7 +186,7 @@
     }
   }
 
-  /* ------------------------------ Controls ------------------------------ */
+
   function start() {
     if (playing || !allowed() || !boot()) return;
     try { ctx.resume(); } catch (e) {}
@@ -267,8 +237,8 @@
     (map[kind] || map.tap).forEach(function (n) { osc(n[0], t, n[1], 'triangle', n[2] * fx, 3000, fxBus); });
   }
 
-  // Called by the shared volume panel; the next tick picks the new level up,
-  // and a fade makes the change smooth instead of a click.
+
+
   function setVolume() {
     if (!ctx || !master || !playing) return;
     try {
@@ -277,7 +247,7 @@
     } catch (e) {}
   }
 
-  /* ------------------------------ Browser wiring ------------------------------ */
+
   function firstGesture() {
     if (armed) return;
     armed = true;
@@ -292,8 +262,8 @@
     try { if (document.hidden) ctx.suspend(); else ctx.resume(); } catch (e) {}
   });
 
-  // Keep the engine honest if another tab or the in-game sound button changes
-  // the shared mute value.
+
+
   window.addEventListener('storage', function (e) {
     if (e.key === STORE && !allowed()) stop();
   });

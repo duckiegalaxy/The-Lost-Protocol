@@ -1,7 +1,4 @@
-# Only the static site is published. Database migrations and edge function
-# sources live in the repo but are not part of the deployed site.
 supabase/
-.cursor/
 .git/
 README.md
 .vercelignore

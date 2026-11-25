@@ -1,16 +1,3 @@
-/* =============================================================================
-   THE LOST PROTOCOL — STREAK ENGINE  (js/streak.js)
-   -----------------------------------------------------------------------------
-   A streak counts days, not hours. Opening the game on a new local day adds one
-   day. Missing a day starts again at one. The record is kept per learner on this
-   device, so a shared classroom browser keeps each Player ID separate.
-
-   Milestones run from 2 days to a full year. The last one is deliberately very
-   rare: 365 days earns the Protocol Keeper crest.
-
-   This file also injects its own small style block so the streak card looks the
-   same on the game page, the parent area and the admin dashboard.
-   ============================================================================= */
 (function () {
   'use strict';
   if (window.TLP_STREAK) return;
@@ -34,6 +21,7 @@
     { d: 300, name: 'Almost a Year',     tier: 'legendary', line: 'Three hundred days. The last stretch.' },
     { d: 365, name: 'Protocol Keeper',   tier: 'legendary', line: 'One full year. The rarest crest in the game.', rare: true }
   ];
+  function milestoneReward(m) { return m.d === 365 ? 500 : Math.min(m.d * 5, 300); }
 
   function lid() {
     try {
@@ -59,13 +47,13 @@
   }
   function save(s) { try { localStorage.setItem(key(), JSON.stringify(s)); } catch (e) {} }
 
-  /* ------------------------------ Day check ------------------------------ */
+
   function check() {
-    var s = load(), t = today(), result = { newDay: false, count: s.count || 0, best: s.best || 0, milestone: null, broken: false };
+    var s = load(), t = today(), result = { newDay: false, count: s.count || 0, best: s.best || 0, milestone: null, fresh: false, broken: false };
     if (s.last === t) return result;
 
     var gap = s.last ? (dayNum(t) - dayNum(s.last)) : null;
-    if (gap !== null && gap < 0) return result;       // clock moved backwards; do not punish
+    if (gap !== null && gap < 0) return result;
     if (gap !== null && gap > 1) { result.broken = true; s.count = 1; }
     else s.count = (s.count || 0) + 1;
 
@@ -76,13 +64,16 @@
     s.earned = s.earned || [];
     var ms = null;
     for (var i = 0; i < MILESTONES.length; i++) if (MILESTONES[i].d === s.count) { ms = MILESTONES[i]; break; }
-    if (ms && s.earned.indexOf(ms.d) < 0) s.earned.push(ms.d);
+    if (ms && s.earned.indexOf(ms.d) < 0) {
+      s.earned.push(ms.d);
+      result.milestone = ms; result.fresh = true;
+    }
     save(s);
-    result.newDay = true; result.count = s.count; result.best = s.best; result.milestone = ms;
+    result.newDay = true; result.count = s.count; result.best = s.best;
     return result;
   }
 
-  /* ------------------------------ Readers ------------------------------ */
+
   function get() {
     var s = load(), next = null;
     for (var i = 0; i < MILESTONES.length; i++) if (MILESTONES[i].d > s.count) { next = MILESTONES[i]; break; }
@@ -111,7 +102,7 @@
   }
   function tierName(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
 
-  /* ------------------------------ Markup ------------------------------ */
+
   function weekHtml() {
     var names = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     return '<div class="tsweek" aria-label="Last seven days">' + strip(7).map(function (x) {
@@ -122,7 +113,7 @@
   function cardHtml(opts) {
     opts = opts || {};
     var s = get(), t = s.tier;
-    var next = s.next ? ('Next reward in ' + s.left + ' day' + (s.left === 1 ? '' : 's') + ': ' + s.next.name) : 'Every milestone earned. You are a Protocol Keeper.';
+    var next = s.next ? ('Next reward in ' + s.left + ' day' + (s.left === 1 ? '' : 's') + ': ' + s.next.name + ' · +' + milestoneReward(s.next) + ' Sparks') : 'Every milestone earned. You are a Protocol Keeper.';
     return '<div class="tstreak tier-' + t + (opts.compact ? ' compact' : '') + '">' +
       '<div class="tshead"><div class="tsflame" aria-hidden="true"><i class="ic ic-flame"></i></div>' +
       '<div class="tscopy"><b>' + s.count + ' day streak</b><span>' + (s.count ? next : 'Play today to start a streak.') + '</span></div>' +
@@ -139,18 +130,20 @@
       return '<div class="tsms ' + m.tier + (got ? ' got' : '') + '">' +
         '<span class="tsmd">' + m.d + '</span>' +
         '<div><b>' + m.name + '</b><small>' + m.line + '</small></div>' +
-        '<span class="tsmt">' + (m.rare ? 'Very rare' : tierName(m.tier)) + '</span></div>';
+        '<span class="tsmt">' + (m.rare ? 'Very rare' : tierName(m.tier)) + '<em>+' + milestoneReward(m) + ' Sparks</em></span></div>';
     }).join('') + '</div>';
   }
 
-  function popHtml(m) {
+  function popHtml(m, amount) {
+    var reward = typeof amount === 'number' ? amount : milestoneReward(m);
     return '<div class="ts-pop ' + m.tier + '">' +
       '<div class="ts-pop-art" aria-hidden="true"><i class="ic ic-flame"></i></div>' +
       '<small>' + (m.rare ? 'Very rare streak reward' : 'Streak milestone') + '</small>' +
-      '<b>' + m.name + '</b><span>' + m.d + ' days in a row. ' + m.line + '</span></div>';
+      '<b>' + m.name + '</b><span>' + m.d + ' days in a row. ' + m.line + '</span>' +
+      '<strong class="ts-reward">+' + reward + ' Sparks</strong><small class="ts-reward-note">Added to your balance</small></div>';
   }
 
-  /* ------------------------------ Styles ------------------------------ */
+
   var css = '' +
     '.tstreak{--tier:#35c9e8;border:1px solid color-mix(in srgb,var(--tier) 45%,transparent);border-radius:16px;padding:12px 14px;background:linear-gradient(160deg,color-mix(in srgb,var(--tier) 12%,transparent),transparent 70%);font-family:var(--sans,system-ui,sans-serif);color:var(--fg,#f3efe8)}' +
     '.tstreak.tier-common{--tier:#35c9e8}.tstreak.tier-rare{--tier:#8d7bff}.tstreak.tier-epic{--tier:#ff9f43}.tstreak.tier-legendary{--tier:#ff4d6d}' +
@@ -167,9 +160,10 @@
     '.ts-pop.common{--tier:#35c9e8}.ts-pop.rare{--tier:#8d7bff}.ts-pop.epic{--tier:#ff9f43}.ts-pop.legendary{--tier:#ff4d6d}' +
     '.tsms.got{opacity:1;border-color:color-mix(in srgb,var(--tier,#35c9e8) 55%,transparent);background:color-mix(in srgb,var(--tier,#35c9e8) 10%,transparent);transform:translateX(2px)}' +
     '.tsms.rare{border-style:double;border-width:3px}.tsmd{font:800 15px var(--sans,system-ui,sans-serif);text-align:center;color:var(--tier,#35c9e8)}' +
-    '.tsms b{display:block;font-size:14px}.tsms small{display:block;font-size:12px;color:var(--mut,#aab);line-height:1.35}.tsmt{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut,#aab)}' +
-    '.ts-pop{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px;border-radius:18px;border:2px solid var(--tier,#35c9e8);background:radial-gradient(circle at 50% 0,color-mix(in srgb,var(--tier,#35c9e8) 26%,transparent),transparent 70%),#080d16;text-align:center;animation:tsPop .5s cubic-bezier(.2,1.6,.4,1) both}' +
+    '.tsms b{display:block;font-size:14px}.tsms small{display:block;font-size:12px;color:var(--mut,#aab);line-height:1.35}.tsmt{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut,#aab);text-align:right}.tsmt em{display:block;margin-top:4px;color:var(--tier,#35c9e8);font-style:normal;letter-spacing:0;text-transform:none;white-space:nowrap}' +
+    '.ts-pop{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px;border-radius:18px;border:2px solid var(--tier,#35c9e8);background:radial-gradient(circle at 50% 0,color-mix(in srgb,var(--tier,#35c9e8) 26%,transparent),transparent 70%),var(--surface-1,#080d16);color:var(--fg,#f3efe8);text-align:center;animation:tsPop .5s cubic-bezier(.2,1.6,.4,1) both}' +
     '.ts-pop small{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--tier,#35c9e8)}.ts-pop b{font:800 24px var(--serif,Georgia,serif)}.ts-pop span{font-size:13px;color:var(--mut,#aab);max-width:34ch}' +
+    '.ts-pop .ts-reward{margin-top:5px;padding:7px 14px;border-radius:999px;color:#071018;background:var(--tier,#35c9e8);font:900 15px/1 var(--sans,system-ui,sans-serif);box-shadow:0 0 20px color-mix(in srgb,var(--tier,#35c9e8) 35%,transparent)}.ts-pop .ts-reward-note{margin-top:-2px;font-size:9px;letter-spacing:.08em}' +
     '.ts-pop-art{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:32px;color:var(--tier,#35c9e8);border:2px solid var(--tier,#35c9e8);box-shadow:0 0 28px color-mix(in srgb,var(--tier,#35c9e8) 55%,transparent)}' +
     '.ts-pop.legendary{animation:tsPop .5s cubic-bezier(.2,1.6,.4,1) both,tsGlow 1.4s ease-in-out .5s infinite alternate}' +
     '@keyframes tsPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}' +
@@ -182,6 +176,7 @@
 
   window.TLP_STREAK = {
     MILESTONES: MILESTONES,
+    reward: milestoneReward,
     check: check,
     get: get,
     strip: strip,

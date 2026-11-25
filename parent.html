@@ -13,11 +13,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<script src="js/theme.js"></script>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/pages/parent.css">
+<script src="js/theme.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/parent.css?v=13">
+<link rel="stylesheet" href="css/premium.css?v=10">
 </head>
 <body data-music="home">
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div>
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
@@ -29,9 +33,9 @@
 <main>
 <div class="wrap edu">
   <div class="phead">
-    <p class="pkick">For parents and teachers</p>
-    <h1>Parent and Educator area</h1>
-    <p class="psub">Your learners, their Player IDs and their progress, in one place.</p>
+    <p class="pkick" id="staffKick">Mission support · Parents and teachers</p>
+    <h1 class="glitch" data-text="Your learner command centre">Your learner command centre</h1>
+    <p class="psub" id="staffSub">Support their next mission. Player IDs, progress and your own learners' board, together.</p>
   </div>
 
   <div id="gate" class="pnote" hidden></div>
@@ -44,20 +48,70 @@
       <p class="palt">Want to play the game yourself? Create an <a href="auth.html">Adult learner</a> account instead. It plays like any learner account; this area does not.</p>
     </div>
     <ol class="psteps">
-      <li><span class="ptile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10" cy="8" r="3.4"/><path d="M3.6 19.2c.7-3.3 3.3-5.2 6.4-5.2s5.7 1.9 6.4 5.2"/><path d="M18 6.5v5M15.5 9h5"/></svg></span>
-        <div><b>Create your account</b><span>Choose Parent or Educator. It is separate from a learner account.</span></div></li>
-      <li><span class="ptile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.2" y="5" width="17.6" height="14" rx="2.6"/><circle cx="8.8" cy="11" r="2.1"/><path d="M5.6 16c.4-1.6 1.7-2.4 3.2-2.4s2.8.8 3.2 2.4M15 10.2h3.2M15 13.4h3.2"/></svg></span>
-        <div><b>Add each learner</b><span>Pick an age group and starting difficulty. A Player ID is made for you.</span></div></li>
-      <li><span class="ptile" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19.5V13M9.3 19.5V8.6M14.7 19.5v-8M20 19.5V4.8"/></svg></span>
-        <div><b>Follow progress</b><span>Stars, chapters, guardians and a daily grade, ready to print or email.</span></div></li>
+      <li>
+        <span class="ptile" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="10" cy="8" r="3.4"/>
+            <path d="M3.6 19.2c.7-3.3 3.3-5.2 6.4-5.2s5.7 1.9 6.4 5.2"/>
+            <path d="M18 6.5v5M15.5 9h5"/>
+          </svg>
+        </span>
+        <div>
+          <b>Create your account</b>
+          <span>Choose Parent or Educator. It is separate from a learner account.</span>
+        </div>
+      </li>
+      <li>
+        <span class="ptile" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <rect x="3.2" y="5" width="17.6" height="14" rx="2.6"/>
+            <circle cx="8.8" cy="11" r="2.1"/>
+            <path d="M5.6 16c.4-1.6 1.7-2.4 3.2-2.4s2.8.8 3.2 2.4M15 10.2h3.2M15 13.4h3.2"/>
+          </svg>
+        </span>
+        <div>
+          <b>Add each learner</b>
+          <span>Enter birth month and year for an automatic starting path. Choose a difficulty; we make the Player ID.</span>
+        </div>
+      </li>
+      <li>
+        <span class="ptile" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <path d="M4 19.5V13M9.3 19.5V8.6M14.7 19.5v-8M20 19.5V4.8"/>
+          </svg>
+        </span>
+        <div>
+          <b>Follow progress</b>
+          <span>Stars, chapters, guardians and a daily grade, ready to print or email.</span>
+        </div>
+      </li>
     </ol>
   </section>
 
   <div id="app" hidden>
+    <section id="staffChoice" class="pnote" hidden aria-labelledby="staffChoiceTitle">
+      <h2 id="staffChoiceTitle">How do you support your learners?</h2>
+      <p>This changes the wording here, not your account permissions.</p>
+      <div class="staff-options">
+        <button class="btn ghost" type="button" data-staff="parent">I'm a parent</button>
+        <button class="btn ghost" type="button" data-staff="teacher">I'm a teacher</button>
+      </div>
+      <p id="staffChoiceMsg" role="status" aria-live="polite"></p>
+    </section>
+
+    <div class="pstats" aria-label="Your learners' mission overview">
+      <div><span>Mission crew</span><b id="statLearners">0</b><small>learners you created</small></div>
+      <div><span>Stars collected</span><b id="statStars">0</b><small>current learning paths</small></div>
+      <div><span>Guardians defeated</span><b id="statGuardians">0</b><small>across your crew</small></div>
+    </div>
+
     <div class="pbar2">
       <div class="pcount"><b id="cnt">0</b><span id="cntLbl">learners</span></div>
       <label class="psearch" for="pSearch">
-        <svg class="pic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.6"/><path d="M16 16l4.4 4.4"/></svg>
+        <svg class="pic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="6.6"/>
+          <path d="M16 16l4.4 4.4"/>
+        </svg>
         <input id="pSearch" type="search" maxlength="40" placeholder="Search a child by name or Player ID" autocomplete="off" aria-label="Search a child by name or Player ID">
       </label>
       <div class="pacts2">
@@ -70,15 +124,27 @@
     <p class="pfine">Email opens your mail app with the report already written. Automatic overnight sending needs a mail service set up on the server.</p>
 
     <div class="sec2" id="rankSec" hidden>
-      <h2>Your learners, ranked</h2>
-      <p class="meta">Ranked by score within your own learners. The public leaderboards compare each age group separately.</p>
-      <div class="scroll-x ptable"><table class="rank" id="rank"></table></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+        <div>
+          <p class="pkick">Your crew only</p>
+          <h2 class="glitch" data-text="Your learners' leaderboard">Your learners' leaderboard</h2>
+        </div>
+        <a class="btn ghost sm" href="leaderboard.html">Public boards</a>
+      </div>
+      <p class="meta" id="rankScope">Only learners you created appear here, never unrelated players or teacher rankings. Scores come from the game's public leaderboard; ranks are within your crew.</p>
+      <div class="rank-filters">
+        <label for="rankPath">Age group<select id="rankPath"><option value="g16">Grades 1 to 6</option><option value="g710" selected>Grades 7 to 10</option><option value="g1112">Grades 11 to 12</option><option value="adult">College and adult</option></select></label>
+        <label for="rankDiff">Difficulty<select id="rankDiff"><option value="beg">Beginner</option><option value="int" selected>Intermediate</option><option value="pro">Professional</option></select></label>
+        <button class="btn ghost sm" type="button" id="rankRefresh">Refresh board</button>
+      </div>
+      <p class="meta" id="rankStatus" role="status" aria-live="polite"></p>
+      <div class="scroll-x ptable" role="region" aria-label="Your learners' rankings, scroll horizontally for more columns" tabindex="0"><table class="rank" id="rank"></table></div>
     </div>
   </div>
 </div>
 </main>
 
-<!-- Sign-in QR -->
+
 <div class="tlpm" id="qrM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="qrT">
   <button class="tlpm-x" type="button" id="qrX" aria-label="Close">&#10005;</button>
   <h2 id="qrT">Sign in a device</h2>
@@ -91,7 +157,7 @@
   <div class="tlpm-row"><button type="button" class="tlpm-btn" id="qrClose">Close</button><button type="button" class="tlpm-btn" id="qrCopy">Copy link</button><button type="button" class="tlpm-btn pri" id="qrNew">New code</button></div>
 </div></div>
 
-<!-- Add learner -->
+
 <div class="tlpm" id="addM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="addT">
   <button class="tlpm-x" type="button" id="addX" aria-label="Close">&#10005;</button>
   <h2 id="addT">Add a learner</h2>
@@ -99,8 +165,12 @@
   <p class="s">Only create profiles for children in your care. The <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a> explains what is saved and how to delete it.</p>
   <form id="addF" autocomplete="off">
     <div class="fld"><label for="aName">Learner name</label><input id="aName" maxlength="32" required></div>
-    <div class="fld"><label for="aPath">Age group</label><select id="aPath">
-      <option value="g16">Grades 1 to 6</option><option value="g710" selected>Grades 7 to 10</option><option value="g1112">Grades 11 to 12</option><option value="adult">College and adult</option></select></div>
+    <div class="birth-fields">
+      <div class="fld"><label for="aBirthMonth">Birth month (1-12)</label><input id="aBirthMonth" type="number" inputmode="numeric" min="1" max="12" step="1" required aria-describedby="aBirthHelp"></div>
+      <div class="fld"><label for="aBirthYear">Birth year</label><input id="aBirthYear" type="number" inputmode="numeric" min="1900" step="1" required aria-describedby="aBirthHelp"></div>
+    </div>
+    <p class="meta" id="aBirthHelp">Month and year only, not the full birthday. The starting age group is chosen automatically for this new learner; existing learners' paths are unchanged.</p>
+    <output class="birth-path" id="aPath" aria-live="polite">Enter a birth month and year to see the starting path.</output>
     <div class="fld"><label for="aDiff">Starting difficulty</label><select id="aDiff">
       <option value="beg">Beginner</option><option value="int" selected>Intermediate</option><option value="pro">Professional</option></select></div>
     <p class="meta" id="aDiffHelp"></p>
@@ -117,7 +187,7 @@
   </div>
 </div></div>
 
-<!-- Reset password -->
+
 <div class="tlpm" id="pwM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="pwT">
   <button class="tlpm-x" type="button" id="pwX" aria-label="Close">&#10005;</button>
   <h2 id="pwT">Reset password</h2><p class="s" id="pwWho"></p>
@@ -126,7 +196,7 @@
   <div class="tlpm-row"><button type="button" class="tlpm-btn" id="pwCancel">Cancel</button><button type="button" class="tlpm-btn pri" id="pwGo">Save new password</button></div>
 </div></div>
 
-<!-- Delete learner -->
+
 <div class="tlpm" id="delM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="delT">
   <button class="tlpm-x" type="button" id="delX" aria-label="Close">&#10005;</button>
   <h2 id="delT">Delete learner</h2>
@@ -139,12 +209,15 @@
 <footer><div class="wrap"><span>The Lost Protocol, an interactive educational game · <a href="privacy.html">Privacy notice</a></span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/tlp-auth.js"></script>
-<script src="js/tlp-common.js"></script>
-<script src="js/vendor/qrcode.js"></script>
-<script src="js/streak.js"></script>
-<script src="js/music.js"></script>
-<script src="js/pages/parent.js"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-background.js?v=14"></script>
+<script src="js/vendor/qrcode.js?v=13"></script>
+<script src="js/streak.js?v=14"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/pages/parent.js?v=13"></script>
+<script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

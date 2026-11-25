@@ -13,11 +13,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<script src="js/theme.js"></script>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/pages/leaderboard.css">
+<script src="js/theme.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/leaderboard.css?v=15">
+<link rel="stylesheet" href="css/premium.css?v=10">
 </head>
-<body data-music="home" data-activity="Checking leaderboards">
+<body class="page-leaderboard" data-music="home" data-activity="Checking leaderboards">
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div>
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
@@ -29,16 +33,11 @@
 
 <main>
 <div class="wrap lbp">
-  <h1>Leaderboards</h1>
-  <p class="lead">Pick an age group and a difficulty. Each group has its own board, so a first grader is never ranked against a college student. Parents and teachers can search by display name or Player ID.</p>
+  <div class="lbhero"><p class="lbkick">The mission hall of fame</p><h1>Every star tells a story.</h1><p class="lead">Explore the public leaderboards. Pick an age group and difficulty to celebrate progress with players on the same path.</p><div class="lbhero-tags" aria-label="Board features"><span>Four learning paths</span><span>Shared ranks for ties</span><span>Server-verified scores</span></div></div>
+  <a class="staff-board-link" id="staffBoardLink" href="parent.html#rankSec" hidden>Your learners' leaderboard →</a>
 
-  <div class="swt" role="tablist" aria-label="Leaderboard type">
-    <button role="tab" id="tInd" aria-selected="true" type="button">Individual</button>
-    <button role="tab" id="tCo" aria-selected="false" type="button">Co-op teams</button>
-  </div>
-
-  <div class="vw" id="view"><div class="slides" id="slides">
-    <section class="slide" aria-label="Individual leaderboard">
+  <div class="vw" id="view">
+    <section class="board-panel">
       <div class="tabs2" id="pathTabs" role="tablist" aria-label="Age group"></div>
       <div class="chips2" id="diffChips" role="group" aria-label="Difficulty"></div>
       <div class="lbtools">
@@ -53,22 +52,10 @@
       <div class="tw"><div id="indBody" class="msg3" aria-live="polite">Loading...</div></div>
       <div class="pg"><button id="indPrev" type="button">Previous</button><span id="indPage"></span><button id="indNext" type="button">Next</button></div>
     </section>
-    <section class="slide" aria-label="Co-op leaderboard">
-      <div class="chips2" id="weekChips" role="group" aria-label="Weekly mission"></div>
-      <div class="lbtools">
-        <label class="lbsearch" for="coSearch"><i class="ic ic-target" aria-hidden="true"></i><input id="coSearch" type="search" maxlength="40" placeholder="Find a team by name or Player ID" autocomplete="off" aria-label="Search a co-op team by name or Player ID"></label>
-        <button class="lbbtn" id="coFind" type="button">Find</button>
-        <button class="lbbtn quiet" id="coClear" type="button" hidden>Clear</button>
-      </div>
-      <!-- Placeholder only: the Co-op tab is lazy, so initCo() replaces this
-           sentence with the first page of results when the tab is opened. -->
-      <div class="tw"><div id="coBody" class="msg3" aria-live="polite">Team results load when you open this tab.</div></div>
-      <div class="pg"><button id="coPrev" type="button">Previous</button><span id="coPage"></span><button id="coNext" type="button">Next</button></div>
-    </section>
-  </div></div>
+  </div>
 
   <div class="rules">
-    <b>How ranking works.</b> Higher score first, then more stars, then the player who reached it first. Equal score and stars share a rank. Every age group gets its own layout: sticker cards for Grades 1 to 6, a podium for Grades 7 to 10, a terminal grid for Grades 11 to 12 and a quiet list for college and adult players. <b>Active today</b> shows players who finished something since midnight, still ordered by total score because the board keeps one row per player. <b>Search</b> matches the display name or the Player ID. Co-op matches are scored by the server; test accounts, test matches and bonus results never appear.
+    <b>How ranking works.</b> Higher score first, then more stars, then the player who reached it first. Equal score and stars share a rank. Every age group gets its own layout: sticker cards for Grades 1 to 6, a podium for Grades 7 to 10, a terminal grid for Grades 11 to 12 and a quiet list for college and adult players. <b>Active today</b> shows players who finished something since midnight, still ordered by total score because the board keeps one row per player. <b>Search</b> matches the display name or the Player ID. Test accounts and bonus results never appear.
   </div>
 </div>
 </main>
@@ -76,12 +63,16 @@
 <footer><div class="wrap"><span>The Lost Protocol, an interactive educational game · <a href="privacy.html">Privacy notice</a></span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/tlp-auth.js"></script>
-<script src="js/tlp-common.js"></script>
-<script src="js/tlp-presence.js"></script>
-<script src="js/streak.js"></script>
-<script src="js/music.js"></script>
-<script src="js/pages/leaderboard.js"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-background.js?v=14"></script>
+<script src="js/tlp-presence.js?v=13"></script>
+<script src="js/tlp-avatar.js?v=23"></script>
+<script src="js/streak.js?v=14"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/pages/leaderboard.js?v=15"></script>
+<script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

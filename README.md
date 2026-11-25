@@ -11,7 +11,7 @@ The Lost Protocol is a browser game that teaches programming. Players repair a b
 - A block editor that works with mouse, touch or keyboard, with hints, a guide that reacts to mistakes, and per-mission stars.
 - Story scenes, spoken narration, procedural music and four separate volume channels.
 - Streaks with year-long milestones, daily missions and achievements.
-- Leaderboards, a friend list and co-op rooms scored on the server.
+- Leaderboards and a friend list.
 - Parent dashboard for creating learner accounts, setting names and passwords, and reviewing progress; separate admin tools for story and level management.
 - Offline play: the service worker caches the site, so a lesson already opened keeps working without a connection.
 
@@ -24,7 +24,6 @@ The Lost Protocol is a browser game that teaches programming. Players repair a b
 | `auth.html` | Sign in, sign up and password reset |
 | `leaderboard.html` | Public and per-path score boards |
 | `friends.html` | Friend list and presence |
-| `coop.html` | Co-op lobby and shared missions |
 | `bonus.html` | Mastery missions and practice levels |
 | `parent.html` | Parent and educator dashboard |
 | `admin.html` | Owner-only admin tools |
@@ -39,13 +38,13 @@ python -m http.server 8080
 npx serve .
 ```
 
-Then open `http://localhost:8080`. Sign-in, scores and co-op need a network connection to Supabase; a lesson that has been opened once still plays from the cache.
+Then open `http://localhost:8080`. Sign-in and scores need a network connection to Supabase; a lesson that has been opened once still plays from the cache.
 
 ## Project layout
 
 | Path | Contents |
 | --- | --- |
-| `js/` | Shared scripts: auth, config, music, story, streaks, presence, co-op core |
+| `js/` | Shared scripts: auth, config, music, story, streaks and presence |
 | `js/pages/` | One script per page |
 | `css/` | Base styles and shared components |
 | `css/pages/` | One stylesheet per page |
@@ -56,9 +55,9 @@ Then open `http://localhost:8080`. Sign-in, scores and co-op need a network conn
 
 ## Backend
 
-Accounts, scores and co-op live in Supabase (project `gkycmrivyqxknvkgdffr`, EU West). The browser only ever holds the publishable key in `js/config.js`. Scores are computed by database functions and edge functions, never trusted from the browser, and co-op submissions are re-simulated on the server before a result is stored.
+Accounts and scores live in Supabase (project `gkycmrivyqxknvkgdffr`, EU West). The browser only ever holds the publishable key in `js/config.js`. Scores are computed by database functions and edge functions, never trusted from the browser.
 
-Schema notes, migration files and the two edge functions (`coop-submit`, `learner-admin`) are documented in [`supabase/README.md`](supabase/README.md). The live database is authoritative; the files in `supabase/migrations/` mirror it.
+Schema notes, migration files and the edge functions are documented in [`supabase/README.md`](supabase/README.md). The live database is authoritative; the files in `supabase/migrations/` mirror it.
 
 ## Accounts
 

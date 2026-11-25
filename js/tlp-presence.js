@@ -1,29 +1,3 @@
-/* =============================================================================
-   FRIEND LIST AND LIVE PRESENCE  (js/tlp-presence.js)
-   -----------------------------------------------------------------------------
-   Load after tlp-auth.js and tlp-common.js on pages where a signed-in learner
-   can be seen by friends.
-   
-   How it works:
-     - A friend list is stored in this browser, keyed by the learner's account,
-       so no new database table is needed. Both players add each other's Player
-       ID to see one another.
-     - A single Supabase Realtime channel carries presence only: Player ID,
-       display name and a short activity line. Nothing private is published.
-     - Presence is best effort. If Realtime is unavailable the list still works
-       and everyone simply appears offline.
-   
-   Public API (window.TLP_PRESENCE):
-     start(opts)                 begin presence once the account is known
-     setActivity(text)           change the activity friends see
-     me()                        {id, name, player_id} or null
-     friends()                   local list merged with live presence
-     addFriend(pid, name)        add one Player ID, returns the saved entry
-     removeFriend(pid)
-     onlineMap()                 latest presence payloads, keyed by Player ID
-     onChange(fn)                call fn(friends) whenever presence changes
-     lookupPlayer(pid)           public display name for a Player ID
-   ============================================================================= */
 (function () {
   'use strict';
   if (window.TLP_PRESENCE) return;
@@ -203,8 +177,8 @@
     try { if (ch) A().supabase.removeChannel(ch); } catch (e) {}
   });
 
-  // Pages opt in with a body data-activity attribute, so adding the script is
-  // enough to appear online with a sensible activity line.
+
+
   function auto() {
     if (document.body && document.body.hasAttribute('data-activity')) start();
   }

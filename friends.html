@@ -13,16 +13,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<script src="js/theme.js"></script>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/pages/friends.css">
+<script src="js/theme.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/friends.css?v=14">
+<link rel="stylesheet" href="css/premium.css?v=10">
 </head>
 <body data-music="home" data-activity="Browsing friends">
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div>
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
   <a class="navlink" href="webgame.html"><span class="sp" aria-hidden="true"></span>Play Game</a>
-  <a class="navlink" href="coop.html"><span class="sp" aria-hidden="true"></span>Co-op</a>
   <a class="navlink" href="leaderboard.html"><span class="sp" aria-hidden="true"></span>Leaderboards</a>
   <a class="navlink on" href="friends.html"><span class="sp" aria-hidden="true"></span>Friends</a>
   <a class="navlink" href="auth.html"><span class="sp" aria-hidden="true"></span>Account</a>
@@ -30,8 +33,11 @@
 
 <main>
 <div class="wrap fr">
-  <h1>Friends</h1>
-  <p class="lead">Add a teammate by their Player ID. When they are signed in anywhere on the site, you can see whether they are online and what they are doing, and start a co-op room with one click.</p>
+  <div class="fr-hero">
+    <p class="fr-kicker">SQUAD CONNECTIONS</p>
+    <h1>Friends</h1>
+    <p class="lead">Add friends by their Player ID and see when they are online.</p>
+  </div>
   <div id="gate" class="pn" hidden></div>
 
   <div id="app" hidden>
@@ -50,7 +56,7 @@
         <input type="text" id="addPid" maxlength="26" placeholder="Their Player ID, TLP-12345678" aria-label="Friend Player ID" autocomplete="off">
         <button class="btn" id="addBtn" type="button">Add friend</button>
       </div>
-      <p class="m">The Player ID is shown on this page, in the co-op lobby and on the leaderboard. Both people add each other, because a friend list is kept in each player's own browser.</p>
+      <p class="m">Both people add each other, because a friend list is kept in each player's own browser.</p>
       <p class="msg4" id="addMsg" role="status" aria-live="polite"></p>
     </div>
 
@@ -60,7 +66,7 @@
       <div id="frList" class="frgrid"><p class="m">No friends yet. Add a Player ID above.</p></div>
     </div>
 
-    <p class="frnote">Online status comes from a live connection and clears when someone closes the site. A friend can look offline while their browser is asleep. Starting a co-op room sends them an invitation that appears in their co-op lobby.</p>
+    <p class="frnote">Online status comes from a live connection and clears when someone closes the site. A friend can look offline while their browser is asleep.</p>
   </div>
 </div>
 </main>
@@ -68,11 +74,14 @@
 <footer><div class="wrap"><span>The Lost Protocol, an interactive educational game · <a href="privacy.html">Privacy notice</a></span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/tlp-auth.js"></script>
-<script src="js/tlp-common.js"></script>
-<script src="js/tlp-presence.js"></script>
-<script src="js/music.js"></script>
-<script src="js/pages/friends.js"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-background.js?v=14"></script>
+<script src="js/tlp-presence.js?v=13"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/pages/friends.js?v=13"></script>
+<script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

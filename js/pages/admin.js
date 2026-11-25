@@ -1,17 +1,3 @@
-/* =============================================================================
-   ADMIN DASHBOARD LOGIC  (js/pages/admin.js)
-   -----------------------------------------------------------------------------
-   Powers admin.html. Every action here is already permission-checked in the
-   database: this file only renders what the server returns. If an admin is not
-   signed in, adminBoot() shows the gate and stops.
-   
-   Nothing in this file touches gameplay or learner progress directly; the only
-   write actions are the maintenance buttons (bug status, test-data purge).
-   Areas in this file:
-     - helpers and the table renderer
-     - one loader per tab (profiles, leaderboard, co-op, feedback, bugs, test data)
-     - tab switching and the permission gate in adminBoot()
-   ============================================================================= */
 const $ = (s) => document.querySelector(s);
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const A = () => window.TLP_AUTH;
@@ -19,12 +5,12 @@ const fmt = (d) => { try { return d ? new Date(d).toLocaleString() : ''; } catch
 const say = (t, bad) => { const m = $('#msg'); m.textContent = t || ''; m.style.color = bad ? '#ef7a8c' : ''; };
 let current = 'overview';
 
-/* -----------------------------------------------------------------------------
-   Story map
-   The game itself owns the text (js/story.js) and the chapter order
-   (js/pages/webgame.js SEC). This table only mirrors that order so the
-   dashboard can show every scene in the exact sequence a player meets it.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 const STORY_ACTS = [
   { t: 'The Basics', d: 'How programs think: steps, boxes, repeats and decisions.', ch: [4, 0, 1, 2], boss: 3 },
   { t: 'Data', d: 'What information is, and how to handle it safely.', ch: [5, 6, 7, 8], boss: 9 },
@@ -45,15 +31,18 @@ let storyVer = 'std';
 const S = () => window.TLP_STORY;
 const SPATH = () => (storyVer === 'kid' ? 'g16' : 'adult');
 
-/* One story card: where it appears on screen, when it fires, and the lines. */
-function storyBlock(title, where, when, arr) {
+
+
+function storyBlock(title, where, when, arr, watch) {
   if (!arr || !arr.length) return '';
   return '<div class="stblock"><h4>' + esc(title) + '</h4>' +
     '<p class="stmeta"><b>Where</b> ' + esc(where) + '<br><b>When</b> ' + esc(when) + '</p>' +
-    '<div class="stlines">' + S().lines(arr) + '</div></div>';
+    '<div class="stlines">' + S().lines(arr) + '</div>' +
+    (watch ? '<p class="stwatch"><a class="row-btn" href="webgame.html?watch=' + encodeURIComponent(watch) + '&path=' + encodeURIComponent(SPATH()) + '">▶ Watch the animation</a></p>' : '') +
+    '</div>';
 }
 
-/* CSV export so the same figures can be pasted into the Google Sheet. */
+
 function csvText(rows) {
   return rows.map((r) => r.map((v) => {
     const s = String(v == null ? '' : v);
@@ -69,11 +58,11 @@ function downloadCsv(name, rows) {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-/* -----------------------------------------------------------------------------
-   Table renderer
-   All tabs share one markup shape: a header row plus body rows built by a
-   loader. esc() is applied to every database value before it reaches HTML.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 function table(head, rows) {
   if (!rows.length) return '<p>Nothing to show.</p>';
   return '<table><thead><tr>' + head.map((h) => '<th>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + rows.join('') + '</tbody></table>';
@@ -96,6 +85,13 @@ const TABS = {
   },
   async learners() {
     const list = await A().getAllLearners();
+
+
+    let lifeMap = {};
+    try {
+      const lifes = await A().adminLifelines();
+      lifes.forEach((x) => { lifeMap[x.learner_id] = x; });
+    } catch (e) {}
     let sumMap = {};
     try {
       const summaries = await A().getProgressSummaries(list.map(l => l.id || l.user_id));
@@ -111,7 +107,7 @@ const TABS = {
       let totalSolved = 0, totalStars = 0;
       pRecs.forEach(r => {
         if (r.prog) {
-          // Saved progress stores a star count (0-3) per level, not an object.
+
           Object.values(r.prog).forEach(stars => {
             const n = Number(stars) || 0;
             if (n >= 1) { totalSolved++; totalStars += Math.min(3, n); }
@@ -119,9 +115,14 @@ const TABS = {
         }
       });
       const progText = pRecs.length ? (totalSolved + ' missions (' + totalStars + ' ★)') : 'No missions yet';
-      return '<tr><td><b>' + esc(l.player_id || l.playerId || '-') + '</b></td><td>' + esc(l.name) + '</td><td>' + esc(l.assigned_path || l.assignedPath) + '</td><td>' + esc(l.current_diff || l.currentDiff) + '</td><td>' + ((l.parent_user_id || l.parentUserId) ? 'linked to a parent' : 'self') + '</td><td>' + esc(progText) + '</td><td>' + ((l.is_test || l.isTest) ? 'test' : '') + '</td></tr>';
+      const lf = lifeMap[l.id];
+      const lfHtml = lf
+        ? '<b>' + lf.left + '/' + lf.max + '</b> <button class="row-btn lfref" type="button" data-lid="' + esc(l.id) + '">Refill</button>'
+        : '<span class="muted">-</span>';
+      const av = l.avatar && typeof l.avatar === 'object' ? window.TLP_AVATAR ? TLP_AVATAR.mini(l.avatar, 22) : '' : '';
+      return '<tr><td><b>' + esc(l.player_id || l.playerId || '-') + '</b></td><td>' + av + ' ' + esc(l.name) + '</td><td>' + esc(l.assigned_path || l.assignedPath) + '</td><td>' + esc(l.current_diff || l.currentDiff) + '</td><td>' + ((l.parent_user_id || l.parentUserId) ? 'linked to a parent' : 'self') + '</td><td>' + esc(progText) + '</td><td>' + lfHtml + '</td><td>' + ((l.is_test || l.isTest) ? 'test' : '') + '</td></tr>';
     });
-    return table(['Player ID', 'Learner', 'Path', 'Difficulty', 'Owner', 'Progress', 'Flag'], rows);
+    return '<p>Lifeline is the daily energy reserve players spend on losses. Refill resets it for the current day. The robot icon is each learner\'s avatar.</p>' + table(['Player ID', 'Learner', 'Path', 'Difficulty', 'Owner', 'Progress', 'Lifeline', 'Flag'], rows);
   },
   async bugs() {
     const bugs = await A().getBugReports();
@@ -135,10 +136,6 @@ const TABS = {
     const rows = (await A().getAdminLeaderboardEntries()).map((e) => '<tr data-id="' + esc(e.id) + '"><td>' + esc(e.display_name) + '</td><td>' + esc(e.learning_path) + ' / ' + esc(e.game_diff) + '</td><td>' + esc(e.total_score) + '</td><td>' + esc(e.total_stars) + '</td><td>' + (e.is_test ? 'test' : '') + '</td><td><button class="row-btn danger bdel" type="button">Remove</button></td></tr>');
     return '<p>Scores are calculated by the database from saved progress. Remove an entry only if it looks wrong.</p>' + table(['Name', 'Path / level', 'Score', 'Stars', 'Flag', ''], rows);
   },
-  async coop() {
-    const rows = (await A().getCoopMatchesAdmin()).map((m) => '<tr><td>' + esc(fmt(m.finished_at)) + '</td><td>' + esc(m.challenge_id) + '</td><td>' + esc(m.score) + '</td><td>' + esc(m.correct) + ' of 11</td><td>' + esc(m.steps) + '</td><td>' + esc(Math.round(m.duration_ms / 1000)) + ' s</td><td>' + (m.is_test ? 'test' : '') + '</td></tr>');
-    return '<p>Every completed co-op match, including test matches. Results are verified by the server.</p>' + table(['Finished', 'Mission', 'Score', 'Correct', 'Steps', 'Time', 'Flag'], rows);
-  },
   async feedback() {
     const rows = (await A().getAllFeedback()).map((f) => '<tr><td>' + esc(fmt(f.created_at)) + '</td><td>' + esc(f.rating) + '</td><td>' + esc(f.age_group) + '</td><td>' + esc(f.tags) + '</td><td>' + esc(f.message) + '</td><td>' + esc(f.name) + '</td></tr>');
     return '<p>Copies of feedback sent from the home page since this feature was installed.</p>' + table(['Date', 'Rating', 'Age group', 'Tags', 'Message', 'Name'], rows);
@@ -151,11 +148,11 @@ const TABS = {
       (total ? '<div class="warn"><label><input type="checkbox" id="tconfirm"> I have read the preview above and want to permanently delete these test records.</label><p><label for="ttype">Type <b>DELETE TEST DATA</b> to continue:</label><br><input type="text" id="ttype" autocomplete="off"></p><button class="row-btn danger" id="tgo" type="button" disabled>Delete test data</button></div>' : '<p>No test data found.</p>');
   },
 
-  /* ---------------------------------------------------------------------------
-     Story: every line the game can show, in the order it appears, with the
-     screen it uses and the moment it fires. The text comes from js/story.js,
-     so this tab can never drift out of date with the game.
-     ------------------------------------------------------------------------ */
+
+
+
+
+
   async story() {
     if (!S()) return '<p>The story file did not load, so there is nothing to show.</p>';
     const path = SPATH();
@@ -169,7 +166,7 @@ const TABS = {
       '<p class="stnote">Players meet these scenes in this order. The version buttons show the exact lines each age group sees. As an administrator, the game opens with every section and chapter available, including the optional Mastery section.</p>';
 
     h += '<details class="stsec" open><summary><span class="sttag">Start</span><b>' + esc(op.title) + '</b><em>Opening · before Chapter 1</em></summary><div class="stbody">' +
-      storyBlock('Opening cinematic', 'Full-screen story screen ending with the Begin Mission button', 'First visit, once per learner; replayable from Settings', flat(op.scenes)) +
+      storyBlock('Opening cinematic', 'Full-screen story screen ending with the Begin Mission button', 'First visit, once per learner; replayable from Settings', flat(op.scenes), 'opening') +
       '<p class="stobj"><b>Objective line</b> ' + esc(op.objective) + '</p>' +
       '</div></details>';
 
@@ -177,32 +174,51 @@ const TABS = {
       const act = S().act(i, path), end = S().actEnd(i, path);
       h += '<details class="stsec"><summary><span class="sttag">Act ' + (i + 1) + '</span><b>' + esc(a.t) + '</b><em>' +
         a.ch.length + ' chapters then the guardian · ' + esc(CH_TITLES[a.boss]) + (a.bonus ? ' · optional bonus' : '') + '</em></summary><div class="stbody">' +
-        storyBlock('Act opening', 'Act title card', 'First time this section is entered', act && act.lines);
+        storyBlock('Act opening', 'Act title card', 'First time this section is entered', act && act.lines, 'act-' + i);
       a.ch.forEach((c, j) => {
         const brief = S().brief(c), win = S().win(c, path);
         if (!brief.length && !win.length) return;
         h += '<div class="stchap"><h3>Section ' + (i + 1) + ' · Chapter ' + (j + 1) + ' · ' + esc(CH_TITLES[c]) + '</h3>' +
-          storyBlock('Briefing', 'Story card above the mission', 'Each time this chapter is opened', brief) +
-          storyBlock('Chapter complete', 'Story card after the last mission', 'When the chapter is finished', win) +
+          storyBlock('Briefing', 'Story card above the mission', 'Each time this chapter is opened', brief, 'brief-' + c) +
+          storyBlock('Chapter complete', 'Story card after the last mission', 'When the chapter is finished', win, 'win-' + c) +
           '</div>';
       });
       h += '<div class="stchap"><h3>Section ' + (i + 1) + ' · Guardian · ' + esc(CH_TITLES[a.boss]) + '</h3>' +
-        storyBlock('Guardian intro', 'Guardian screen before the fight', 'When the guardian level starts', S().bossIntro(a.boss)) +
-        storyBlock('Guardian defeated', 'Victory card', 'When the guardian is defeated', S().bossOutro(a.boss)) +
+        storyBlock('Guardian intro', 'Guardian screen before the fight', 'When the guardian level starts', S().bossIntro(a.boss), 'bossin-' + a.boss) +
+        storyBlock('Guardian defeated', 'Victory card', 'When the guardian is defeated', S().bossOutro(a.boss), 'bossout-' + a.boss) +
         '</div>' +
-        storyBlock('Act closing', 'Closing card between acts', a.bonus ? 'After the bonus guardian, leading into the ending' : 'After the guardian, before the next section', end) +
+        storyBlock('Act closing', 'Closing card between acts', a.bonus ? 'After the bonus guardian, leading into the ending' : 'After the guardian, before the next section', end, 'actend-' + i) +
         '</div></details>';
     });
 
     h += '<details class="stsec"><summary><span class="sttag">End</span><b>' + esc(en.title) + '</b><em>Ending · after the final guardian</em></summary><div class="stbody">' +
-      storyBlock('Ending cinematic', 'Full-screen ending with the Back to menu button', 'After the final guardian; also plays when the bonus section is skipped', flat(en.scenes)) +
+      storyBlock('Ending cinematic', 'Full-screen ending with the Back to menu button', 'After the final guardian; also plays when the bonus section is skipped', flat(en.scenes), 'ending') +
       '</div></details>';
+
+
+
+    h += '<details class="stsec"><summary><span class="sttag">Learn</span><b>What you learned</b><em>Result screen · after each chapter and guardian</em></summary><div class="stbody">';
+    for (let ci = 0; ci < 30; ci++) {
+      const lines = S().learned(ci);
+      if (!lines.length) continue;
+      h += '<div class="stchap"><h3>' + esc(CH_TITLES[ci] || ('Chapter ' + (ci + 1))) + '</h3>' +
+        '<div class="stlines">' + lines.map((t) => '<div class="sline sp-s" style="opacity:1;transform:none"><b>Summary</b><span>' + esc(t) + '</span></div>').join('') + '</div></div>';
+    }
+    h += '</div></details>';
+
+
+    const fails = S().fails ? S().fails() : [];
+    if (fails.length) {
+      h += '<details class="stsec"><summary><span class="sttag">Retry</span><b>Try-again feedback</b><em>Rotates after every failed run</em></summary><div class="stbody">' +
+        storyBlock('Failure messages', 'Message line under the mission', 'Each time a run does not pass', fails) +
+        '</div></details>';
+    }
     return h;
   },
 
-  /* ---------------------------------------------------------------------------
-     Streaks: the whole ladder with the exact reward popup players get.
-     ------------------------------------------------------------------------ */
+
+
+
   async streaks() {
     const M = (window.TLP_STREAK && TLP_STREAK.MILESTONES) || [];
     if (!M.length) return '<p>The streak file did not load, so there is nothing to show.</p>';
@@ -217,20 +233,19 @@ const TABS = {
       '<div class="mstair">' + rows + '</div>';
   },
 
-  /* ---------------------------------------------------------------------------
-     Sync: live Supabase counts plus spreadsheet-ready exports. The Google
-     Sheet is fed by the Apps Script endpoint in js/script.js; these exports
-     carry the same rows so nothing has to be retyped.
-     ------------------------------------------------------------------------ */
+
+
+
+
+
   async sync() {
     const A2 = A();
     const grab = (p) => Promise.resolve(p).catch(() => null);
-    const [d, profs, learners, board, coop, bugs, fb] = await Promise.all([
+    const [d, profs, learners, board, bugs, fb] = await Promise.all([
       grab(A2.runDiagnostics()),
       grab(A2.getAllProfiles()),
       grab(A2.getAllLearners()),
       grab(A2.getAdminLeaderboardEntries()),
-      grab(A2.getCoopMatchesAdmin()),
       grab(A2.getBugReports()),
       grab(A2.getAllFeedback())
     ]);
@@ -245,14 +260,12 @@ const TABS = {
       '<div><b>' + n(profs) + '</b>accounts</div>' +
       '<div><b>' + n(learners) + '</b>learners</div>' +
       '<div><b>' + n(board) + '</b>leaderboard rows</div>' +
-      '<div><b>' + n(coop) + '</b>co-op matches</div>' +
       '<div><b>' + n(fb) + '</b>feedback</div></div>' +
       '<p>Supabase is the live record. Everything on every other tab is read from it when you open that tab.</p>' +
       '<table><thead><tr><th>Data</th><th>Rows</th><th>Export</th></tr></thead><tbody>' +
       row('Learners', n(learners), 'learners') +
       row('Accounts', n(profs), 'users') +
       row('Individual leaderboard', n(board), 'board') +
-      row('Co-op matches', n(coop), 'coop') +
       row('Feedback', n(fb), 'feedback') +
       row('Bug reports', n(bugs), 'bugs') +
       '</tbody></table>' +
@@ -261,7 +274,7 @@ const TABS = {
   }
 };
 
-/* Spreadsheet export. Fetches fresh rows so a stale tab can never export old data. */
+
 async function exportCsv(kind) {
   const A2 = A();
   try {
@@ -279,10 +292,6 @@ async function exportCsv(kind) {
       const list = await A2.getAdminLeaderboardEntries();
       rows = [['name', 'path', 'difficulty', 'score', 'stars', 'test', 'updated']].concat(list.map((e) =>
         [e.display_name || '', e.learning_path || '', e.game_diff || '', e.total_score || 0, e.total_stars || 0, e.is_test ? 'test' : '', e.updated_at || '']));
-    } else if (kind === 'coop') {
-      const list = await A2.getCoopMatchesAdmin();
-      rows = [['finished', 'challenge', 'score', 'correct', 'steps', 'seconds', 'test']].concat(list.map((m) =>
-        [m.finished_at || '', m.challenge_id || '', m.score || 0, m.correct || 0, m.steps || 0, Math.round((m.duration_ms || 0) / 1000), m.is_test ? 'test' : '']));
     } else if (kind === 'feedback') {
       const list = await A2.getAllFeedback();
       rows = [['date', 'rating', 'age_group', 'tags', 'message', 'name']].concat(list.map((f) =>
@@ -298,14 +307,15 @@ async function exportCsv(kind) {
   }
 }
 
-/* -----------------------------------------------------------------------------
-   Tab switching
-   Each tab maps to one loader above. Loading is lazy: a tab fetches its data
-   the first time it is opened, so the dashboard does not query everything at
-   once. Errors are reported through say() in the page message bar.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 async function show(name) {
   current = name;
+  try { localStorage.setItem('tlp-admin-tab', name); } catch (e) {}
   document.querySelectorAll('.tabs button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === name));
   const panel = $('#panel');
   panel.textContent = 'Loading...'; say('');
@@ -318,7 +328,7 @@ document.addEventListener('click', async (e) => {
   if (t.matches('.tabs button')) return show(t.dataset.tab);
   if (t.closest('.stver button')) {
     const v = t.closest('.stver button').dataset.ver;
-    if (v && v !== storyVer) { storyVer = v; show('story'); }
+    if (v && v !== storyVer) { storyVer = v; try { localStorage.setItem('tlp-admin-ver', storyVer); } catch (e) {} show('story'); }
     return;
   }
   if (t.closest('.msrow')) {
@@ -337,6 +347,14 @@ document.addEventListener('click', async (e) => {
   if (t.classList.contains('batt')) {
     try { const url = await A().getAttachmentUrl(t.dataset.path); window.open(url, '_blank', 'noopener'); } catch (err) { say('Could not open the attachment: ' + err.message, true); }
   }
+  if (t.classList.contains('lfref')) {
+    try {
+      const r = await A().adminRefreshLifeline(t.dataset.lid);
+      say('Lifeline refilled: ' + (r ? r.left + '/' + r.max : 'done') + '.');
+      show('learners');
+    } catch (err) { say('Could not refill lifeline: ' + err.message, true); }
+    return;
+  }
   if (t.classList.contains('bdel')) {
     if (!confirm('Remove this leaderboard entry?')) return;
     try { await A().deleteLeaderboardEntry(t.closest('tr').dataset.id); say('Entry removed.'); show('board'); }
@@ -352,11 +370,11 @@ document.addEventListener('input', () => {
   if (c && ty && go) go.disabled = !(c.checked && ty.value.trim() === 'DELETE TEST DATA');
 });
 
-/* -----------------------------------------------------------------------------
-   Boot and permission gate
-   Waits for TLP_AUTH, checks the signed-in role, then wires the tabs and the
-   maintenance controls. A non-admin never sees the panels.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 async function adminBoot() {
   const gate = $('#gate');
   try {
@@ -365,7 +383,10 @@ async function adminBoot() {
     if (!u) { gate.hidden = false; gate.innerHTML = 'Please <a href="auth.html">sign in</a> with an administrator account.'; return; }
     if (!A().isCurrentUserAdmin()) { gate.hidden = false; gate.innerHTML = 'This page is for the site administrator only. <a href="auth.html">Sign in</a> with an administrator account to continue.'; return; }
     $('#app').hidden = false; gate.hidden = true;
-    show('overview');
+    const _at = (function(){try{return localStorage.getItem('tlp-admin-tab')}catch(e){return null}})();
+    const _av = (function(){try{return localStorage.getItem('tlp-admin-ver')}catch(e){return null}})();
+    if (_av) storyVer = _av;
+    show(_at || 'overview');
   } catch (e) {
     gate.hidden = false; gate.textContent = 'Could not check your access: ' + (e && e.message ? e.message : 'unknown error');
   }

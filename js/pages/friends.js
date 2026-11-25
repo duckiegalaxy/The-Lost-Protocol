@@ -1,16 +1,3 @@
-/* =============================================================================
-   FRIENDS PAGE  (js/pages/friends.js)
-   -----------------------------------------------------------------------------
-   Powers friends.html. The friend list itself is local to this browser; live
-   online state comes from TLP_PRESENCE, which only publishes a Player ID,
-   display name and a short activity line.
-   
-   Areas in this file:
-     - access gate
-     - rendering the self card and friend cards
-     - adding and removing a friend
-     - starting a co-op room and inviting a friend
-   ============================================================================= */
 const $ = (s) => document.querySelector(s);
 const A = () => window.TLP_AUTH, P = () => window.TLP_PRESENCE;
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -33,7 +20,6 @@ function card(f) {
     '<span class="fdot"><i></i>' + (f.online ? 'Online' : 'Offline') + '</span>' +
     '<p class="fact">' + esc(f.online ? (f.activity || 'Signed in') : ago(f.at)) + '</p>' +
     '<div class="row3">' +
-    (f.online ? '<button class="btn ghost sm" type="button" data-play="' + esc(f.pid) + '">Play co-op</button>' : '') +
     '<button class="btn ghost sm danger" type="button" data-del="' + esc(f.pid) + '">Remove</button>' +
     '</div></article>';
 }
@@ -41,17 +27,17 @@ function card(f) {
 let boardSig = '';
 let boardReq = 0;
 
-/* Friends play at different times, so the board compares finished scores
-   instead of waiting for both people to be online. It only reloads when the
-   friend list itself changes, not on every presence update. */
+
+
+
 async function loadBoard(list) {
   const box = $('#frBoard');
   if (!box) return;
   const l = A().getActiveLearner();
   const me = l && l.player_id;
   if (!l || l.isGuest || !me || !A().isCloudConfigured()) { box.hidden = true; return; }
-  /* Names are part of the signature: a friend is added with a placeholder
-     name and renamed once the public display name arrives. */
+
+
   const sig = [me].concat(list.map((f) => f.pid + ':' + (f.name || ''))).join(',');
   if (sig === boardSig) return;
   boardSig = sig;
@@ -104,29 +90,13 @@ async function addFriend() {
     $('#addPid').value = '';
     render(P().friends());
     say('Added ' + entry.pid + '. Ask them to add your Player ID too.');
-    // The public display name may be available; fill it in so the card reads
-    // well even while that friend is offline.
+
+
     try {
       const hit = await P().lookupPlayer(entry.pid);
       if (hit && hit.display_name) { P().addFriend(entry.pid, hit.display_name); render(P().friends()); }
     } catch (e) {}
   } catch (e) { say(e.message, true); }
-}
-
-async function playCoop(pid, btn) {
-  const name = (P().friends().filter((f) => f.pid === pid)[0] || {}).name || pid;
-  btn.disabled = true; say('Opening a room for ' + name + '...');
-  try {
-    let roomId = await A()._rpc('coop_my_active_room');
-    if (!roomId) { const r = await A()._rpc('coop_create_room'); roomId = r && r.room_id; }
-    if (!roomId) throw new Error('The co-op service did not return a room.');
-    await A()._rpc('coop_invite', { p_room: roomId, p_player_id: pid });
-    say('Invitation sent. Opening the co-op lobby...');
-    location.href = 'coop.html';
-  } catch (e) {
-    btn.disabled = false;
-    say('Could not invite them: ' + (e && e.message ? e.message : 'unknown error') + '. Make sure you are the host of the room.', true);
-  }
 }
 
 $('#addBtn').onclick = addFriend;
@@ -137,8 +107,6 @@ $('#copyPid').onclick = () => {
   try { navigator.clipboard.writeText(pid); $('#copyPid').textContent = 'Copied'; setTimeout(() => { $('#copyPid').textContent = 'Copy'; }, 1500); } catch (e) {}
 };
 $('#frList').addEventListener('click', (e) => {
-  const play = e.target.closest('[data-play]');
-  if (play) return playCoop(play.dataset.play, play);
   const del = e.target.closest('[data-del]');
   if (del) {
     if (!confirm('Remove ' + del.dataset.del + ' from your friend list?')) return;

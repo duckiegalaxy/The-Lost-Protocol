@@ -1,12 +1,3 @@
-/* =============================================================================
-   THE LOST PROTOCOL — STORY DATA (edit text here; no game logic lives here)
-   Speakers: r = R-067 (the player's repair unit), u = RoboUnison (companion),
-             l = Dr. Lena Voss (scientist), s = system log / narration.
-   Chapter numbers are the game's real chapter indexes (0-29) in js "CH".
-   Section ("act") numbers are 0-5, matching the game's "SEC" list.
-   Text is written in short, plain sentences so it works for every learning
-   path. Opening, acts and ending also have a gentler "k" version (grades 1-6).
-   ============================================================================= */
 (function () {
   'use strict';
 
@@ -20,7 +11,7 @@
   var isKid = function (path) { return path === 'g16'; };
   var pick = function (path, o) { return isKid(path) && o.k ? o.k : o.d; };
 
-  /* ---------- Opening (shown once, then a "Begin Mission" button) ---------- */
+
   var OPENING = {
     title: 'System Restart',
     scenes: [
@@ -48,7 +39,7 @@
     button: 'Begin Mission'
   };
 
-  /* ---------- Acts: one per game section (0-5) ---------- */
+
   var ACTS = [
     { title: 'Act 1 · The Basics',
       d: [['l', 'Start with the local systems. Every big machine begins with small, ordered steps.'],
@@ -125,7 +116,7 @@
       end: { d: [], k: [] } }
   ];
 
-  /* ---------- Chapters 0-29: brief (when a chapter starts) and win (when it ends) ---------- */
+
   var CH = {
     4:  { b: [['u', 'Instructions run in order, top to bottom. Let us restart the power terminal.']],
           w: [['s', 'Local power restored. A damaged facility map flickers on.']] },
@@ -191,7 +182,7 @@
           w: [['s', 'Safeguards reactivated. Components recover in order. Communication returns.']] }
   };
 
-  /* ---------- Guardians (bosses): intro + defeat line ---------- */
+
   var BOSS = {
     3:  { i: [['u', 'The Glitch is a corrupted leftover of the emergency sequence. It remembers every move.']],
           o: [['l', 'It was trying to isolate a failing part, but the safeguards were bypassed.']] },
@@ -210,7 +201,7 @@
           o: [['l', 'The sequence is under control. Renner\'s log is opening.']] }
   };
 
-  /* ---------- Ending ---------- */
+
   var ENDING = {
     title: 'The Lost Protocol, restored',
     scenes: [
@@ -236,7 +227,7 @@
     button: 'Back to menu'
   };
 
-  /* ---------- Feedback after unsuccessful attempts (constructive, never harsh) ---------- */
+
   var FAIL = [
     ['u', 'Not yet. Read the mission once more, then change just one block.'],
     ['u', 'Close! Check the order of your blocks.'],
@@ -246,12 +237,110 @@
   ];
   var failIdx = 0;
 
-  /* ---------- Helpers ---------- */
-  function line(pair) {
+
+
+
+  var LEARN = [
+    ['A variable is a labelled box that remembers a value.',
+     'set puts a value in the box. change adds to it: change by 3 is addition, and change by minus 1 is subtraction.',
+     'Boxes can hold numbers or words, and a box only keeps its latest value, so the order of your blocks matters.',
+     'You can have many boxes, each with its own label.'],
+    ['A loop repeats blocks so you write a step once and run it many times.',
+     'Loops and variables work together: a variable can count laps, or grow a little every time round.',
+     'Blocks outside a loop run once, and a loop inside a loop multiplies: 2 times 2 times 2 makes 8 steps.'],
+    ['An if block asks a yes or no question, and else runs when the answer is no.',
+     'Conditions compare with more than, less than, or exactly equal.',
+     'Your script must work for every test case, not just one.',
+     'You can put an if inside an else for three outcomes, and an if inside a loop to decide again every lap.'],
+    ['Variables, loops and logic are strongest when you combine them.',
+     'There is almost always more than one way to solve a problem, so you can write fresh code instead of repeating yourself.',
+     'Reading what a program remembers and does is how you plan, test and fix your code like a real programmer.'],
+    ['A program is a list of instructions that run in order, top to bottom.',
+     'Changing the order can change the result: fill a box before you read it.',
+     'Blocks are simple instructions you can combine into bigger ideas.'],
+    ['A constant is a box whose value never changes after it is set.',
+     'Constants protect important settings, like speed or gravity, from accidental changes.',
+     'You can read a constant as often as you like, but not change it.'],
+    ['Every value has a type, such as a number or a word.',
+     'Numbers can be used for maths and moving. Words are text.',
+     'Using the wrong type causes an error, so check what a box holds.'],
+    ['Type casting converts a value from one type to another.',
+     'The word 3 looks like a number but is text until you convert it.',
+     'Convert before you use a value for maths.'],
+    ['A string is text, a list of characters.',
+     'Joining strings glues them end to end.',
+     'Loops and joining build long text one piece at a time.'],
+    ['Data has types, locks and shapes, and you can combine them.',
+     'You turned words into numbers, glued strings and used constants.',
+     'A guardian that remembers teaches you to try fresh solutions.'],
+    ['Operators calculate: plus, minus, times, divide, and remainder.',
+     'The remainder is what is left after dividing.',
+     'Operators let one value be built from others.'],
+    ['An array is a list stored in one box. Items are numbered from 1.',
+     'Pick an item by its number.',
+     'A loop with a counter can walk the whole list.'],
+    ['Input is information coming into a program, and output is what it shows or says.',
+     'A program should work for any input, not just one.',
+     'Reading input then answering is how apps talk to people.'],
+    ['A comment is a note for humans that the computer ignores.',
+     'Good comments explain why, not only what.',
+     'Comments make code easier to read and fix later.'],
+    ['Operators, arrays, input and comments work together.',
+     'You calculated, listed, listened and explained your code.',
+     'A guardian that remembers teaches you to try fresh solutions.'],
+    ['A function is a named group of blocks. Define it once, call it many times.',
+     'Functions remove repetition and keep code tidy.',
+     'A function can use the boxes around it.'],
+    ['Scope is where a variable exists.',
+     'A change made inside a function stays inside it.',
+     'The outside box is global and stays safe from accidents.'],
+    ['Recursion is a function calling itself.',
+     'It needs a base case, a rule that tells it when to stop.',
+     'Each call works on a smaller problem.'],
+    ['A bit is an on/off switch with a value: 1, 2, 4, 8 and so on.',
+     'Add the values of the switches that are on to get a number. 8 bits make a byte.',
+     'Binary writes numbers using only 0 and 1.'],
+    ['Functions, scope, recursion and bits are the strongest tools of all.',
+     'You can now build programs from small reusable pieces.',
+     'Every guardian is gone and the light is back.'],
+    ['A bit is an on/off switch with a value. A byte is 8 bits.',
+     'The bit values are 1, 2, 4, 8, 16, 32, 64 and 128. Add the ones that are on.',
+     'The biggest number in one byte is 255.'],
+    ['Binary writes a number using only 0 and 1.',
+     'You can convert a number to binary and back again.',
+     'Each binary digit is a switch worth double the one to its right.'],
+    ['To add binary numbers, convert them to normal numbers first or add column by column.',
+     'Shifting left multiplies by two. Shifting right halves.',
+     'Computers do maths with bits very fast.'],
+    ['AND keeps a bit only if it is on in both numbers.',
+     'OR keeps a bit if it is on in either number.',
+     'XOR keeps a bit only if the two numbers differ.'],
+    ['Bits, binary conversion and bit operations work together.',
+     'You switched bits, converted bases and combined numbers.',
+     'A guardian that remembers teaches you to try fresh solutions.'],
+    ['A bug is a mistake in code, and debugging is finding and fixing it.',
+     'Read the code slowly and work out what each line does.',
+     'Typical bugs are wrong numbers, missing steps and wrong order.'],
+    ['A search checks items one by one until it finds a match.',
+     'The position of the match is often the answer.',
+     'A search can also answer yes or no.'],
+    ['To find the biggest, remember the best so far and replace it when you see a better one.',
+     'The same idea finds the smallest.',
+     'Starting values matter: pick one that cannot win.'],
+    ['Optimising means doing the same job with less code.',
+     'Loops replace repeated blocks and are easier to change.',
+     'Shorter code has fewer places for bugs to hide.'],
+    ['Every idea you learned can combine into bigger programs.',
+     'You searched, compared, looped and used functions together.',
+     'Every guardian is gone and the light is back.']
+  ];
+
+
+  function line(pair, d) {
     var w = WHO[pair[0]] || WHO.s;
-    return '<div class="sline ' + w.cls + '"><b>' + w.name + '</b><span>' + pair[1] + '</span></div>';
+    return '<div class="sline ' + w.cls + '" style="opacity:0;transform:translateY(10px);animation:storyLineIn .5s ' + (d || 0) + 's ease both"><b>' + w.name + '</b><span>' + pair[1] + '</span></div>';
   }
-  function lines(arr) { return (arr || []).map(line).join(''); }
+  function lines(arr) { return (arr || []).map(function (p, i) { return line(p, i * 0.38); }).join(''); }
   function plain(arr) { return (arr || []).map(function (p) { return (WHO[p[0]] || WHO.s).name + ': ' + p[1]; }).join(' '); }
 
   function sectionOf(ci) {
@@ -268,6 +357,28 @@
     return sx && sx.ch[0] === ci ? si : -1;
   }
 
+
+  function sectionCompleted(si) {
+    try {
+      var prog = JSON.parse(localStorage.getItem('tlp-prog') || '{}');
+      var SECS = (typeof SEC !== 'undefined') ? SEC : [];
+      var s = SECS[si];
+      if (!s || !s.ch) return false;
+      for (var i = 0; i < s.ch.length; i++) {
+        var key = s.ch[i] + '-' + i;
+        if (!prog[key] || prog[key] < 1) return false;
+      }
+      return true;
+    } catch (e) { return false; }
+  }
+
+
+  function isAdmin() {
+    try {
+      return localStorage.getItem('tlp-admin') === '1' || document.body.classList.contains('admin-mode');
+    } catch (e) { return false; }
+  }
+
   window.TLP_STORY = {
     WHO: WHO,
     opening: function (path) {
@@ -277,8 +388,21 @@
     ending: function (path) {
       return { title: ENDING.title, scenes: ENDING.scenes.map(function (s) { return pick(path, s); }), button: ENDING.button };
     },
-    act: function (si, path) { var a = ACTS[si]; return a ? { title: a.title, lines: pick(path, a) } : null; },
-    actEnd: function (si, path) { var a = ACTS[si]; if (!a || !a.end) return []; if (a.end.n && (path === 'g16' || path === 'g710')) return a.end.n; return pick(path, a.end); },
+    act: function (si, path, all) {
+      var a = ACTS[si];
+      if (!a) return null;
+
+
+      if (!all && !isAdmin() && si > 0 && !sectionCompleted(si - 1)) return null;
+      return { title: a.title, lines: pick(path, a) };
+    },
+    actEnd: function (si, path, all) {
+      var a = ACTS[si];
+      if (!a || !a.end) return [];
+      if (!all && !isAdmin() && si > 0 && !sectionCompleted(si - 1)) return [];
+      if (a.end.n && (path === 'g16' || path === 'g710')) return a.end.n;
+      return pick(path, a.end);
+    },
     sectionOf: sectionOf,
     firstInSection: firstInSection,
     brief: function (ci) { return CH[ci] ? CH[ci].b : []; },
@@ -286,8 +410,13 @@
     bossIntro: function (ci) { return BOSS[ci] ? BOSS[ci].i : []; },
     bossOutro: function (ci) { return BOSS[ci] ? BOSS[ci].o : []; },
     fail: function () { var f = FAIL[failIdx++ % FAIL.length]; return f; },
+    fails: function () { return FAIL.slice(); },
+    learned: function (ci) { return LEARN[ci] || []; },
+    learnAll: function () { return LEARN; },
     line: line, lines: lines, plain: plain,
-    /* "seen" tracking is per browser; it never touches saved progress */
+    isAdmin: isAdmin,
+    sectionCompleted: sectionCompleted,
+
     seen: function (k) { try { return localStorage.getItem('tlp-story-' + k) === '1'; } catch (e) { return false; } },
     mark: function (k) { try { localStorage.setItem('tlp-story-' + k, '1'); } catch (e) {} }
   };

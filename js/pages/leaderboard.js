@@ -1,32 +1,11 @@
-/* =============================================================================
-   LEADERBOARD LOGIC  (js/pages/leaderboard.js)
-   -----------------------------------------------------------------------------
-   Powers leaderboard.html. Two boards share one page: individual scores and
-   co-op matches. Both are read-only views over server data; nothing here can
-   submit a score.
-   
-   The individual board changes shape with the age group:
-     Grades 1-6    sticker cards with a friendly robot face
-     Grades 7-10   podium plus a clean scoreboard
-     Grades 11-12  dense terminal grid with score bars
-     College/adult a quiet editorial list
-   Search and the "Active today" filter work on every layout and are also
-   available for co-op teams. Equal score and stars share a rank.
-   Areas in this file:
-     - formatting and rank helpers
-     - the tab bar and filters
-     - the individual board (four layouts)
-     - the co-op board
-     - search, keyboard and swipe controls
-   ============================================================================= */
 const $ = (s) => document.querySelector(s);
 const A = () => window.TLP_AUTH;
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PATHS = [['g16', 'Grades 1 to 6'], ['g710', 'Grades 7 to 10'], ['g1112', 'Grades 11 to 12'], ['adult', 'College and adult']];
 const DIFFS = [['beg', 'Beginner'], ['int', 'Intermediate'], ['pro', 'Professional']];
 const PER = 15;
-let path = 'g16', diff = 'int', indPage = 0, week = '', coPage = 0, coLoaded = false;
-let indSearch = '', coSearch = '', today = false, weekOnly = false, indReq = 0, coReq = 0;
+let path = 'g16', diff = 'int', indPage = 0;
+let indSearch = '', today = false, weekOnly = false, indReq = 0;
 
 function fmtTime(ms) { const s = Math.round(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
 function fmtDate(d) { try { return new Date(d).toLocaleDateString(); } catch (e) { return ''; } }
@@ -41,11 +20,34 @@ function ago(d) {
 }
 function medal(n) { return n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : ''; }
 
-/* -----------------------------------------------------------------------------
-   Tab bar
-   Tabs are buttons, not links, so they keep the page scroll position while
-   switching data sets.
-   -------------------------------------------------------------------------- */
+
+const PLATES = {
+  rookie:  ['Rookie',          't-rookie',  'Fresh compile, fresh start.'],
+  coder:   ['Certified Coder', 't-coder',   'Syntax approved by the Protocol.'],
+  hero:    ['Hero',            't-hero',    'Guardians fear this one.'],
+  legend:  ['Living Legend',   't-legend',  'The leaderboard bows to you.'],
+  star:    ['Star Coder',      't-star',    'Bright enough to navigate by.'],
+  champ:   ['Champion',        't-champ',   'Undefeated. Mostly.'],
+  overlord:['Overlord',        't-overlord','The Protocol fears you.'],
+  mythic:  ['Mythic',          't-mythic',  'Legends are printed with your name.'],
+  coadmin: ['Co-Admin',        't-coadmin', 'Second-in-command of the Protocol.']
+};
+function plate(r) {
+  const t = r && r.avatar && r.avatar.look && r.avatar.look.title;
+  const p = t && PLATES[t];
+  return p ? '<span class="lb-plate ' + p[1] + '" title="' + esc(p[2]) + '">' + p[0] + '</span>' : '';
+}
+
+
+function av(r, px) {
+  return window.TLP_AVATAR ? TLP_AVATAR.mini(r.avatar || {}, px || 26) : '';
+}
+
+
+
+
+
+
 function buildTabs() {
   $('#pathTabs').innerHTML = PATHS.map(([id, n]) => '<button type="button" role="tab" data-id="' + id + '" aria-selected="' + (id === path) + '">' + n + '</button>').join('');
   $('#diffChips').innerHTML = DIFFS.map(([id, n]) => '<button type="button" data-id="' + id + '" aria-pressed="' + (id === diff) + '">' + n + '</button>').join('');
@@ -53,7 +55,7 @@ function buildTabs() {
   $('#diffChips').querySelectorAll('button').forEach((b) => b.onclick = () => { diff = b.dataset.id; indPage = 0; buildTabs(); loadInd(); });
 }
 
-/* Rank is the position in the full table, so equal rows keep the same number. */
+
 function ranked(rows) {
   let prev = null, prevRank = 0;
   return rows.map((r, i) => {
@@ -65,16 +67,16 @@ function ranked(rows) {
   });
 }
 
-/* -----------------------------------------------------------------------------
-   The four age layouts. All of them read the same row shape, so switching the
-   age tab changes the presentation and nothing else.
-   -------------------------------------------------------------------------- */
+
+
+
+
 function kidCards(list) {
   return '<div class="lbkid">' + list.map((r) =>
     '<article class="kcard r' + (r.rank <= 3 ? r.rank : 0) + '">' +
       '<span class="krank" aria-label="Rank ' + r.rank + '">' + r.rank + '</span>' +
       '<span class="kface" aria-hidden="true"><i></i><i></i></span>' +
-      '<div class="kwho"><b>' + esc(r.display_name) + '</b><small>' + esc(r.player_id) + '</small></div>' +
+      '<div class="kwho"><span class="kwav">' + av(r, 30) + '</span><b>' + esc(r.display_name) + plate(r) + '</b><small>' + esc(r.player_id) + '</small></div>' +
       '<div class="kscore"><b>' + r.total_score + '</b><span>points</span></div>' +
       '<div class="kstars">★ ' + r.total_stars + ' stars · ' + r.chapters_cleared + ' chapters · ' + r.badges + ' guardians</div>' +
     '</article>').join('') + '</div>';
@@ -82,17 +84,17 @@ function kidCards(list) {
 function podium(list) {
   const order = [list[1], list[0], list[2]].filter(Boolean);
   return '<div class="lbpodium">' + order.map((r) =>
-    '<article class="pcard p' + r.rank + '"><span class="prank">' + medal(r.rank) + '</span><b>' + esc(r.display_name) + '</b><small>' + esc(r.player_id) + '</small><strong>' + r.total_score + '</strong><span>' + r.total_stars + ' stars · ' + r.chapters_cleared + ' chapters</span></article>').join('') + '</div>';
+    '<article class="pcard p' + r.rank + '"><span class="prank">' + medal(r.rank) + '</span><span class="pav">' + av(r, 40) + '</span><b>' + esc(r.display_name) + plate(r) + '</b><small>' + esc(r.player_id) + '</small><strong>' + r.total_score + '</strong><span>' + r.total_stars + ' stars · ' + r.chapters_cleared + ' chapters</span></article>').join('') + '</div>';
 }
 function teenTable(list) {
   return '<div class="tw"><table class="t lbt"><thead><tr><th>Rank</th><th>Player</th><th>Score</th><th>Stars</th><th>Chapters</th><th>Guardians</th><th>Updated</th></tr></thead><tbody>' +
-    list.map((r) => '<tr class="' + (r.rank <= 3 ? 'top' + r.rank : '') + '"><td class="rk">' + r.rank + '</td><td><b>' + esc(r.display_name) + '</b> <span class="pidc">' + esc(r.player_id) + '</span></td><td class="n">' + r.total_score + '</td><td class="n">' + r.total_stars + '</td><td class="n">' + r.chapters_cleared + '</td><td class="n">' + r.badges + '/6</td><td class="n">' + esc(fmtDate(r.updated_at)) + '</td></tr>').join('') +
+    list.map((r) => '<tr class="' + (r.rank <= 3 ? 'top' + r.rank : '') + '"><td class="rk">' + r.rank + '</td><td><span class="tav">' + av(r, 24) + '</span><b>' + esc(r.display_name) + plate(r) + '</b> <span class="pidc">' + esc(r.player_id) + '</span></td><td class="n">' + r.total_score + '</td><td class="n">' + r.total_stars + '</td><td class="n">' + r.chapters_cleared + '</td><td class="n">' + r.badges + '/6</td><td class="n">' + esc(fmtDate(r.updated_at)) + '</td></tr>').join('') +
     '</tbody></table></div>';
 }
 function seniorGrid(list) {
   const max = Math.max.apply(null, list.map((r) => r.total_score).concat([1]));
   return '<div class="lbterm"><div class="thead"><span>#</span><span>player</span><span>score</span><span>sig</span></div>' +
-    list.map((r) => '<div class="trow' + (r.rank <= 3 ? ' hot' : '') + '"><span class="trk">' + String(r.rank).padStart(2, '0') + '</span><span class="twho"><b>' + esc(r.display_name) + '</b><small>' + esc(r.player_id) + ' · ' + esc(fmtDate(r.updated_at)) + '</small></span><span class="tnum">' + r.total_score + '</span><span class="tbar" aria-hidden="true"><i style="width:' + Math.max(4, Math.round(r.total_score / max * 100)) + '%"></i></span></div>').join('') +
+    list.map((r) => '<div class="trow' + (r.rank <= 3 ? ' hot' : '') + '"><span class="trk">' + String(r.rank).padStart(2, '0') + '</span><span class="twho"><span class="tav">' + av(r, 24) + '</span><b>' + esc(r.display_name) + plate(r) + '</b><small>' + esc(r.player_id) + ' · ' + esc(fmtDate(r.updated_at)) + '</small></span><span class="tnum">' + r.total_score + '</span><span class="tbar" aria-hidden="true"><i style="width:' + Math.max(4, Math.round(r.total_score / max * 100)) + '%"></i></span></div>').join('') +
     '</div><p class="tfootline">stars ' + list.reduce((a, r) => a + r.total_stars, 0) + ' · chapters ' + list.reduce((a, r) => a + r.chapters_cleared, 0) + ' · guardians ' + list.reduce((a, r) => a + r.badges, 0) + '</p>';
 }
 function adultList(list) {
@@ -103,7 +105,7 @@ function adultList(list) {
     list.map((r) =>
       '<article class="arow' + (r.rank <= 3 ? ' lead r' + r.rank : '') + '">' +
         '<span class="arank">' + r.rank + '</span>' +
-        '<div class="awho"><span class="aav" aria-hidden="true">' + initial(r) + '</span><div class="aname"><b>' + esc(r.display_name) + '</b><small title="' + esc(fmtDate(r.updated_at)) + '">' + esc(r.player_id) + ' · ' + esc(ago(r.updated_at)) + '</small></div></div>' +
+        '<div class="awho"><span class="aav" aria-hidden="true">' + av(r, 30) + '</span><div class="aname"><b>' + esc(r.display_name) + plate(r) + '</b><small title="' + esc(fmtDate(r.updated_at)) + '">' + esc(r.player_id) + ' · ' + esc(ago(r.updated_at)) + '</small></div></div>' +
         '<div class="ameta"><span><b>' + r.total_stars + '</b> stars</span><span><b>' + r.chapters_cleared + '</b> chapters</span><span><b>' + r.badges + '</b> guardians</span></div>' +
         '<div class="ascore"><strong>' + r.total_score + '</strong><span class="abar" aria-hidden="true"><i style="width:' + Math.max(3, Math.round(r.total_score / max * 100)) + '%"></i></span></div>' +
       '</article>').join('') +
@@ -136,8 +138,8 @@ async function loadInd() {
   try {
     const { rows, hasMore } = await A().getPublicLeaderboardPage({ path, diff, offset: indPage * PER, limit: PER, search: indSearch, today: today, week: weekOnly });
     if (req !== indReq) return;
-    // A parent or teacher usually knows the name, not the age group and
-    // difficulty, so an empty scoped search also checks every other group.
+
+
     if (indSearch && !rows.length) {
       const hits = await searchEveryGroup(indSearch);
       if (req !== indReq) return;
@@ -152,7 +154,7 @@ async function loadInd() {
     $('#indNext').disabled = true;
   }
 }
-/* One row per matching player, with the group it belongs to. */
+
 async function searchEveryGroup(term) {
   const jobs = [];
   PATHS.forEach(([p]) => DIFFS.forEach(([d]) => {
@@ -218,69 +220,7 @@ $('#weekChip').onclick = () => {
   loadInd();
 };
 
-/* -----------------------------------------------------------------------------
-   Co-op board
-   Loaded on first use. Matches are already finished server-side, so this view
-   only formats them.
-   -------------------------------------------------------------------------- */
-async function initCo() {
-  coLoaded = true;
-  try {
-    const weeks = await A().getCoopChallenges();
-    if (weeks.length) week = weeks[0];
-    $('#weekChips').innerHTML = weeks.length ? weeks.map((w) => '<button type="button" data-id="' + esc(w) + '" aria-pressed="' + (w === week) + '">Mission ' + esc(w) + '</button>').join('') : '';
-    $('#weekChips').querySelectorAll('button').forEach((b) => b.onclick = () => { week = b.dataset.id; coPage = 0; $('#weekChips').querySelectorAll('button').forEach((o) => o.setAttribute('aria-pressed', o === b)); loadCo(); });
-  } catch (e) {}
-  loadCo();
-}
-async function loadCo() {
-  const body = $('#coBody'); body.className = 'msg3'; body.textContent = 'Loading...';
-  const req = ++coReq;
-  try {
-    const { rows, hasMore } = await A().getCoopLeaderboardPage({ challengeId: week, offset: coPage * PER, limit: PER, search: coSearch });
-    if (req !== coReq) return;
-    if (!rows.length) { body.textContent = coSearch ? 'No team matches "' + coSearch + '".' : coPage ? 'No more entries.' : 'No completed co-op matches yet. Be the first team on the board.'; }
-    else {
-      body.className = '';
-      let html = '<div class="tw"><table class="t lbt"><thead><tr><th>Rank</th><th>Team</th><th>Score</th><th>Time</th><th>Steps</th><th>Mission</th><th>Date</th></tr></thead><tbody>', prev = null, prevRank = 0;
-      rows.forEach((r, i) => {
-        const pos = coPage * PER + i + 1, same = prev && prev.score === r.score && prev.duration_ms === r.duration_ms;
-        const rank = same ? prevRank : pos; prev = r; prevRank = rank;
-        html += '<tr class="' + (rank <= 3 ? 'top' + rank : '') + '"><td class="rk">' + rank + '</td><td><b>' + esc(r.p1_name) + '</b> <span class="pidc">' + esc(r.p1_player_id) + '</span><br><b>' + esc(r.p2_name) + '</b> <span class="pidc">' + esc(r.p2_player_id) + '</span></td><td class="n">' + r.score + '</td><td class="n">' + fmtTime(r.duration_ms) + '</td><td class="n">' + r.steps + '</td><td class="n">' + esc(r.challenge_id) + '</td><td class="n">' + esc(fmtDate(r.finished_at)) + '</td></tr>';
-      });
-      body.innerHTML = html + '</tbody></table></div>';
-    }
-    $('#coPrev').disabled = coPage === 0; $('#coNext').disabled = !hasMore; $('#coPage').textContent = 'Page ' + (coPage + 1);
-  } catch (e) {
-    if (req !== coReq) return;
-    body.className = 'msg3'; body.textContent = 'The co-op leaderboard could not be loaded. Please try again later.';
-    $('#coNext').disabled = true;
-  }
-}
-$('#coPrev').onclick = () => { coPage = Math.max(0, coPage - 1); loadCo(); };
-$('#coNext').onclick = () => { coPage++; loadCo(); };
-function doCoSearch() {
-  coSearch = $('#coSearch').value.trim(); coPage = 0;
-  const c = $('#coClear'); if (c) c.hidden = !coSearch;
-  loadCo();
-}
-$('#coFind').onclick = doCoSearch;
-$('#coSearch').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); doCoSearch(); } });
-$('#coClear').onclick = () => { $('#coSearch').value = ''; coSearch = ''; coPage = 0; $('#coClear').hidden = true; loadCo(); };
 
-// sliding between Individual and Co-op: buttons, arrow keys on the buttons, and a swipe on touch screens
-function show(co) {
-  $('#slides').classList.toggle('co', co);
-  $('#tInd').setAttribute('aria-selected', !co); $('#tCo').setAttribute('aria-selected', co);
-  if (co && !coLoaded) initCo();
-}
-$('#tInd').onclick = () => show(false); $('#tCo').onclick = () => show(true);
-document.querySelector('.swt').addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') { show(true); $('#tCo').focus(); } if (e.key === 'ArrowLeft') { show(false); $('#tInd').focus(); } });
-let sx = null;
-$('#view').addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
-$('#view').addEventListener('touchend', (e) => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 70 && !e.target.closest('.tw,.tabs2')) show(dx < 0); }, { passive: true });
-
-// A cross-group search result opens the board that player belongs to.
 $('#indBody').addEventListener('click', (e) => {
   const b = e.target.closest('.srrow');
   if (!b) return;
@@ -291,4 +231,21 @@ $('#indBody').addEventListener('click', (e) => {
   buildTabs(); loadInd();
 });
 
+let _lb = null; try { _lb = JSON.parse(localStorage.getItem('tlp-lb') || 'null'); } catch (e) {}
+if (_lb) {
+  if (_lb.path) path = _lb.path;
+  if (_lb.diff) diff = _lb.diff;
+  if (typeof _lb.indPage === 'number') indPage = _lb.indPage;
+  if (typeof _lb.today === 'boolean') today = _lb.today;
+  if (typeof _lb.weekOnly === 'boolean') weekOnly = _lb.weekOnly;
+  if (typeof _lb.indSearch === 'string') { indSearch = _lb.indSearch; const _i = $('#indSearch'); if (_i) _i.value = indSearch; }
+  if (indSearch) { const _cl = $('#indClear'); if (_cl) _cl.hidden = false; }
+  if (today) { const _tc = $('#todayChip'); if (_tc) _tc.setAttribute('aria-pressed', 'true'); }
+  if (weekOnly) { const _wc = $('#weekChip'); if (_wc) _wc.setAttribute('aria-pressed', 'true'); }
+}
 buildTabs(); loadInd();
+
+function saveLb() { try { localStorage.setItem('tlp-lb', JSON.stringify({ path, diff, indPage, today, weekOnly, indSearch })); } catch (e) {} }
+window.addEventListener('beforeunload', saveLb);
+window.addEventListener('pagehide', saveLb);
+document.addEventListener('visibilitychange', function () { if (document.hidden) saveLb(); });

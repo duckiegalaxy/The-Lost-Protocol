@@ -9,42 +9,31 @@ The live project is authoritative. Repository SQL mirrors the database; it does 
 
 | Path | Purpose |
 | --- | --- |
-| `migrations/20261115000000_baseline_public_schema.sql` | Point-in-time dump of the live `public` schema generated from `pg_catalog` on 2026-11-15. Reference and recovery only. |
-| `migrations/20261115000001_grant_service_role_app_tables.sql` | Minimum `service_role` table and function grants used by `coop-submit` and `learner-admin`. |
-| `migrations/20261115000002_grant_browser_table_access.sql` | The `anon`/`authenticated` table privileges the browser app needs. `leaderboard_entries` INSERT stays RPC-only so scores remain server-computed. |
-| `migrations/20261115000003_learner_login_allowlist.sql` | Service-role-only `learner_login_allowlist` table plus the updated `guard_learner_login_domain` trigger. `learner-admin` pre-approves one Player ID address before `admin.createUser`, because GoTrue applies `app_metadata` after the `auth.users` insert. |
-| `migrations/20261117000000_learner_signin_tokens.sql` | Service-role-only `learner_signin_tokens` table used by `learner-qr`. Holds SHA-256 hashes of 10-minute, single-use codes; browser roles get no grants or policies. |
-| `functions/coop-submit/` | Deno edge function that re-simulates and scores co-op submissions server-side. |
-| `functions/learner-admin/` | Deno edge function for parent-only learner creation and password resets. |
-| `functions/learner-qr/` | Deno edge function for parent-issued one-time sign-in codes. `create` and `status` need a Parent/Educator session; `redeem` is anonymous because the code is the credential. Returns a one-time Supabase magic-link token, never the service key. |
+| `migrations/20261115000000_baseline_public_schema.sql` | Historical snapshot of the public schema generated on 2026-11-15. Reference only. |
+| `migrations/20261115000001_grant_service_role_app_tables.sql` | Service role grants used by the edge functions. |
+| `migrations/20261115000002_grant_browser_table_access.sql` | Browser role privileges; score inserts remain RPC-only. |
+| `migrations/20261115000003_learner_login_allowlist.sql` | Service-role-only allowlist for educator-created learners. |
+| `migrations/20261117000000_learner_signin_tokens.sql` | Single-use, short-lived parent-issued sign-in codes. |
+| `migrations/20261124000003_remove_coop.sql` | Removes the retired co-op schema objects and stored results. Apply this migration to the live project. |
+| `functions/learner-admin/` | Parent-only learner creation and password resets. |
+| `functions/learner-qr/` | Parent-issued one-time sign-in codes. |
 
 ## Making a schema change
 
-1. Inspect the live schema first (Table Editor or SQL editor). Do not assume the baseline is current.
+1. Inspect the live schema first. Do not assume the baseline is current.
 2. Write the exact SQL you intend to run.
-3. Add it as a new file in `migrations/` named `YYYYMMDDHHMMSS_short_description.sql`, wrapped so it is re-runnable where possible.
+3. Add it as a new timestamped migration, wrapped so it is re-runnable where possible.
 4. Apply it in the dashboard SQL editor.
-5. Verify the result (catalog query, API request, advisor).
-6. Keep the file in the repo so the change is reproducible.
+5. Verify the result with catalog queries and an API request.
+6. Keep the migration in the repo so the change is reproducible.
 
 ## Rules
 
-- Never re-run the old `legacy/*.sql` files (deleted in the 2026-11-15 restructure). They predated the live schema and would overwrite working functions (for example the co-op RPCs and `submit_leaderboard_score`). The baseline dump is the only historical reference.
+- Never re-run old `legacy/*.sql` files. They predate the live schema and can overwrite current functions.
 - Keep the browser key publishable. The service-role key belongs only in edge-function secrets.
 - `public.site_owner` stays locked (RLS on, no policies). Only `is_admin()` reads it.
-- Leaderboard scores are computed server-side from saved progress. `coop-submit` recomputes the match; never accept a browser-sent score.
-- Security-definer functions that are bound to triggers must not be executable through the API. Game RPCs (`delete_my_account`, `switch_difficulty`, `submit_leaderboard_score`, co-op RPCs) are intentional entry points and keep `authenticated` EXECUTE.
-- Auth dashboard settings (leaked-password protection, providers) are not SQL. Record any change in the PR or commit message.
+- Leaderboard scores are computed server-side from saved progress.
+- Trigger-bound security-definer functions must not be executable through the API. Keep only intentional RPC entry points granted to `authenticated`.
+- Auth dashboard settings are not SQL; record any changes separately.
 
-## What the baseline contains
-
-Tables, columns, defaults, constraints, indexes, sequences, functions (with their `search_path`), views (including `security_invoker = true`), triggers, RLS enablement, policies, and grants for `anon`, `authenticated`, and `service_role`.
-
-It does not contain data, extension-owned objects, `auth`/`storage` schemas, or project-level Auth settings.
-
-## Known state at baseline
-
-- `public_leaderboard` and `public_coop_leaderboard` are invoker views over the `leaderboard_public` and `coop_leaderboard_public` projection tables. Both projection tables are RLS-protected and grant only public-safe columns; `learner_id`, `p1_learner`, and `p2_learner` are not exposed.
-- Base tables grant no `SELECT`/`INSERT`/`UPDATE`/`DELETE` to `anon` or `authenticated`; only the projection views are readable through the Data API. Direct browser access to `learners`, `profiles`, `progress_records`, etc. is therefore not enabled. Decide explicitly before granting it.
-- `service_role` has only the grants the edge functions need (`coop_rooms` select/update, `coop_matches` select/insert, `coop_challenges` select, `learners` select/insert, `profiles` select, `generate_player_id` execute). Add to that list only when a function needs it.
-- Leaked-password protection is off and cannot be turned on: the setting is rejected with "Configuring leaked password protection via HaveIBeenPwned.org is available on Pro Plans and up." Minimum password length is 6. Revisit on a Pro plan, or enforce strength in `learner-admin` for educator-created accounts.
+The checked-in baseline is historical and includes objects that were subsequently retired. New installations must apply migrations in timestamp order, including the final removal migration, to reach the current schema. The live database remains authoritative.

@@ -13,22 +13,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<script src="js/theme.js"></script>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/pages/bonus.css">
+<script src="js/theme.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/bonus.css?v=13">
+<link rel="stylesheet" href="css/premium.css?v=10">
 </head>
 <body data-music="g710" data-activity="In the bonus workshops">
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div>
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="webgame.html"><span class="sp" aria-hidden="true"></span>Play Game</a>
   <a class="navlink on" href="bonus.html"><span class="sp" aria-hidden="true"></span>Bonus sections</a>
   <a class="navlink" href="leaderboard.html"><span class="sp" aria-hidden="true"></span>Leaderboards</a>
   <a class="navlink" href="friends.html"><span class="sp" aria-hidden="true"></span>Friends</a>
+  <span id="avSlot" class="av-slot"></span>
   <a class="navlink" href="auth.html"><span class="sp" aria-hidden="true"></span>Account</a>
 </div></nav></header>
 <main><div class="wrap bl">
   <h1>Bonus sections</h1>
-  <p class="lead">Optional sections open after you finish the five story sections. The two workshops are practice spaces: nothing there changes a score, leaderboard, co-op result or ranking, and every activity can be repeated with four levels of hints. For grades 7 and up, the Mastery missions add four extra game chapters: their stars and points count, but they never block the ending.</p>
+  <p class="lead">Optional sections open after you finish the five story sections. The two workshops are practice spaces: their activities do not affect scores or rankings, and each can be repeated with four levels of hints. For grades 7 and up, the Mastery missions add four extra game chapters: their stars and points count, but they never block the ending.</p>
   <div id="gate" class="bp" hidden></div>
   <div id="app" hidden>
     <div id="bprog" class="bprog" aria-label="Bonus progress"></div>
@@ -39,12 +44,16 @@
 <footer><div class="wrap"><span>The Lost Protocol, an interactive educational game · <a href="privacy.html">Privacy notice</a></span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/tlp-auth.js"></script>
-<script src="js/tlp-common.js"></script>
-<script src="js/tlp-presence.js"></script>
-<script src="js/streak.js"></script>
-<script src="js/music.js"></script>
-<script src="js/pages/bonus.js"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-background.js?v=14"></script>
+<script src="js/tlp-presence.js?v=13"></script>
+<script src="js/tlp-avatar.js?v=23"></script>
+<script src="js/streak.js?v=14"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/pages/bonus.js?v=13"></script>
+<script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

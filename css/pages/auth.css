@@ -1,18 +1,623 @@
-/* =============================================================================
-   ACCOUNT PAGE  (auth.html)
+.acct {
+  max-width: 620px;
+  margin: 42px auto 88px;
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-   One centered column. The heading introduces the task, then a single card
-   holds whichever view is needed: sign in / create account, the signed-in
-   summary, the reset request or the new-password form. Only one of those is
-   ever visible, and fields that do not apply to the chosen account type are
-   hidden by the script.
+.acct .alert,
+.acct .card2 {
+  width: 100%;
+  box-sizing: border-box;
+}
 
-   Everything here is page-local. The shared tokens (--bg, --fg, --a, --line,
-   --serif, --sans) and the site header, buttons and alerts outside this page
-   come from css/style.css.
-   ============================================================================= */
 
-/* --- Page frame ----------------------------------------------------------- */
+.acct::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,.04) 2px,
+    rgba(0,0,0,.04) 4px
+  );
+}
+
+
+
+.acct-head {
+  text-align: center;
+  padding: 4px 0 10px;
+}
+
+.acct-head h1 {
+  font-size: clamp(32px, 4.6vw, 46px);
+  line-height: 1.05;
+  margin: 0 0 10px;
+  letter-spacing: -.01em;
+  font-style: italic;
+}
+
+
+.acct-head h1::before {
+  content: "";
+  display: block;
+  width: 60px;
+  height: 3px;
+  margin: 0 auto 18px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--a), var(--b));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--a) 60%, transparent);
+  animation: acctGlow 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes acctGlow {
+  from { box-shadow: 0 0 10px color-mix(in srgb, var(--a) 40%, transparent); }
+  to   { box-shadow: 0 0 28px color-mix(in srgb, var(--b) 70%, transparent), 0 0 56px color-mix(in srgb, var(--a) 30%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acct-head h1::before { animation: none; }
+}
+
+.acct-head .lead {
+  color: var(--mut);
+  margin: 0 auto;
+  max-width: 46ch;
+}
+
+
+
+.card2 {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--a) 30%, var(--line));
+  border-radius: 20px;
+  padding: 28px 28px 26px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  box-shadow: 0 22px 56px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255,255,255,.06);
+  backdrop-filter: blur(14px);
+  transition: border-color .25s ease, box-shadow .25s ease;
+}
+
+
+.card2::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--a), var(--b), var(--a), transparent);
+  background-size: 200% 100%;
+  animation: acctSlide 4s linear infinite;
+  opacity: .8;
+}
+
+@keyframes acctSlide {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card2::before { animation: none; background-position: 50% 0; }
+}
+
+.card2:focus-within {
+  border-color: color-mix(in srgb, var(--a) 65%, var(--line));
+  box-shadow: 0 22px 56px rgba(0, 0, 0, .28), 0 0 0 3px color-mix(in srgb, var(--a) 18%, transparent);
+}
+
+.card2 + .card2 {
+  margin-top: 16px;
+}
+
+.s-name {
+  font: 800 clamp(22px, 2.6vw, 28px) var(--serif);
+  margin: 0 0 8px;
+  letter-spacing: -.01em;
+  font-style: italic;
+}
+
+
+
+.seg {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 20px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.03);
+}
+
+.seg button {
+  flex: 1 1 130px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--mut);
+  font: 600 14px var(--sans);
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, box-shadow .2s ease;
+}
+
+.seg button:hover {
+  color: var(--fg);
+}
+
+.seg button:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 2px;
+}
+
+.seg button[aria-pressed="true"] {
+  background: linear-gradient(135deg, var(--a), var(--b));
+  color: var(--ink, #0b0f14);
+  font-weight: 700;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--a) 35%, transparent);
+}
+
+.seg-sub {
+  margin-bottom: 6px;
+  border-color: transparent;
+  padding: 0;
+}
+
+.seg-sub button {
+  min-height: 34px;
+  font-size: 13px;
+  letter-spacing: .01em;
+  border-radius: 8px;
+}
+
+.seg-sub button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--a) 18%, transparent);
+  color: var(--fg);
+  box-shadow: none;
+}
+
+
+
+.acct label.l {
+  display: block;
+  margin: 16px 0 6px;
+  font: 700 11.5px var(--sans);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+
+.acct input[type="text"],
+.acct input[type="email"],
+.acct input[type="password"],
+.acct select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--bg) 60%, rgba(0,0,0,.12));
+  color: inherit;
+  font: 16px var(--sans);
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.acct input:hover {
+  border-color: color-mix(in srgb, var(--a) 40%, var(--line));
+}
+
+.acct input:focus,
+.acct select:focus {
+  outline: none;
+  border-color: var(--a);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--a) 22%, transparent);
+}
+
+.acct input:invalid:not(:placeholder-shown) {
+  border-color: color-mix(in srgb, #ef7a8c 60%, var(--line));
+}
+
+
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+  margin: 8px 0 4px;
+}
+
+.pick {
+  display: block;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 15px;
+  background: rgba(255,255,255,.025);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color .2s ease, background .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.pick:hover {
+  border-color: color-mix(in srgb, var(--a) 50%, var(--line));
+  background: color-mix(in srgb, var(--a) 7%, transparent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0,0,0,.2);
+}
+
+.pick:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 2px;
+}
+
+.pick[aria-pressed="true"] {
+  border-color: var(--a);
+  background: color-mix(in srgb, var(--a) 11%, transparent);
+  box-shadow: inset 3px 0 0 var(--a), 0 0 20px color-mix(in srgb, var(--a) 15%, transparent);
+}
+
+.pick b {
+  display: block;
+  font: 800 17px var(--serif);
+  margin: 8px 0 4px;
+  font-style: italic;
+}
+
+.pick span {
+  display: block;
+  font-size: 13.5px;
+  color: var(--mut);
+  line-height: 1.5;
+}
+
+.bot {
+  width: 40px;
+  height: 40px;
+  display: block;
+}
+
+.bot * {
+  fill: none;
+  stroke: var(--a);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.bot .f {
+  fill: var(--a);
+  stroke: none;
+}
+
+
+
+.go {
+  margin-top: 22px;
+  width: 100%;
+  min-height: 50px;
+  background: linear-gradient(135deg, var(--a) 0%, var(--b) 100%);
+  box-shadow: 0 6px 24px color-mix(in srgb, var(--a) 35%, transparent);
+  transition: transform .2s, box-shadow .2s, filter .2s;
+}
+
+.go:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--a) 45%, transparent);
+  filter: brightness(1.08);
+}
+
+.acct .btn.big {
+  font-size: 16px;
+  letter-spacing: .01em;
+}
+
+.forgot-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.linky {
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: var(--mut);
+  font: 500 14px var(--sans);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--mut) 45%, transparent);
+  text-underline-offset: 4px;
+  cursor: pointer;
+  transition: color .18s ease, text-decoration-color .18s ease;
+}
+
+.linky:hover {
+  color: var(--a);
+  text-decoration-color: var(--a);
+}
+
+.linky:focus-visible {
+  outline: 2px solid var(--a);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+
+
+.consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 18px 0 0;
+  font: 400 14px/1.5 var(--sans);
+  color: var(--mut);
+  cursor: pointer;
+}
+
+.consent.remember {
+  margin-top: 14px;
+}
+
+.consent input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex: none;
+  accent-color: var(--a);
+  cursor: pointer;
+}
+
+.consent a {
+  color: var(--a);
+  text-underline-offset: 3px;
+}
+
+.tlpm .consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px 0 0;
+  font: 400 14px/1.5 var(--sans);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.tlpm .consent input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  flex: none;
+}
+
+.tlpm .pvlist {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--mut);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tlpm .pvlist li + li {
+  margin-top: 6px;
+}
+
+.tlpm .pvlink {
+  margin: 0 0 2px;
+  font-size: 14px;
+}
+
+.tlpm .pvlink a {
+  color: var(--a);
+  text-underline-offset: 3px;
+}
+
+
+
+.note {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  color: var(--mut);
+  line-height: 1.6;
+}
+
+#qrOther {
+  color: #ef7a8c;
+}
+
+.alert {
+  display: none;
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  line-height: 1.45;
+  font-size: 14.5px;
+  animation: alertIn .3s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+
+@keyframes alertIn {
+  from { opacity: 0; transform: translateY(-8px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+.alert.show {
+  display: block;
+}
+
+.alert.err {
+  border-color: #ef7a8c;
+  background: color-mix(in srgb, #ef7a8c 10%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, #ef7a8c 18%, transparent);
+}
+
+.alert.ok {
+  border-color: #3ddc84;
+  background: color-mix(in srgb, #3ddc84 10%, transparent);
+  box-shadow: 0 0 24px color-mix(in srgb, #3ddc84 18%, transparent);
+}
+
+.idbox {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 14px 0;
+  padding: 13px 15px;
+  border: 1px dashed color-mix(in srgb, var(--a) 60%, var(--line));
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--a) 6%, transparent);
+}
+
+.idbox span {
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mut);
+}
+
+.idbox code {
+  font: 800 21px var(--sans);
+  letter-spacing: .07em;
+  color: var(--a);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--a) 50%, transparent);
+}
+
+
+
+.danger {
+  margin-top: 28px;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, #ef7a8c 55%, var(--line));
+  border-radius: 14px;
+  background: color-mix(in srgb, #ef7a8c 4%, transparent);
+}
+
+.danger h3 {
+  margin: 0 0 6px;
+  font: 700 15px var(--sans);
+  letter-spacing: .02em;
+  color: #ef7a8c;
+}
+
+#sName {
+  margin: 0 0 4px;
+}
+
+#sRole {
+  margin: 0 0 8px;
+}
+
+#delWarn {
+  margin: 0 0 10px;
+}
+
+.danger button.dng {
+  min-height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid #ef7a8c;
+  background: transparent;
+  color: #ef7a8c;
+  font: 700 14.5px var(--sans);
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease;
+}
+
+.danger button.dng:hover:not(:disabled) {
+  background: #ef7a8c;
+  color: var(--ink, #0b0f14);
+}
+
+.danger button.dng:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+.rw {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  align-items: center;
+}
+
+
+
+@media (max-width: 900px) {
+  .acct {
+    margin-top: 24px;
+    gap: 14px;
+  }
+
+  .acct-head {
+    padding: 0 0 6px;
+  }
+
+  .acct-head .lead {
+    max-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .card2 {
+    padding: 20px 17px;
+    border-radius: 15px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .seg button {
+    flex-basis: 100%;
+  }
+}
+
+
+
+.pwbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin: 8px 0 6px;
+}
+
+.pwbar i {
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg, #f3efe8) 16%, transparent);
+  transition: background .25s ease;
+}
+
+.pwbar[data-score="1"] i:nth-child(1) { background: #ef7a8c; }
+.pwbar[data-score="2"] i:nth-child(-n+2) { background: #e8a23a; }
+.pwbar[data-score="3"] i:nth-child(-n+3) { background: #35c9e8; }
+.pwbar[data-score="4"] i { background: #3ddc84; box-shadow: 0 0 10px rgba(61,220,132,.4); }
+
+.pwhint {
+  margin: 0 0 14px;
+  min-height: 1.2em;
+  font: 500 12.5px/1.45 var(--sans, system-ui, sans-serif);
+  color: color-mix(in srgb, var(--fg, #f3efe8) 62%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pwbar i { transition: none; }
+}
+
+
+
 
 .acct {
   max-width: 620px;
@@ -30,15 +635,15 @@
   box-sizing: border-box;
 }
 
-/* --- Title ---------------------------------------------------------------- */
+
 
 .acct-head {
   text-align: center;
   padding: 4px 0 10px;
 }
 
-/* Short accent rule above the heading, a quiet nod to the game's terminal
-   styling without adding another box to the page. */
+
+
 .acct-head h1 {
   font-size: clamp(32px, 4.6vw, 46px);
   line-height: 1.05;
@@ -62,7 +667,7 @@
   max-width: 46ch;
 }
 
-/* --- Panels --------------------------------------------------------------- */
+
 
 .card2 {
   position: relative;
@@ -75,7 +680,7 @@
   transition: border-color .25s ease;
 }
 
-/* A hairline of accent colour along the top edge marks the active panel. */
+
 .card2::before {
   content: "";
   position: absolute;
@@ -85,8 +690,8 @@
   opacity: .65;
 }
 
-/* A panel that contains the field currently being typed in gets a slightly
-   stronger outline, which makes the active form obvious without extra chrome. */
+
+
 .card2:focus-within {
   border-color: color-mix(in srgb, var(--a) 45%, var(--line));
 }
@@ -101,7 +706,7 @@
   letter-spacing: -.01em;
 }
 
-/* --- Segmented controls --------------------------------------------------- */
+
 
 .seg {
   display: flex;
@@ -141,8 +746,8 @@
   font-weight: 700;
 }
 
-/* The second-level switcher (email vs Player ID) is lighter than the
-   sign-in / create-account switcher above it, so the hierarchy reads. */
+
+
 .seg-sub {
   margin-bottom: 6px;
   border-color: transparent;
@@ -161,7 +766,7 @@
   color: var(--fg);
 }
 
-/* --- Fields --------------------------------------------------------------- */
+
 
 .acct label.l {
   display: block;
@@ -201,7 +806,7 @@
   border-color: color-mix(in srgb, #ef7a8c 60%, var(--line));
 }
 
-/* --- Choice cards (account type, age group, difficulty) -------------------- */
+
 
 .cards {
   display: grid;
@@ -271,7 +876,7 @@
   stroke: none;
 }
 
-/* --- Buttons and inline links --------------------------------------------- */
+
 
 .go {
   margin-top: 22px;
@@ -314,10 +919,10 @@
   border-radius: 4px;
 }
 
-/* --- Privacy consent ------------------------------------------------------
-   The inline agreement line above the Create account button and the same row
-   inside the pre-registration dialog. The shared modal styles treat every
-   label as a field caption, so the dialog version resets that here. */
+
+
+
+
 
 .consent {
   display: flex;
@@ -329,7 +934,7 @@
   cursor: pointer;
 }
 
-/* Sign-in only: the session choice sits above the password-reset link. */
+
 .consent.remember {
   margin-top: 14px;
 }
@@ -348,7 +953,7 @@
   text-underline-offset: 3px;
 }
 
-/* Higher specificity than .tlpm-pan label, which is meant for form fields. */
+
 .tlpm .consent {
   display: flex;
   gap: 10px;
@@ -368,7 +973,7 @@
   flex: none;
 }
 
-/* The short summary in the dialog is a normal list, not a form control. */
+
 .tlpm .pvlist {
   margin: 0 0 14px;
   padding-left: 20px;
@@ -391,7 +996,7 @@
   text-underline-offset: 3px;
 }
 
-/* --- Notes, alerts and Player ID ------------------------------------------ */
+
 
 .note {
   margin: 12px 0 0;
@@ -400,7 +1005,7 @@
   line-height: 1.6;
 }
 
-/* One-time sign-in: a different account already open on this device. */
+
 #qrOther {
   color: #ef7a8c;
 }
@@ -453,7 +1058,7 @@
   color: var(--a);
 }
 
-/* --- Danger zone ---------------------------------------------------------- */
+
 
 .danger {
   margin-top: 28px;
@@ -469,8 +1074,8 @@
   color: #ef7a8c;
 }
 
-/* Spacing for the signed-in header and the delete warning. These were inline
-   style attributes in auth.html; the values are unchanged. */
+
+
 #sName {
   margin: 0 0 4px;
 }
@@ -513,7 +1118,7 @@
   align-items: center;
 }
 
-/* --- Responsive ----------------------------------------------------------- */
+
 
 @media (max-width: 900px) {
   .acct {
@@ -545,9 +1150,9 @@
   }
 }
 
-/* --- Password strength meter ---------------------------------------------
-   Four small bars under the password field. The data-score attribute (0-4)
-   is set by js/pages/auth.js; everything visual lives here. */
+
+
+
 
 .pwbar {
   display: grid;

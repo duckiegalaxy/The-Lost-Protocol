@@ -1,34 +1,17 @@
-/* =============================================================================
-   BONUS LAB LOGIC  (js/pages/bonus.js)
-   -----------------------------------------------------------------------------
-   Powers bonus.html: the logic-gate playground and the bonus missions.
-   Progress is stored per learner, locally first and then mirrored to Supabase
-   when a learner is signed in.
-   
-   The circuit evaluator is intentionally small and synchronous: it walks wires
-   until values settle or a loop is detected, which is what makes the truth
-   table update instantly as switches are flipped.
-   Areas in this file:
-     - progress persistence (localStorage + cloud mirror)
-     - audio tones and the generated victory songs
-     - the circuit model, evaluator, drawing and truth table
-     - puzzle checking and the gate builder
-     - the explorer cards
-   ============================================================================= */
 const $ = (s, r) => (r || document).querySelector(s);
 const A = () => window.TLP_AUTH;
 const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-/* -----------------------------------------------------------------------------
-   Small helpers
-   Seeded-free randomness is fine here: the puzzles only need variety, not
-   reproducible runs. pkey() namespaces storage per learner so two learners on
-   the same device never overwrite each other.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 const rnd = (n) => Math.floor(Math.random() * n);
 const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const uniq = (n, lo, hi) => { const s = new Set(); while (s.size < n) s.add(lo + rnd(hi - lo + 1)); return [...s]; };
 
-/* ================= progress (separate from the main game and every ranking) ================= */
+
 let learnerId = 'local', prog = { done: {}, ach: [] };
 const pkey = () => 'tlp-bonus-' + learnerId;
 function loadLocal() { try { const p = JSON.parse(localStorage.getItem(pkey()) || 'null'); if (p && p.done) prog = p; } catch (e) {} }
@@ -41,13 +24,13 @@ async function loadCloud() {
     if (data && data.data) { prog.ach = [...new Set([...(prog.ach || []), ...(data.data.ach || [])])]; prog.done = Object.assign({}, data.data.done, prog.done); } } catch (e) {}
 }
 
-/* ================= sound and achievements ================= */
+
 let actx = null;
-/* -----------------------------------------------------------------------------
-   Audio
-   Short oscillator tones double as feedback for gates opening and achievements.
-   AudioContext is created lazily and only after a user gesture.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 function tone(f, t, d, type) { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); const o = actx.createOscillator(), g = actx.createGain(); o.type = type || 'sine'; o.frequency.value = f; g.gain.setValueAtTime(.0001, actx.currentTime + t); g.gain.exponentialRampToValueAtTime(.18, actx.currentTime + t + .02); g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime + t + d); o.connect(g); g.connect(actx.destination); o.start(actx.currentTime + t); o.stop(actx.currentTime + t + d + .05); } catch (e) {} }
 const SONGS = [[523, 659, 784], [440, 554, 659, 880], [392, 523, 659], [349, 440, 523, 698], [587, 740, 880], [330, 415, 494, 659]];
 function playSong(i) { (SONGS[i % SONGS.length]).forEach((f, k) => tone(f, k * .13, .3, i % 2 ? 'triangle' : 'square')); }
@@ -79,7 +62,7 @@ function unlock(id) {
   renderAch(); renderProg();
 }
 
-/* ================= LOGIC GATE WORKSHOP ================= */
+
 const GATE_INFO = {
   AND: ['AND', 'The output is ON only when both inputs are ON.', (a, b) => a & b], OR: ['OR', 'The output is ON when at least one input is ON.', (a, b) => a | b],
   NOT: ['NOT', 'The output is the opposite of the input.', (a) => a ? 0 : 1], NAND: ['NAND', 'NOT AND: OFF only when both inputs are ON.', (a, b) => (a & b) ? 0 : 1],
@@ -105,17 +88,36 @@ const PUZZLES = [
   { t: 'Guard and one helper', n: 3, f: (a, b, c) => (a & (b | c)) ? 1 : 0, goal: 'The bulb must be ON only when A is ON and at least one of B or C is also ON.', how: 'A is the guard. B and C are helpers that join through OR.', hints: ['A must always be ON, so it is one side of an AND gate.', 'B or C alone is enough, so combine them with OR.', 'OR B with C, then AND that result with A. The AND output drives the bulb.'], why: 'This is the shape of many login checks: a valid account AND (a password OR a recovery code).' }
 ];
 let comps = [], wires = [], pend = null, selC = null, selW = null, nid = 1, pidx = 0, hintLv = 0, explorerBuilt = false;
+
+
+
+let gateSaveT = null;
+function saveGate() {
+  clearTimeout(gateSaveT);
+  gateSaveT = setTimeout(() => {
+    try { sessionStorage.setItem('tlp-bonus-gate', JSON.stringify({ p: pidx, n: nid, c: comps, w: wires })); } catch (e) {}
+  }, 250);
+}
+function restoreGate() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('tlp-bonus-gate') || 'null');
+    if (!s || !PUZZLES[s.p] || !Array.isArray(s.c) || !s.c.length) return;
+    loadPuzzle(s.p);
+    comps = s.c; wires = Array.isArray(s.w) ? s.w : []; nid = s.n || 1000;
+    drawCircuit();
+  } catch (e) {}
+}
 const NIN = (t) => t === 'SW' ? 0 : (t === 'NOT' || t === 'LAMP') ? 1 : 2;
 const PORT_Y = (t, k) => NIN(t) === 1 ? 24 : (k === 0 ? 14 : 34);
-/* -----------------------------------------------------------------------------
-   Circuit model and evaluator
-   comps holds components, wires connects outputs to inputs. evalCircuit()
-   resolves values with memoisation and a busy set to catch feedback loops.
-   This is the only place that decides what a circuit outputs.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 function addComp(t, x, y) { const c = { id: nid++, t, x: x == null ? 150 + rnd(200) : x, y: y == null ? 40 + rnd(260) : y, v: 0 }; comps.push(c); drawCircuit(); return c; }
 function inputsOf(c) { const arr = []; for (let k = 0; k < NIN(c.t); k++) { const w = wires.find((w) => w.to === c.id && w.port === k); arr.push(w ? w.from : null); } return arr; }
-function evalCircuit(sw) { // sw: {id: 0/1}; returns {vals:{id:value}, cyc:boolean}
+function evalCircuit(sw) {
   const vals = {}, busy = {}; let cyc = false;
   const val = (id) => { if (id == null) return 0; if (id in vals) return vals[id]; if (busy[id]) { cyc = true; return 0; } busy[id] = 1; const c = comps.find((x) => x.id === id); let v = 0;
     if (!c) v = 0; else if (c.t === 'SW') v = sw[id] ? 1 : 0; else if (c.t === 'LAMP') v = val(inputsOf(c)[0]); else { const ins = inputsOf(c).map(val); v = GATE_INFO[c.t][2](ins[0], ins[1]) ? 1 : 0; }
@@ -140,9 +142,10 @@ function drawCircuit() {
   svg.innerHTML = h;
   const cyc = $('#cycNote'); if (cyc) cyc.textContent = ev.cyc ? 'A wire loops back on itself. Remove the loop so the signal can flow forward.' : '';
   renderTruth();
+  saveGate();
 }
 const swName = (c) => 'ABCDEFGH'[comps.filter((x) => x.t === 'SW').findIndex((x) => x.id === c.id)] || '?';
-function tableFor() { // evaluates every switch combination of the current circuit
+function tableFor() {
   const sws = comps.filter((c) => c.t === 'SW'), lamps = comps.filter((c) => c.t === 'LAMP'); if (!sws.length || sws.length > 4 || lamps.length !== 1) return null;
   const rows = []; for (let m = 0; m < (1 << sws.length); m++) { const s = {}; sws.forEach((c, i) => s[c.id] = (m >> (sws.length - 1 - i)) & 1); const ev = evalCircuit(s); rows.push({ ins: sws.map((c) => s[c.id]), out: ev.vals[lamps[0].id] }); }
   return rows;
@@ -154,11 +157,11 @@ function renderTruth() {
   rows.forEach((r) => { const want = p.f(...r.ins) ? 1 : 0, ok = (r.out ? 1 : 0) === want; h += '<tr class="' + (p.n === n ? (ok ? 'ok' : 'bad') : '') + '">' + r.ins.map((v) => '<td>' + v + '</td>').join('') + '<td>' + r.out + '</td><td>' + (p.n === n ? want : '-') + '</td></tr>'; });
   el.innerHTML = h + '</table>';
 }
-/* -----------------------------------------------------------------------------
-   Puzzle checking
-   Runs the player circuit against every switch combination and compares the
-   full truth table with the target. One mismatch fails the puzzle.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 function checkPuzzle() {
   const p = PUZZLES[pidx], rows = tableFor(), fb = $('#gfb'), sws = comps.filter((c) => c.t === 'SW').length, gates = comps.filter((c) => !['SW', 'LAMP'].includes(c.t)).length;
   const say = (m, ok) => { fb.textContent = m; fb.className = 'fb ' + (ok ? 'good' : 'bad'); if (ok) { tone(660, 0, .1); tone(880, .12, .18); } else { buzz(); tone(150, 0, .14, 'square'); } };
@@ -170,7 +173,7 @@ function checkPuzzle() {
   say('Correct! ' + p.why, true); prog.done['gate' + pidx] = 1; unlock('gate' + pidx); saveProg(); renderProg();
   $('#gnext').hidden = pidx >= PUZZLES.length - 1;
 }
-/* A wrong answer shakes the board itself, which reads faster than the message. */
+
 function buzz(){const cv=$('#cv');if(!cv)return;cv.classList.remove('shake');void cv.getBoundingClientRect();cv.classList.add('shake');setTimeout(()=>cv.classList.remove('shake'),500)}
 function loadPuzzle(i) {
   pidx = Math.max(0, Math.min(PUZZLES.length - 1, i)); hintLv = 0; comps = []; wires = []; nid = 1; pend = null; selC = null; selW = null; const p = PUZZLES[pidx];
@@ -187,12 +190,12 @@ function buildGate() {
     '<p class="mm">How to use: add parts with the buttons, drag them to move, click a switch to turn it on or off. To connect, click the output circle (right side of a part) and then the input circle (left side of another part). Click a wire or a part, then Remove selected to delete it.</p>' +
     '<div class="ctl"><button class="bb pri" id="gcheck" type="button">Check my circuit</button><button class="bb" id="ghbtn" type="button">Give me a hint</button><button class="bb" id="gprev" type="button">Previous puzzle</button><button class="bb" id="gnext" type="button" hidden>Next puzzle</button><button class="bb sm" id="glisten" type="button">Listen to the goal</button></div>' +
     '<p class="fb" id="ghint"></p><p class="fb" id="gfb" role="status" aria-live="polite"></p><h3>Truth table (updates live)</h3><div id="truth"></div></div>';
-/* -----------------------------------------------------------------------------
-   Explorer cards
-   Reference cards for each gate, shown beside the sandbox so players can read
-   the behaviour instead of guessing it.
-   -------------------------------------------------------------------------- */
-  // explorer cards
+
+
+
+
+
+
   $('#gex').innerHTML = Object.keys(GATE_INFO).map((g) => { const two = NIN(g) === 2; return '<div class="gc" data-g="' + g + '">' + GSV(g) + '<b>' + g + '</b><p class="mm" style="margin:2px 0 6px">' + GATE_INFO[g][1] + '</p><div class="tg"><button type="button" data-in="0" aria-pressed="false" aria-label="Input A">A 0</button>' + (two ? '<button type="button" data-in="1" aria-pressed="false" aria-label="Input B">B 0</button>' : '') + '</div><span class="out">0</span></div>'; }).join('');
   $('#gex').querySelectorAll('.gc').forEach((card) => { const g = card.dataset.g, v = [0, 0]; const upd = () => { const o = GATE_INFO[g][2](v[0], v[1]) ? 1 : 0; const ob = card.querySelector('.out'); ob.textContent = o; ob.classList.toggle('on', !!o); };
     card.querySelectorAll('.tg button').forEach((b) => b.onclick = () => { const k = +b.dataset.in; v[k] = v[k] ? 0 : 1; b.setAttribute('aria-pressed', !!v[k]); b.textContent = 'AB'[k] + ' ' + v[k]; tone(v[k] ? 660 : 440, 0, .08); upd(); }); upd(); });
@@ -202,7 +205,7 @@ function buildGate() {
   $('#ghbtn').onclick = () => { const p = PUZZLES[pidx]; hintLv = Math.min(3, hintLv + 1); $('#ghint').textContent = 'Hint ' + hintLv + ' of 3: ' + p.hints[hintLv - 1]; };
   $('#gprev').onclick = () => loadPuzzle(pidx - 1); $('#gnext').onclick = () => loadPuzzle(pidx + 1);
   $('#glisten').onclick = () => TLP.Voice.speak(PUZZLES[pidx].goal + ' ' + PUZZLES[pidx].how);
-  // board interaction: drag, connect, toggle
+
   const svg = $('#cv'); let drag = null;
   const pt = (e) => { const m = svg.getScreenCTM().inverse(), p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(m); };
   svg.addEventListener('pointerdown', (e) => {
@@ -215,9 +218,10 @@ function buildGate() {
   svg.addEventListener('pointermove', (e) => { if (!drag) return; const p = pt(e); const nx = Math.max(0, Math.min(704, p.x - drag.dx)), ny = Math.max(0, Math.min(290, p.y - drag.dy)); if (Math.abs(nx - drag.c.x) + Math.abs(ny - drag.c.y) > 3) drag.moved = true; drag.c.x = nx; drag.c.y = ny; drawCircuit(); });
   svg.addEventListener('pointerup', () => { if (drag && !drag.moved && drag.c.t === 'SW') { drag.c.v = drag.c.v ? 0 : 1; tone(drag.c.v ? 660 : 440, 0, .08); } drag = null; drawCircuit(); });
   loadPuzzle(0);
+  restoreGate();
 }
 
-/* ================= ALGORITHM WORKSHOP ================= */
+
 const ALGS = [
   { id: 'linear', name: 'Linear Search', sorted: false, real: 'Finding one package among a pile of unsorted parcels: you have no choice but to look at each one in turn.', how: 'Start at the first item. Compare it with what you are looking for. If it matches, stop. If not, move to the next item. Repeat until you find it or run out of items.', when: 'Use it when the list is small or not sorted. It works on any list.', limit: 'It can be slow: with 1,000 items you may need 1,000 checks.', hints: ['Linear search simply looks at the items one after another.', 'Start at the very first position. Which position comes next after that?', 'Click the items from left to right, never skipping a position.', 'Click the next position in order. The rule is always "the position right after the last one you checked".'] },
   { id: 'binary', name: 'Binary Search', sorted: true, real: 'Looking up a name in a phone book: you open near the middle, decide whether to go left or right, and halve the pages left each time.', how: 'Look at the middle item of the current range. If it is the target, stop. If the target is smaller, keep only the left half. If larger, keep only the right half. Repeat on the smaller range.', when: 'Use it on a SORTED list, especially a long one: 1,000 items need only about 10 checks.', limit: 'The list must be sorted first. On an unsorted list the halving logic is wrong, because the target could be on either side.', hints: ['Binary search always inspects the middle of the range that is still possible.', 'The possible range is shown by the bright items. Find the position halfway between its two ends.', 'After checking the middle, decide: is the target smaller or larger than it? That tells you which half to keep.', 'Count the positions in the range, take the position in the middle (round down), and click it.'] },
@@ -229,7 +233,7 @@ const ALGS = [
 let curAlg = 0, curTier = 'n', st = null, watch = null, wTimer = null, hintN = 0;
 const labelBox = (v, i, cls, idx) => '<button type="button" class="bx ' + (cls || '') + '" data-i="' + i + '" aria-label="Position ' + (i + 1) + (cls && cls.includes('hid') ? ', hidden' : ', value ' + v) + '">' + v + '<small>' + (i + 1) + '</small></button>';
 
-/* ---- step generators for the animated demonstration (each step is a full snapshot) ---- */
+
 function genSteps(id, arr, target) {
   const S = []; const a = arr.slice(); const snap = (o) => S.push(Object.assign({ arr: a.slice(), hl: [], range: null, sorted: 0, found: -1, note: '' }, o));
   if (id === 'linear') { for (let i = 0; i < a.length; i++) { if (a[i] === target) { snap({ hl: [i], found: i, note: 'Position ' + (i + 1) + ' holds ' + a[i] + ', which is the target. Found it after ' + (i + 1) + ' check' + (i ? 's' : '') + '.' }); return S; } snap({ hl: [i], note: 'Check position ' + (i + 1) + ': ' + a[i] + ' is not ' + target + ', so move on.' }); } snap({ note: 'The end of the list was reached: the target is not in it.' }); }
@@ -250,10 +254,10 @@ function newWatch() { const A0 = ALGS[curAlg]; let arr = A0.sorted === false ? s
 function stepWatch(d) { watch.i = Math.max(0, Math.min(watch.steps.length - 1, watch.i + d)); renderWatch(); }
 function togglePlay() { if (wTimer) { clearInterval(wTimer); wTimer = null; $('#wPlay').textContent = 'Play'; return; } if (watch.i >= watch.steps.length - 1) watch.i = 0; $('#wPlay').textContent = 'Pause'; wTimer = setInterval(() => { if (watch.i >= watch.steps.length - 1) { clearInterval(wTimer); wTimer = null; $('#wPlay').textContent = 'Play'; return; } stepWatch(1); }, +$('#wSpeed').value); }
 
-/* ---- hands-on activities (you perform the algorithm; mistakes get specific feedback) ---- */
+
 function newTry(tier) {
   const A0 = ALGS[curAlg], id = A0.id; curTier = tier || 'n'; const ch = curTier === 'c'; hintN = 0; $('#tHint').textContent = '';
-  let arr; if (A0.sorted === false) arr = shuffle(uniq(ch ? 12 : curTier === 's' ? 6 : 8, 10, 99)); else if (A0.sorted) arr = uniq(ch ? 15 : (id === 'jump' ? (curTier === 's' ? 9 : 12) : (curTier === 's' ? 8 : 11)), 5, 99).sort((a, b) => a - b); else arr = shuffle(uniq(ch ? 7 : curTier === 's' ? 5 : 6, 10, 60));
+  let arr; if (A0.sorted === false) arr = shuffle(uniq(ch ? 12 : curTier === 's' ? 6 : 8, 10, 99)); else if (A0.sorted) arr = uniq(id === 'binary' ? (curTier === 's' ? 7 : curTier === 'n' ? 9 : 13) : (ch ? 15 : (id === 'jump' ? (curTier === 's' ? 9 : 12) : (curTier === 's' ? 8 : 11))), 5, 99).sort((a, b) => a - b); else arr = shuffle(uniq(ch ? 7 : curTier === 's' ? 5 : 6, 10, 60));
   st = { id, ch, tier: curTier, arr, orig: arr.slice(), done: false, checks: 0, swaps: 0, revealed: new Set(), target: A0.sorted === null ? null : arr[rnd(arr.length)] };
   if (ch && A0.sorted !== null) st.mode = 'freeSearch'; else if (ch) st.mode = 'freeSort';
   if (id === 'linear') st.next = 0;
@@ -269,7 +273,7 @@ function goalText() { const s = st; if (s.mode === 'freeSearch') return 'Challen
 function drawTry() {
   const s = st, el = $('#tArr'), id = s.id; $('#tGoal').textContent = goalText(); let h = '';
   const search = s.target != null;
-  if (search) { h = s.arr.map((v, i) => { const open = s.revealed.has(i); return labelBox(open ? v : '?', i, (open ? '' : 'hid ') + (s.done && v === s.target ? 'fnd ' : '') + (id === 'binary' && !s.ch && (i < s.lo || i > s.hi) ? 'dim ' : '') + (id === 'jump' && !s.ch && s.phase === 'jump' && i === s.cur ? 'hl ' : '')); }).join(''); }
+  if (search) { const mid = id === 'binary' && !s.ch && !s.done && s.phase === 'pick' ? (s.lo + s.hi) >> 1 : -1; h = s.arr.map((v, i) => { const open = s.revealed.has(i); return labelBox(open ? v : '?', i, (open ? '' : 'hid ') + (s.done && v === s.target ? 'fnd ' : '') + (id === 'binary' && !s.ch && (i < s.lo || i > s.hi) ? 'dim ' : '') + (i === mid ? 'mid ' : '') + (id === 'binary' && !s.ch && i === s.lastMid && s.phase === 'dir' ? 'hl ' : '') + (id === 'jump' && !s.ch && s.phase === 'jump' && i === s.cur ? 'hl ' : '')); }).join(''); }
   else if (s.mode === 'freeSort') { h = s.arr.map((v, i) => labelBox(v, i, (s.pick === i ? 'hl ' : '') + (s.done ? 'srt' : ''))).join(''); }
   else if (id === 'bubble') { h = s.arr.map((v, i) => labelBox(v, i, (!s.done && (i === s.i || i === s.i + 1) ? 'hl ' : '') + (i >= s.sortedFrom ? 'srt' : ''))).join(''); }
   else if (id === 'selection') { h = s.arr.map((v, i) => labelBox(v, i, i < s.k ? 'srt' : '')).join(''); }
@@ -278,7 +282,7 @@ function drawTry() {
   const ctl = $('#tCtl'); ctl.innerHTML = '';
   if (id === 'binary' && !s.ch && !s.done && s.phase === 'dir') ctl.innerHTML = '<button class="bb" data-dir="L" type="button">The target is on the left</button><button class="bb" data-dir="R" type="button">The target is on the right</button>';
   if (id === 'bubble' && !s.ch && !s.done) ctl.innerHTML = '<button class="bb pri" data-bb="swap" type="button">Swap</button><button class="bb" data-bb="keep" type="button">Keep</button>';
-  $('#tStat').textContent = search ? 'Checks so far: ' + s.checks : (s.swaps ? 'Swaps so far: ' + s.swaps : '');
+  $('#tStat').textContent = search ? 'Checks so far: ' + s.checks + (id === 'binary' && !s.ch && !s.done && s.phase === 'pick' ? ' · Middle is position ' + (((s.lo + s.hi) >> 1) + 1) : '') : (s.swaps ? 'Swaps so far: ' + s.swaps : '');
 }
 function finishTry() {
   const s = st, A0 = ALGS[curAlg]; s.done = true; drawTry();
@@ -311,7 +315,7 @@ function onTryClick(e) {
     if (s.revealed.has(i)) return; if (i !== s.blk) return fbk('In the block, check items one by one in order. The next position is ' + (s.blk + 1) + '.', false); s.revealed.add(i); s.checks++; s.blk++; if (s.arr[i] === s.target) return finishTry(); fbk(s.arr[i] + ' is not the target. Check the next one.', true); return drawTry(); }
   if (id === 'selection') { const rest = s.arr.slice(s.k), mn = Math.min(...rest); if (i < s.k) return fbk('That item is already sorted. Pick from the unsorted items.', false); if (s.arr[i] !== mn) return fbk(s.arr[i] + ' is not the smallest of the unsorted items. Look for a smaller value among them.', false); const j = s.arr.indexOf(mn, s.k); if (j !== s.k) { [s.arr[s.k], s.arr[j]] = [s.arr[j], s.arr[s.k]]; s.swaps++; } s.k++; fbk('Correct: ' + mn + ' is the smallest remaining and now sits in position ' + s.k + '.', true); if (s.k >= s.arr.length - 1) return finishTry(); return drawTry(); }
 }
-/* ---- "Which algorithm?" drill: five situations drawn from eight ---- */
+
 const QUIZ = [
   { q: 'A sorted list holds 2,000 student IDs and you need to find one ID.', a: 'binary', why: 'The list is already sorted, so each check can throw away half of what remains. About 11 checks beat 2,000.' },
   { q: 'A drawer holds 8 unsorted charging cables and you want the USB-C one.', a: 'linear', why: 'With only eight unsorted items, looking at them one by one is the simplest and fastest choice.' },
@@ -361,15 +365,15 @@ function loadAlg() {
   $('#tSum').hidden = true; fbk('', true); newWatch(); newTry(curTier);
 }
 
-/* ================= achievements ================= */
+
 function buildAchList() {
   PUZZLES.forEach((p, i) => ACHS.push({ id: 'gate' + i, n: i, t: p.t, d: 'Solved logic gate puzzle ' + (i + 1) + '.', svg: '<svg viewBox="0 0 56 48">' + GATE_SHAPES[PUZ_SHAPE[i]] + '</svg>' }));
   ALGS.forEach((a, i) => ACHS.push({ id: 'alg-' + a.id, n: 10 + i, t: a.name + ' Expert', d: 'Completed the ' + a.name + ' activity.', svg: ALG_ICONS[a.id] }));
   ACHS.push({ id: 'master', n: 16, t: 'Bonus Lab Master', d: 'Finished every gate puzzle and algorithm activity.', svg: '<svg viewBox="0 0 56 48"><path d="M6 40L6 14L18 26L28 8L38 26L50 14L50 40Z"/></svg>' });
   ACHS.push({ id: 'quiz', n: 21, t: 'Algorithm Scout', d: 'Answered all five scenario questions in one drill correctly.', svg: '<svg viewBox="0 0 56 48"><path d="M28 42V10"/><path d="M28 14H12L6 22L12 30H28"/><path d="M28 14H44L50 22L44 30H28"/></svg>' });
 }
-/* Progress strip above the tabs. It reuses the same prog.done and prog.ach
-   keys the activities write, so there is no separate counter to drift. */
+
+
 function renderProg() {
   const el = $('#bprog'); if (!el) return;
   const gates = PUZZLES.filter((_, i) => prog.done['gate' + i]).length;
@@ -384,13 +388,13 @@ function renderProg() {
 }
 function renderAch() {
   const el = $('#pAch'); if (!el) return;
-  el.innerHTML = '<div class="bp"><h2>Your achievements</h2><p class="mm">These are shown only here. They are separate from your score and do not affect any leaderboard, co-op result or ranking.</p>' + ACHS.map((a) => '<div class="ach ' + (prog.ach.includes(a.id) ? '' : 'lk') + '">' + a.svg + '<br><b>' + esc(prog.ach.includes(a.id) ? a.t : 'Locked') + '</b><br><span class="mm">' + esc(a.d) + '</span></div>').join('') + '</div>';
+  el.innerHTML = '<div class="bp"><h2>Your achievements</h2><p class="mm">These are shown only here. They are separate from your score and do not affect any leaderboard, ranking.</p>' + ACHS.map((a) => '<div class="ach ' + (prog.ach.includes(a.id) ? '' : 'lk') + '">' + a.svg + '<br><b>' + esc(prog.ach.includes(a.id) ? a.t : 'Locked') + '</b><br><span class="mm">' + esc(a.d) + '</span></div>').join('') + '</div>';
 }
 
-/* ================= mastery missions =================
-   These are the four extra chapters and the final guardian that used to sit
-   on the chapter map as "Section 6". They now live here, after the five story
-   sections, and open the game directly on the chosen chapter. */
+
+
+
+
 const MASTERY = [
   { c: 25, t: 'Debugging', d: 'Find the broken step and repair the program.' },
   { c: 26, t: 'Searching', d: 'Search through data in a smart order.' },
@@ -405,18 +409,19 @@ function buildMas() {
     '</div></div>';
 }
 
-/* ================= unlock check and start ================= */
+
 async function isUnlocked(l, u) {
   if (u && u.isAdmin) return true;
   if (l && (l.completed_diffs || []).length) return true;
   try { const recs = await A().getProgressSummaries([l.id]); const hid = (TLP.HIDDEN[l.assigned_path] || []);
-    // Two workshops and Mastery open together: the five story guardians are
-    // the gate, and the optional Mastery guardian is never required here.
+
+
     const need = TLP.BOSS_CH.filter((c) => !hid.includes(c) && c !== 29);
     return recs.some((r) => need.every((c) => Number((r.prog || {})[c + '-0']) >= 1)); } catch (e) { return false; }
 }
 function tab(n) {
   ['Gate', 'Alg', 'Mas', 'Ach'].forEach((k) => { $('#t' + k).setAttribute('aria-selected', k === n); $('#p' + k).hidden = k !== n; });
+  try { localStorage.setItem('tlp-bonus-tab', n); } catch (e) {}
   renderProg();
   if (n === 'Gate') buildGate(); if (n === 'Alg') buildAlg(); if (n === 'Mas') buildMas(); if (n === 'Ach') renderAch();
 }
@@ -428,15 +433,15 @@ window.BONUS = { evalCircuit, genSteps, PUZZLES, ALGS, get comps() { return comp
     await A().init(); const u = A().getCurrentUser();
     if (A().isCloudConfigured() && !u) { g.hidden = false; g.innerHTML = 'Please <a href="auth.html">sign in</a> to open the Bonus sections.'; return; }
     const admin = !!(u && u.isAdmin);
-    // The owner account is also a parent, but it may inspect every section.
+
     if (u && u.role === 'parent' && !admin) { g.hidden = false; g.innerHTML = 'Parent and Educator accounts do not play. <a href="parent.html">Back to the Parent and Educator area</a>.'; return; }
     const l = A().getActiveLearner(); if (admin) learnerId = 'admin-preview'; else if (l && !l.isGuest) learnerId = l.id;
     if (A().isCloudConfigured() && !(await isUnlocked(l || {}, u))) { g.hidden = false; g.innerHTML = '<h2>Locked</h2><p>The Bonus sections unlock after you finish the five story sections, on any difficulty. Keep going: the guardians are waiting. <a href="webgame.html">Back to the game</a></p>'; return; }
-    // Grades 1-6 do not have the Mastery chapters in their game, so the tab is
-    // hidden rather than offering links that would not open. The game picks its
-    // chapters from this same saved path, including for guests.
+
+
+
     let lp = 'g710'; try { lp = localStorage.getItem('tlp-path') || 'g710'; } catch (e) {}
     if (!admin && lp === 'g16') { $('#tMas').hidden = true; $('#pMas').hidden = true; }
-    loadLocal(); await loadCloud(); $('#app').hidden = false; tab('Gate');
+    loadLocal(); await loadCloud(); $('#app').hidden = false; let _bt = 'Gate'; try { const _s = localStorage.getItem('tlp-bonus-tab'); if (_s && ['Gate','Alg','Mas','Ach'].includes(_s)) _bt = _s; } catch (e) {} tab(_bt);
   } catch (e) { g.hidden = false; g.textContent = 'Something went wrong: ' + (e && e.message || e); }
 })();

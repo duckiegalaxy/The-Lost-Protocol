@@ -13,11 +13,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<script src="js/theme.js"></script>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/pages/auth.css">
+<script src="js/theme.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/auth.css?v=13">
+<link rel="stylesheet" href="css/premium.css?v=10">
 </head>
 <body data-music="home">
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div>
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
@@ -27,13 +31,13 @@
 
 <main>
 <div class="wrap acct">
-  <!-- Left column: title and explanation. It stays put while the right column
-       swaps between sign-in, register and recovery. -->
+
+
   <div class="acct-head">
     <h1>Account</h1>
     <p class="lead">Sign in to save your progress and get on the leaderboards.</p>
   </div>
-  <!-- Shared message strip: every view writes feedback into this element. -->
+
   <div id="alert" class="alert" role="alert" aria-live="polite"></div>
 
   <div id="sessionView" class="card2" hidden>
@@ -69,11 +73,11 @@
       <div id="fEmail"><label class="l" for="liEmail">Email address</label><input type="email" id="liEmail" autocomplete="username"></div>
       <div id="fId" hidden><label class="l" for="liId">Player ID</label><input type="text" id="liId" placeholder="TLP-12345678" autocomplete="username" maxlength="12"></div>
       <label class="l" for="liPw">Password</label><input type="password" id="liPw" autocomplete="current-password">
-      <!-- Checked keeps the session on this device so a returning visitor is
-           still signed in; unchecked keeps it only until the browser closes. -->
+
+
       <label class="consent remember"><input type="checkbox" id="liRemember" checked> <span>Keep me signed in on this device</span></label>
-      <!-- Recovery entry point. Hidden while the Player ID method is selected,
-           because a Player ID has no email address to send a link to. -->
+
+
       <div class="forgot-row"><button class="linky" id="forgotLink" type="button">Forgot your password?</button></div>
       <button class="btn big go" type="submit" id="liGo">Sign in</button>
       <p class="note">If a parent or teacher made your profile, sign in with your Player ID and password.</p>
@@ -108,19 +112,19 @@
       <label class="l" for="rgPw">Password (at least 10 characters)</label><input type="password" id="rgPw" autocomplete="new-password" aria-describedby="rgHint">
       <div class="pwbar" id="rgMeter" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <p class="pwhint" id="rgHint" role="status" aria-live="polite">Three unrelated words make a strong, easy password.</p>
-      <!-- The dialog below sets this box, but it stays visible here so the
-           agreement is still on screen when the form is submitted. -->
+
+
       <label class="consent"><input type="checkbox" id="rgConsent"> <span>I have read the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</span></label>
       <button class="btn big go" type="submit" id="rgGo">Create account</button>
       <p class="note">We send a confirmation email. If it does not arrive in a few minutes, check your spam folder.</p>
     </form>
   </div>
 
-  <!-- ===================================================================== -->
-  <!-- VIEW 2b — one-time sign-in code from the Parent area                  -->
-  <!-- The code is redeemed only when Sign in is pressed, so merely opening  -->
-  <!-- the link does not spend it.                                           -->
-  <!-- ===================================================================== -->
+
+
+
+
+
   <section id="qrView" class="card2" hidden>
     <h2 class="s-name">Sign in on this device</h2>
     <p class="note" id="qrIntro">A parent or teacher made a one-time code for this device. Continuing signs it in to that learner's account.</p>
@@ -131,11 +135,11 @@
     <p class="note">The code works once and expires after ten minutes. If it has expired, ask for a new one.</p>
   </section>
 
-  <!-- ===================================================================== -->
-  <!-- VIEW 3 — ask for the reset email                                      -->
-  <!-- The confirmation message is identical whether or not the address is   -->
-  <!-- known, so the form cannot be used to discover which emails exist.     -->
-  <!-- ===================================================================== -->
+
+
+
+
+
   <section id="forgotView" class="card2" hidden>
     <h2 class="s-name">Reset your password</h2>
     <p class="note">Enter the email address you use for The Lost Protocol. We will send a link to set a new password.</p>
@@ -148,11 +152,11 @@
     <p class="note">Students who sign in with a Player ID cannot reset a password by email. Ask the parent or teacher who created the profile to set a new one.</p>
   </section>
 
-  <!-- ===================================================================== -->
-  <!-- VIEW 4 — the email link returned with a recovery session              -->
-  <!-- Only reachable with a valid token in the URL. Saving a new password   -->
-  <!-- replaces the short-lived recovery session with a normal one.          -->
-  <!-- ===================================================================== -->
+
+
+
+
+
   <section id="resetView" class="card2" hidden>
     <h2 class="s-name">Choose a new password</h2>
     <p class="note">You are signed in through the link from your email. Set a new password, then continue to the game.</p>
@@ -170,11 +174,11 @@
 </div>
 </main>
 
-<!-- ======================================================================= -->
-<!-- PRIVACY SUMMARY — shown once before the Create account form appears     -->
-<!-- The Continue button is disabled until the box is ticked. Cancel leaves  -->
-<!-- the page on the sign-in view; nothing is created either way.           -->
-<!-- ======================================================================= -->
+
+
+
+
+
 <div class="tlpm" id="pvM" hidden><div class="tlpm-pan" role="dialog" aria-modal="true" aria-labelledby="pvT">
   <button class="tlpm-x" type="button" id="pvX" aria-label="Close">&#10005;</button>
   <h2 id="pvT">Before you create an account</h2>
@@ -194,12 +198,15 @@
 <footer><div class="wrap"><span>The Lost Protocol, an interactive educational game · <a href="privacy.html">Privacy notice</a></span></div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/tlp-auth.js"></script>
-<script src="js/tlp-common.js"></script>
-<script src="js/streak.js"></script>
-<script src="js/music.js"></script>
-<script src="js/password.js"></script>
-<script src="js/pages/auth.js"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-background.js?v=14"></script>
+<script src="js/streak.js?v=14"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/password.js?v=13"></script>
+<script src="js/pages/auth.js?v=13"></script>
+<script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

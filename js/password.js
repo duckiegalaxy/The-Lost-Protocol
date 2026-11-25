@@ -1,29 +1,10 @@
-/* =============================================================================
-   PASSWORD GUIDANCE (js/password.js)
-
-   Supabase's built-in "leaked password protection" is a paid feature, so this
-   file provides the same idea on the free plan, entirely in the browser:
-
-     - a 10 character minimum (length beats forced complexity rules),
-     - a small list of the most common passwords,
-     - a breach check against Have I Been Pwned using k-anonymity: only the
-       first five characters of the SHA-1 hash ever leave the device.
-
-   The check runs on sign-up and on password reset. It fails OPEN: if the
-   network or the crypto API is unavailable, the password is accepted with a
-   gentle note instead of blocking account creation.
-
-   Exposed as window.TLP_PASSWORD:
-     score(pw)  -> 0..4, used by the strength meter
-     check(pw)  -> { ok, msg, strength, checked }
-   ============================================================================= */
 (function () {
   'use strict';
 
   var MIN = 10;
 
-  // The most common passwords. Keeping this list short avoids shipping a large
-  // file; the breach check catches the long tail.
+
+
   var COMMON = {
     '1234567890': 1, 'password123': 1, 'qwertyuiop': 1, '123456789': 1,
     '12345678': 1, '12345678910': 1, 'password1': 1, 'iloveyou': 1,
@@ -38,8 +19,8 @@
     'lostprotocol': 1, 'theprotocol': 1, 'robounison': 1, 'lostprotocol1': 1
   };
 
-  // A rough strength score for the little meter beside the field. It is only
-  // advice: only the minimum length and the breach check can block a password.
+
+
   function score(pw) {
     pw = String(pw || '');
     if (!pw) return 0;
@@ -49,7 +30,7 @@
     if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) s++;
     if (/[0-9]/.test(pw)) s++;
     if (/[^A-Za-z0-9]/.test(pw)) s++;
-    // Very long passphrases are strong even with few character classes.
+
     if (pw.length >= 20) s = Math.max(s, 3);
     return Math.min(4, s);
   }
@@ -66,9 +47,9 @@
     return toHex(buf);
   }
 
-  // Ask the Pwned Passwords range API whether this password is known. Only the
-  // five character prefix is sent; the server returns all suffixes for it.
-  // A 3.5 second timeout keeps a slow network from freezing the form.
+
+
+
   async function breachCount(pw) {
     var timer = null;
     try {
@@ -98,7 +79,7 @@
     }
   }
 
-  // Full check used by the forms. Always resolves, never throws.
+
   async function check(pw) {
     pw = String(pw || '');
     var strength = score(pw);

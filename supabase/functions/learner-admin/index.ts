@@ -1,10 +1,4 @@
 // deno-lint-ignore-file
-// =============================================================================
-// THE LOST PROTOCOL — Edge Function "learner-admin"
-// Lets a signed-in Parent / Educator create child accounts (Player ID + password)
-// and reset their passwords. The Supabase service key is read from the function's
-// own environment here. It never reaches the browser.
-// =============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS = {
@@ -47,10 +41,10 @@ Deno.serve(async (req) => {
     const { data: pid, error: pidErr } = await admin.rpc("generate_player_id");
     if (pidErr || !pid) { console.error("player id failed"); return json({ error: "server" }, 500); }
     const loginEmail = String(pid).toLowerCase() + "@" + DOMAIN;
-    // GoTrue inserts auth.users with empty app_metadata and applies the metadata we
-    // send in a follow-up UPDATE, so the reserved-domain guard cannot see
-    // tlp_learner on the INSERT. Pre-approve this one address instead; the
-    // allowlist table is service-role only and the row is removed again below.
+
+
+
+
     const { error: allowErr } = await admin.from("learner_login_allowlist").upsert({ email: loginEmail });
     if (allowErr) { console.error("allowlist insert failed"); return json({ error: "server" }, 500); }
     const { data: created, error: cErr } = await admin.auth.admin.createUser({

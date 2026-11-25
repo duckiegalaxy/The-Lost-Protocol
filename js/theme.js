@@ -1,13 +1,3 @@
-/* =============================================================================
-   THE LOST PROTOCOL — APPEARANCE (loaded in <head> on every page)
-   One choice of three: Auto (follow this device), Light or Dark. The resolved
-   value is written to <html data-theme> before the first paint so a page never
-   flashes the wrong colours, and the CSS in style.css and webgame.css keys off
-   that attribute. The choice is saved on this device only.
-   A small sun/moon switch is placed in the header of every page. It sets an
-   explicit Light or Dark choice, so one tap overrides Auto until the setting
-   is changed again.
-   ============================================================================= */
 (function () {
   'use strict';
   var KEY = 'tlp-theme';
@@ -15,8 +5,8 @@
   var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
   var KNOWN = { auto: 1, light: 1, dark: 1 };
 
-  // Styles for the switch live here because every page loads this file, and
-  // webgame.html does not load css/style.css.
+
+
   var css = '.themetog{display:inline-flex;align-items:center;gap:2px;height:34px;padding:3px;border:1px solid var(--line);border-radius:999px;background:color-mix(in srgb,var(--fg) 6%,transparent);color:var(--mut);cursor:pointer;flex:0 0 auto;transition:border-color .2s}' +
     '.themetog:hover{border-color:var(--a)}' +
     '.themetog:focus-visible{outline:2px solid var(--a);outline-offset:2px}' +
@@ -24,10 +14,14 @@
     '.themetog svg{width:15px;height:15px}' +
     '.themetog span.on{background:var(--a);color:var(--ink)}' +
     '.wrap.has-menu .themetog{margin-left:auto}' +
-    // The game header keeps the mood row against the right edge, with the
-    // switch beside it. On narrow screens the two no longer fit on one row, so
-    // the switch takes the free margin and stays pinned right instead of
-    // landing alone at the left edge.
+
+
+
+    '.top>.themetog{align-self:center;margin-top:0}' +
+
+
+
+
     '@media(max-width:620px){.top>.themetog{margin-left:auto}}';
   var style = document.createElement('style');
   style.id = 'tlpThemeSwitchCss';
@@ -64,8 +58,8 @@
     var wrap = document.querySelector('header nav .wrap');
     if (wrap) {
       var menu = document.getElementById('navMenuBtn');
-      // On shared-menu pages wait for setupNav, so the switch lands next to
-      // Menu instead of being spread to the middle of the bar.
+
+
       if (menu && menu.parentNode === wrap) {
         wrap.insertBefore(b, menu);
       } else if (!force) {
@@ -78,12 +72,14 @@
     }
     var top = document.querySelector('.top');
     if (top) {
-      // Sit beside the mood swatches when they are in the bar (they carry the
-      // auto margin that pins them right). On phones they move into the More
-      // panel, leaving the switch next to the logo.
+
+
+
       var tools = top.querySelector('.tools');
       var logo = top.querySelector('.logo');
+      var entry = top.querySelector('.ui-entry') || top.querySelector('#topMenuToggle');
       if (tools && tools.parentNode === top) top.insertBefore(b, tools.nextSibling);
+      else if (entry && entry.parentNode === top) top.insertBefore(b, entry);
       else if (logo && logo.parentNode === top) top.insertBefore(b, logo.nextSibling);
       else top.appendChild(b);
       syncSwitch();
@@ -104,20 +100,20 @@
   function apply() {
     var v = resolved();
     root.setAttribute('data-theme', v);
-    // Native controls (selects, scrollbars) and the browser chrome follow too.
+
     root.style.colorScheme = v;
     var meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', v === 'light' ? '#f3f7fb' : '#080d16');
     syncSwitch();
     try { window.dispatchEvent(new CustomEvent('tlp-theme-change', { detail: { theme: v, pref: pref() } })); } catch (e) {}
   }
-  // In Auto the page must follow the device without a reload.
+
   if (mq) {
     var onChange = function () { if (pref() === 'auto') apply(); };
     if (mq.addEventListener) mq.addEventListener('change', onChange);
     else if (mq.addListener) mq.addListener(onChange);
   }
-  // A choice made in another tab applies here as well.
+
   window.addEventListener('storage', function (e) { if (e.key === KEY) apply(); });
 
   apply();
@@ -129,18 +125,30 @@
       try { localStorage.setItem(KEY, p); } catch (e) {}
       apply();
     },
-    apply: apply
+    apply: apply,
+    setHighContrast: function (on) {
+      try { localStorage.setItem('tlp-high-contrast', on); } catch (e) {}
+      if (on) { root.style.setProperty('--contrast', 'high'); }
+      else { root.style.setProperty('--contrast', 'normal'); }
+      apply();
+    },
+    setFontSize: function (size) {
+      try { localStorage.setItem('tlp-font-size', size); } catch (e) {}
+      var sizes = { 'normal': '16px', 'large': '18px', 'larger': '20px' };
+      root.style.fontSize = sizes[size] || sizes['normal'];
+      apply();
+    }
   };
 
-  // Placement. Pages with the shared menu announce tlp-nav-ready once their
-  // header is built; privacy.html has no shared script, so it is placed at once.
+
+
   window.addEventListener('tlp-nav-ready', function () { buildSwitch(false); });
   function place() {
     if (document.querySelector('.themetog')) return;
     if (!document.querySelector('header nav .wrap') && document.querySelector('.top')) { buildSwitch(true); return; }
     if (!window.TLP) { buildSwitch(true); return; }
     buildSwitch(false);
-    // If the shared menu never arrives, still show the switch.
+
     setTimeout(function () { if (!document.querySelector('.themetog')) buildSwitch(true); }, 700);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', place);

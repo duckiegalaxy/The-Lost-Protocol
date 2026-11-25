@@ -1,18 +1,3 @@
-/* =============================================================================
-   LESSON EXPLAINERS  (js/explainers.js)
-   -----------------------------------------------------------------------------
-   Small animated diagrams that sit at the top of a lesson card. Each scene is
-   a few labelled parts revealed one step at a time; the narration reads the
-   caption for the step that is on screen, so the voice and the picture always
-   agree. Nothing here changes a mission, a score or a saved result.
-
-   Public API (window.TLP_EXPLAIN):
-     html(chapter)     figure markup for a chapter index, or '' if none
-     mount(figure, ch) fill the figure with its scene and controls
-     narrate(onend)    speak the scene steps from the current one
-     stop()            stop speech and leave the picture where it is
-     mounted()         the mounted state, or null
-   ============================================================================= */
 (function () {
   'use strict';
 
@@ -20,10 +5,10 @@
   const ln = (at, cls) => '<i class="ex-el ln ' + (cls || '') + '" data-at="' + at + '"></i>';
   const text = (s) => String(s).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
-  /* ---------------------------------------------------------------------------
-     Scenes. One entry per idea, not per chapter: chapters that teach the same
-     idea share a scene, so the diagrams stay consistent across age paths.
-     ------------------------------------------------------------------------ */
+
+
+
+
   const SCENES = {
     box: {
       name: 'A variable',
@@ -234,8 +219,8 @@
     }
   };
 
-  /* Chapter index to scene. Boss chapters get the boss scene, and chapters
-     that teach the same idea share a scene on purpose. */
+
+
   const MAP = ['box', 'loop', 'fork', 'boss', 'seq', 'lock', 'type', 'cast', 'string', 'boss',
     'op', 'array', 'io', 'note', 'boss', 'func', 'scope', 'recurs', 'bits', 'boss',
     'bits', 'bits', 'sum', 'gate', 'boss', 'bug', 'search', 'best', 'slim', 'boss'];

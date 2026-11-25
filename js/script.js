@@ -1,19 +1,3 @@
-/* =============================================================================
-   HOME PAGE SCRIPT  (js/script.js)
-   -----------------------------------------------------------------------------
-   Powers index.html only: the intro sequence, the animated background, the mood
-   swatches, the hash router for the About view, the home tally and the feedback
-   modal. The game itself lives in webgame.html and js/pages/webgame.js.
-   
-   If you add markup to index.html, add its behaviour here rather than inline.
-   Areas in this file:
-     - mood state and the install button
-     - intro sequence and title effects
-     - the rain canvas and reduced-effects handling
-     - the hash router (home / about me)
-     - the home tally
-     - the feedback modal and its offline queue
-   ============================================================================= */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const root = document.documentElement;
@@ -94,12 +78,12 @@ let mx = -999;
 let bgt = 0;
 let bgm = [8, 12, 16];
 
-/* -----------------------------------------------------------------------------
-   Background canvas
-   The rain loop is the only per-frame work on this page. It stops when the tab
-   is hidden or when reduced effects are on, so it never burns battery in the
-   background.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
 function fit() {
     cv.width = innerWidth;
     cv.height = innerHeight;
@@ -297,7 +281,7 @@ $('#replay').onclick = e => {
     location.reload();
 };
 
-// "Reduce visual effects" toggle: saved setting and the shared logic live in tlp-common.js
+
 function fxSet() {
     if (window.TLP) { TLP.FX.apply(); }
 }
@@ -308,12 +292,12 @@ $('#fx').onclick = () => {
 
 fxSet();
 
-/* "install app": Chromium browsers fire beforeinstallprompt once the site is
-   installable. The event is kept so the header button can offer it, and the
-   button never appears when the game already runs as an installed app.
-   iPhone and iPad have no install prompt, so there the button explains the
-   manual Share > Add to Home Screen step instead. iPadOS reports a desktop
-   user agent, so touch support is part of that check. */
+
+
+
+
+
+
 const installBtn = $('#install');
 const installTip = $('#installTip');
 const alreadyInstalled = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -374,11 +358,11 @@ $('#phin').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileR
 r.onload=()=>{const im=new Image();im.onload=()=>{const m=Math.min(1,900/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*m);c.height=Math.round(im.height*m);c.getContext('2d').drawImage(im,0,0,c.width,c.height);const d=c.toDataURL('image/jpeg',.85);show(d);try{localStorage.setItem('tlp-photo',d)}catch(x){}};im.src=r.result};
 r.readAsDataURL(f)}}
 
-/* -----------------------------------------------------------------------------
-   Router
-   Hash-only routing (#/about) because the site is plain files on a static
-   host. Unknown hashes fall back to the home view.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 function route() {
     const ab = location.hash.replace('#/', '') === 'about';
     $('#home').hidden = ab;
@@ -445,11 +429,11 @@ if (TALLY_URL) {
 
 const FB = { rating: 0, tags: [] };
 
-/* -----------------------------------------------------------------------------
-   Feedback modal
-   Submits through TLP_AUTH when online and queues the entry in localStorage
-   when it fails, so a reviewer never loses a comment on a flaky network.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
 function openFb() {
     $('#fb').hidden = false;
     $('#fbform').hidden = false;
@@ -583,13 +567,13 @@ $('#fbchips').addEventListener('click', e => {
 });
 fbFlush();
 
-/* -----------------------------------------------------------------------------
-   Today card
-   The game menu already knows the streak and the daily goals, but a returning
-   player lands here first. This card reads the same per-learner save keys and
-   offers one next step. It never calls TLP_STREAK.check(), so opening the home
-   page alone does not count as a day played.
-   -------------------------------------------------------------------------- */
+
+
+
+
+
+
+
 function dayStamp() {
     const d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
@@ -614,10 +598,18 @@ async function renderToday() {
             await TLP_AUTH.init();
             user = TLP_AUTH.getCurrentUser();
             learner = TLP_AUTH.getActiveLearner();
+
+
+            const np = document.getElementById('navParent');
+            if (np) {
+                const staff = (TLP_AUTH.isCurrentUserStaff && TLP_AUTH.isCurrentUserStaff()) ||
+                              (TLP_AUTH.isCurrentUserAdmin && TLP_AUTH.isCurrentUserAdmin());
+                np.hidden = !staff;
+            }
         }
     } catch (e) {
     }
-    // Parents and educators are heading for their own area, not the game.
+
     if (user && user.role === 'parent') {
         card.hidden = true;
         return;
@@ -677,4 +669,96 @@ async function renderToday() {
     card.hidden = false;
 }
 
+renderToday();
+
+
+
+
+
+
+function renderHomeWotd() {
+    var el = document.getElementById('home-wotd');
+    if (!el || !window.TLP_WOTD) return;
+    try {
+        if (localStorage.getItem('tlp-wotd-seen') === new Date().toDateString()) return;
+    } catch (e) {}
+    el.style.marginTop = '12px';
+    TLP_WOTD.render('#home-wotd');
+}
+renderHomeWotd();
+
+
+
+
+
+
+function renderHomeProgress() {
+    var snapshot = null;
+    try { snapshot = JSON.parse(localStorage.getItem('tlp-home-snapshot') || 'null'); } catch (e) {}
+    if (!snapshot) return;
+
+
+    var who = document.getElementById('tcWho');
+    if (who && snapshot.name && !who.textContent) {
+        who.textContent = 'for ' + snapshot.name.split(' ')[0];
+    }
+
+
+    var card = document.getElementById('today');
+    if (!card) return;
+    card.hidden = false;
+
+
+    var streakEl = document.getElementById('tcStreak');
+    var streakNote = document.getElementById('tcStreakNote');
+    if (streakEl && !parseInt(streakEl.textContent, 10) && snapshot.streak) {
+        streakEl.textContent = String(snapshot.streak);
+        if (streakNote) streakNote.textContent = 'day streak · keep it going today';
+    }
+
+
+    if (!document.getElementById('tc-progress')) {
+        var statsEl = card.querySelector('.tc-stats');
+        if (statsEl && (snapshot.stars || snapshot.done)) {
+            var row = document.createElement('div');
+            row.id = 'tc-progress';
+            row.style.cssText = 'display:flex;gap:14px;padding:6px 14px 2px;font-size:13px;color:var(--mut,#aab)';
+            row.innerHTML = '<span>· <b style="color:var(--fg,#f3efe8)">' + (snapshot.stars || 0) + '</b> stars total</span>' +
+                '<span>· <b style="color:var(--fg,#f3efe8)">' + (snapshot.done || 0) + '</b> missions done</span>';
+            statsEl.after(row);
+        }
+    }
+}
+renderHomeProgress();
+
+
+
+
+
+
+
+
+function escH(t) {
+    return String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function paintHomeWho() {
+    var who = document.getElementById('homeWho');
+    if (!who) return;
+    var l = null;
+    try { l = window.TLP_AUTH && TLP_AUTH.getActiveLearner ? TLP_AUTH.getActiveLearner() : null; } catch (e) {}
+    var name = l && l.name ? String(l.name).trim() : '';
+    var signed = l && !l.isGuest && name;
+    who.innerHTML = signed
+        ? 'Playing as <b>' + escH(name.split(' ')[0]) + '</b> · progress syncs to your account · <a href="auth.html">switch</a>'
+        : 'Playing as <b>Guest</b> · progress stays on this device · <a href="auth.html">log in to sync</a>';
+}
+paintHomeWho();
+(function mountHomeLife() {
+    var el = document.getElementById('homeLife');
+    if (el && window.TLP_LIFE && !el._lfMounted) { el._lfMounted = true; TLP_LIFE.mount(el); }
+})();
+
+
+var _origRenderToday = renderToday;
+renderToday = async function () { await _origRenderToday(); paintHomeWho(); };
 renderToday();

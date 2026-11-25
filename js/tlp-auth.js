@@ -1,28 +1,12 @@
-// =============================================================================
-// THE LOST PROTOCOL — AUTHENTICATION, PROFILE & PROGRESS SYNC ENGINE (V2)
-// =============================================================================
-// Supports:
-// 1. Supabase Cloud Backend (free-tier PostgreSQL + Auth with RLS)
-// 2. Local / Demo Mode fallback when cloud credentials are not yet configured
-// 3. Three Strict Account Roles: 'learner', 'parent', 'admin'
-// 4. Independent Learner Profiles with Automatic Learning-Path Assignment (g16, g710, g1112, adult)
-// 5. Independent Gameplay Difficulties ('beg', 'int', 'pro') across all paths
-// 6. Strict progress isolation per (User, Learner, Path, Difficulty)
-// 7. Verified Leaderboard with deterministic sorting and public alias privacy
-// 8. Test Mode classification and Safe Admin Test Data Purge (Preview + Confirmation)
-// 9. Bug Reporting with persistent tracking (New, Investigating, Fixed, Closed)
-// 10. Conservative, recoverable legacy save migration
-// =============================================================================
-
 (function() {
   'use strict';
 
-  // Grade Range to Learning Path Mapping
+
   const GRADE_TO_PATH = {
-    'g16': 'g16',     // Grades 1–6 (Ages 6–12)
-    'g710': 'g710',   // Grades 7–10 (Ages 12–16)
-    'g1112': 'g1112', // Grades 11–12 (Ages 16–18)
-    'adult': 'adult'  // College & Adults
+    'g16': 'g16',
+    'g710': 'g710',
+    'g1112': 'g1112',
+    'adult': 'adult'
   };
 
   const PATH_INFO = {
@@ -38,14 +22,64 @@
     'pro': { label: 'Professional', desc: 'Terminal mode, code view, 2 hearts in boss fights' }
   };
 
-  // Helper for SHA-256 in browser (used for local password verification in demo mode)
+
+  function validateBirth(month, year, { managed = false, staff = false } = {}) {
+    if (typeof month !== 'number' || typeof year !== 'number' || !Number.isInteger(month) || !Number.isInteger(year) || month < 1 || month > 12) {
+      throw new Error('Enter a whole-number birth month (1–12) and birth year.');
+    }
+    const now = new Date(), currentYear = now.getUTCFullYear(), currentMonth = now.getUTCMonth() + 1;
+    if (year > currentYear || (year === currentYear && month > currentMonth)) throw new Error('Birth date cannot be in the future.');
+    const age = currentYear - year - (month > currentMonth ? 1 : 0);
+    if (age < 6 || age > 120) throw new Error('Learners must be between 6 and 120 years old.');
+    if (staff && age < 18) throw new Error('Parent and Teacher accounts require an age of at least 18.');
+    if (!staff && !managed && age < 13) throw new Error('Under-13 learners need a parent or guardian to create their profile in the Parent area.');
+    return { age, path: age <= 12 ? 'g16' : age <= 15 ? 'g710' : age <= 17 ? 'g1112' : 'adult' };
+  }
+  const ACTIVITY_NS = '__tlp_activity_v1';
+  const isObject = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+  const union = (a, b) => [...new Map([...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])].map(v => [JSON.stringify(v), v])).values()];
+
+  function mergeActivity(a, b, key = '') {
+    if (b == null) return a;
+    if (a == null) return b;
+    if (Array.isArray(a) && Array.isArray(b)) return union(a, b);
+    if (isObject(a) && isObject(b)) {
+
+      if (key === 'daily' && a.date && b.date && a.date !== b.date) return a.date > b.date ? a : b;
+      const out = { ...a };
+      for (const k of Object.keys(b)) {
+        if (['__proto__', 'constructor', 'prototype'].includes(k)) continue;
+        out[k] = mergeActivity(a[k], b[k], k);
+      }
+
+      if (key === 'streak') {
+        const latest = (a.last || '') > (b.last || '') ? a : b;
+        if (latest.last) { out.last = latest.last; out.count = latest.count; }
+      }
+      return out;
+    }
+    if (typeof a === 'number' && typeof b === 'number' && Number.isFinite(a) && Number.isFinite(b)) {
+      return ['bestTime', 'bestTries'].includes(key) ? Math.min(a || Infinity, b || Infinity) : Math.max(a, b);
+    }
+    if (typeof a === 'boolean' && typeof b === 'boolean') return a || b;
+    return b;
+  }
+  function mergeProgress(a = {}, b = {}) {
+    const prog = { ...(a.prog || {}) };
+    for (const [k, v] of Object.entries(b.prog || {})) {
+      if (Number.isFinite(v) && !['__proto__', 'constructor', 'prototype'].includes(k)) prog[k] = Math.max(Number(prog[k]) || 0, v);
+    }
+    return { ...a, ...b, prog, ach: union(a.ach, b.ach), badges: union(a.badges, b.badges) };
+  }
+
+
   async function sha256(str) {
     if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
       const buffer = new TextEncoder().encode(str);
       const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
       return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
-    // Fallback simple hash
+
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = ((hash << 5) - hash) + str.charCodeAt(i);
@@ -57,12 +91,54 @@
   class TLPAuthEngine {
     constructor() {
       this.supabase = null;
-      this.mode = 'local'; // 'cloud' or 'local'
+      this.mode = 'local';
       this.currentUser = null;
       this.activeLearner = null;
       this.initialized = false;
       this.initPromise = null;
       this.isProcessingAction = false;
+      this._saveQueues = new Map();
+
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+      const query = new URLSearchParams(window.location.search);
+      const type = hash.get('type') || query.get('type');
+      this.authCallback = {
+        signup: type === 'signup' || (query.get('confirmed') === '1' && Boolean(query.get('code') || hash.get('access_token'))),
+        recovery: type === 'recovery',
+        error: hash.get('error_description') || query.get('error_description') || hash.get('error') || query.get('error') || '',
+        hasCode: Boolean(query.get('code'))
+      };
+      this._callbackToken = hash.get('access_token');
+      this._callbackAccepted = false;
+      this._callbackSession = null;
+    }
+
+    static validateBirth(month, year, options) { return validateBirth(month, year, options); }
+    validateBirth(month, year, options) { return validateBirth(month, year, options); }
+
+    _emit(name, detail = {}) {
+      try { window.dispatchEvent(new CustomEvent(name, { detail })); } catch (e) {}
+    }
+
+    _authChanged() {
+      this._emit('tlp-auth-ready', { mode: this.mode, userId: this.currentUser && this.currentUser.id, learnerId: this.activeLearner && this.activeLearner.id });
+    }
+
+    async getEmailConfirmationStatus() {
+      await this.init();
+      if (this.authCallback.error) return { confirmed: false, error: this.authCallback.error };
+      if (!this.authCallback.signup || !this.isCloudConfigured() || !this._callbackAccepted || !this._callbackSession) return { confirmed: false };
+
+      const { data, error } = await this.supabase.auth.getUser(this._callbackSession.access_token);
+      if (error) throw error;
+      return { confirmed: Boolean(data.user && data.user.id === this._callbackSession.user.id && data.user.email_confirmed_at) };
+    }
+
+    async hasRecoverySession() {
+      await this.init();
+      if (!this.authCallback.recovery || !this._callbackAccepted || !this._callbackSession || this.authCallback.error) return false;
+      const { data, error } = await this.supabase.auth.getUser(this._callbackSession.access_token);
+      return !error && Boolean(data.user && data.user.id === this._callbackSession.user.id);
     }
 
     async init() {
@@ -78,11 +154,11 @@
 
       if (url && key && window.supabase && typeof window.supabase.createClient === 'function') {
         try {
-          // Supabase stores its session in localStorage by default, which is
-          // what keeps a returning visitor signed in. When the sign-in box
-          // "Keep me signed in on this device" is unchecked the flag is "0"
-          // and the same session goes to sessionStorage instead, so closing
-          // the browser ends it. Sign-out clears both stores.
+
+
+
+
+
           const authStorage = {
             getItem: (k) => {
               try {
@@ -95,8 +171,8 @@
                 const store = localStorage.getItem('tlp-remember') === '0' ? sessionStorage : localStorage;
                 const other = store === localStorage ? sessionStorage : localStorage;
                 store.setItem(k, v);
-                // A session must live in exactly one store, so a token left
-                // over from the other choice cannot come back later.
+
+
                 other.removeItem(k);
               } catch (e) {}
             },
@@ -109,12 +185,24 @@
             auth: { storage: authStorage, persistSession: true, autoRefreshToken: true }
           });
           this.mode = 'cloud';
-          // Check existing cloud session
+          this.supabase.auth.onAuthStateChange((event, session) => {
+
+            if ((event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') && session && (this.authCallback.signup || this.authCallback.recovery)) {
+              this._callbackAccepted = !this.authCallback.error && (this.authCallback.hasCode || session.access_token === this._callbackToken);
+              if (this._callbackAccepted) this._callbackSession = session;
+            }
+          });
+
           const { data: { session }, error } = await this.supabase.auth.getSession();
+          if (error) this.authCallback.error = error.message || 'Invalid or expired link.';
           if (session && session.user && !error) {
+            if (this._callbackToken && session.access_token === this._callbackToken && !this.authCallback.error) {
+              this._callbackAccepted = true;
+              this._callbackSession = session;
+            }
             await this._loadCloudUser(session.user);
           } else {
-            // Check local fallback session
+
             this._loadLocalSession();
           }
         } catch (err) {
@@ -127,7 +215,7 @@
         this._loadLocalSession();
       }
 
-      // Check query param for learner override (e.g. from Parent Dashboard: webgame.html?learnerId=xyz)
+
       if (typeof window !== 'undefined' && window.location) {
         const params = new URLSearchParams(window.location.search);
         const lId = params.get('learnerId') || params.get('learner');
@@ -138,6 +226,7 @@
       }
 
       this.initialized = true;
+      this._authChanged();
       return { mode: this.mode, user: this.currentUser, learner: this.activeLearner };
     }
 
@@ -145,9 +234,9 @@
       return this.mode === 'cloud';
     }
 
-    // -------------------------------------------------------------------------
-    // USER SESSIONS & ROLES
-    // -------------------------------------------------------------------------
+
+
+
     async _loadCloudUser(supabaseUser) {
       try {
         const { data: profile } = await this.supabase
@@ -169,10 +258,10 @@
           displayName: (profile && profile.display_name) || supabaseUser.email.split('@')[0]
         };
 
-        // Load active learner
+
         const learners = await this.getLearners(this.currentUser.id);
         const savedLId = localStorage.getItem('tlp-active-learner-id');
-        this.activeLearner = learners.find(l => l.id === savedLId) || learners[0] || null;
+        this.setActiveLearner(learners.find(l => l.id === savedLId) || learners[0] || null);
       } catch (e) {
         console.error('[TLP Auth] Error loading cloud profile:', e);
       }
@@ -193,14 +282,14 @@
           this.currentUser = JSON.parse(rawUser);
           const learners = this._getLocalLearners(this.currentUser.id);
           const savedLId = localStorage.getItem('tlp-active-learner-id');
-          this.activeLearner = learners.find(l => l.id === savedLId) || learners[0] || null;
+          this.setActiveLearner(learners.find(l => l.id === savedLId) || learners[0] || null);
         } else {
           this.currentUser = null;
-          this.activeLearner = null;
+          this.setActiveLearner(null);
         }
       } catch (e) {
         this.currentUser = null;
-        this.activeLearner = null;
+        this.setActiveLearner(null);
       }
     }
 
@@ -218,7 +307,7 @@
 
     getActiveLearner() {
       if (this.activeLearner) return this.activeLearner;
-      // Default guest learner if none active
+
       return {
         id: 'default',
         name: localStorage.getItem('tlp-name') || 'Player',
@@ -230,6 +319,7 @@
     }
 
     setActiveLearner(learner) {
+      const previousId = this.activeLearner && this.activeLearner.id;
       this.activeLearner = learner;
       if (learner && learner.id) {
         try {
@@ -241,11 +331,13 @@
           if (learner.name) localStorage.setItem('tlp-name', learner.name);
         } catch (e) {}
       }
+      const nextId = learner && learner.id;
+      if (this.initialized && previousId !== nextId) this._authChanged();
     }
 
-    // -------------------------------------------------------------------------
-    // PATH AND DIFFICULTY VALIDATION & ENFORCEMENT
-    // -------------------------------------------------------------------------
+
+
+
     resolvePathFromGrade(gradeRange) {
       return GRADE_TO_PATH[gradeRange] || null;
     }
@@ -258,18 +350,18 @@
       return DIFF_INFO[diff] || DIFF_INFO['int'];
     }
 
-    // Learner path locking: Learners are restricted to their assigned path
+
     canLearnerSelectPath(targetPath) {
       const l = this.getActiveLearner();
-      if (!l || l.isGuest) return true; // Guests can preview any path
+      if (!l || l.isGuest) return true;
       const assigned = l.assigned_path || l.assignedPath;
       if (!assigned) return true;
       return assigned === targetPath;
     }
 
-    // -------------------------------------------------------------------------
-    // REGISTRATION & AUTHENTICATION
-    // -------------------------------------------------------------------------
+
+
+
     async registerUser({ email, password, role, displayName, learnerName, gradeRange, currentDiff, isTestAccount }) {
       if (this.isProcessingAction) throw new Error('An action is already in progress.');
       this.isProcessingAction = true;
@@ -278,7 +370,7 @@
         await this.init();
         email = (email || '').trim().toLowerCase();
         displayName = (displayName || '').trim() || (email.split('@')[0]);
-        role = role === 'parent' ? 'parent' : 'learner'; // admin can never be self-assigned
+        role = role === 'parent' ? 'parent' : 'learner';
         const assignedPath = this.resolvePathFromGrade(gradeRange) || 'g710';
         const diff = ['beg', 'int', 'pro'].includes(currentDiff) ? currentDiff : 'int';
         const isTest = Boolean(isTestAccount);
@@ -291,7 +383,7 @@
         }
 
         if (this.isCloudConfigured()) {
-          // Real Supabase Auth Registration
+
           const { data: authData, error: authErr } = await this.supabase.auth.signUp({
             email,
             password,
@@ -301,7 +393,7 @@
           const user = authData.user;
           if (!user) throw new Error('Account creation failed. Please check backend email verification settings.');
 
-          // Insert Profile
+
           const { error: profErr } = await this.supabase
             .from('profiles')
             .upsert({
@@ -313,8 +405,8 @@
             });
           if (profErr) console.warn('[TLP Auth] Could not create profile row:', profErr);
 
-          // The database creates the learner profile (and its public Player ID) at sign-up.
-          // If we already have a session (no email confirmation needed), load it now.
+
+
           let initialLearner = null;
           if (role === 'learner' && authData.session) {
             const rows = await this.getLearners(user.id);
@@ -337,7 +429,7 @@
           if (initialLearner) this.setActiveLearner(initialLearner);
           return { user: this.currentUser, learner: initialLearner, requiresEmailConfirmation: !authData.session };
         } else {
-          // Local Demo Mode Registration
+
           const accounts = this._getLocalAccounts();
           if (accounts.some(a => a.email === email)) {
             throw new Error('An account with this email already exists on this device.');
@@ -409,8 +501,8 @@
             return { user: this.currentUser, learner: this.activeLearner };
           }
 
-          // If cloud login failed (e.g. offline, user not created on Supabase yet, network down),
-          // check if there is a matching local account (such as the default Administrator account).
+
+
           const accounts = this._getLocalAccounts();
           const pwHash = await sha256(password);
           const matched = accounts.find(a => a.email === email && a.passwordHash === pwHash);
@@ -425,8 +517,7 @@
             };
             this._localSessionStore().setItem('tlp-local-session-user', JSON.stringify(this.currentUser));
             const learners = this._getLocalLearners(this.currentUser.id);
-            this.activeLearner = learners[0] || null;
-            if (this.activeLearner) this.setActiveLearner(this.activeLearner);
+            this.setActiveLearner(learners[0] || null);
             return { user: this.currentUser, learner: this.activeLearner };
           }
 
@@ -463,27 +554,29 @@
         try { await this.supabase.auth.signOut(); } catch (e) {}
       }
       this.currentUser = null;
-      this.activeLearner = null;
+      const hadLearner = !!this.activeLearner;
+      this.setActiveLearner(null);
       try {
         localStorage.removeItem('tlp-local-session-user');
         sessionStorage.removeItem('tlp-local-session-user');
         localStorage.removeItem('tlp-active-learner-id');
       } catch (e) {}
+      if (!hadLearner) this._authChanged();
       return true;
     }
 
-    // -------------------------------------------------------------------------
-    // PASSWORD RECOVERY
-    // -------------------------------------------------------------------------
-    // Two separate steps, because the user who forgot a password cannot be
-    // signed in to change it:
-    //   1. requestPasswordReset(email) emails a one-time link that returns the
-    //      browser to this page with a recovery session in the URL hash.
-    //   2. updatePassword(newPassword) runs after that return, using the
-    //      short-lived recovery session instead of the normal login session.
-    // The redirect target is always the current page, so the same code works on
-    // localhost and on the deployed site without hard-coding a hostname. The
-    // host still has to be allowlisted in Supabase Auth -> URL Configuration.
+
+
+
+
+
+
+
+
+
+
+
+
     async requestPasswordReset(email) {
       await this.init();
       email = (email || '').trim().toLowerCase();
@@ -504,9 +597,9 @@
       return data;
     }
 
-    // -------------------------------------------------------------------------
-    // LEARNER MANAGEMENT (PARENT AREA)
-    // -------------------------------------------------------------------------
+
+
+
     async getLearners(userId) {
       userId = userId || (this.currentUser && this.currentUser.id);
       if (!userId) return [];
@@ -633,9 +726,9 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // PROGRESS IDENTIFICATION & PERSISTENCE
-    // -------------------------------------------------------------------------
+
+
+
     buildSaveKey(userId, learnerId, path, diff, itemKey) {
       const u = userId || 'guest';
       const l = learnerId || 'default';
@@ -675,14 +768,14 @@
       } catch (e) {}
     }
 
-    // Full progress bundle sync for cloud and dashboard
+
     async getProgressBundle(learnerId, path, diff) {
       const u = this.currentUser ? this.currentUser.id : 'guest';
       const l = learnerId || (this.activeLearner ? this.activeLearner.id : 'default');
       const p = path || 'g710';
       const d = diff || 'int';
 
-      // 1. Try cloud if configured
+
       if (this.isCloudConfigured() && u !== 'guest' && l !== 'default') {
         try {
           const recId = `${l}:${p}:${d}`;
@@ -707,7 +800,7 @@
         }
       }
 
-      // 2. Local fallback
+
       try {
         const progStr = localStorage.getItem(this.buildSaveKey(u, l, p, d, 'prog')) || '{}';
         const achStr = localStorage.getItem(this.buildSaveKey(u, l, p, d, 'ach')) || '[]';
@@ -735,7 +828,7 @@
       const d = diff || 'int';
       const isTest = Boolean(this.currentUser && this.currentUser.isTestAccount);
 
-      // Local write
+
       try {
         if (bundle.prog) localStorage.setItem(this.buildSaveKey(u, l, p, d, 'prog'), JSON.stringify(bundle.prog));
         if (bundle.ach) localStorage.setItem(this.buildSaveKey(u, l, p, d, 'ach'), JSON.stringify(bundle.ach));
@@ -744,7 +837,7 @@
         if (bundle.bossState !== undefined) localStorage.setItem(this.buildSaveKey(u, l, p, d, 'boss'), JSON.stringify(bundle.bossState));
       } catch (e) {}
 
-      // Cloud write if authenticated
+
       if (this.isCloudConfigured() && u !== 'guest' && l !== 'default') {
         try {
           const recId = `${l}:${p}:${d}`;
@@ -768,13 +861,13 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // REAL LEADERBOARD WITH DETERMINISTIC SORTING & TEST EXCLUSION
-    // -------------------------------------------------------------------------
+
+
+
     async recordLeaderboardScore({ learnerId, displayName, learningPath, gameDiff, score, stars, chaptersCleared }) {
       const u = this.currentUser ? this.currentUser.id : null;
       const l = learnerId || (this.activeLearner ? this.activeLearner.id : null);
-      if (!l || l === 'default' || !u) return; // Only recorded for authenticated profiles
+      if (!l || l === 'default' || !u) return;
 
       const path = learningPath || 'g710';
       const diff = gameDiff || 'int';
@@ -783,8 +876,8 @@
 
       if (this.isCloudConfigured()) {
         try {
-          // Scores are calculated by the database from the learner's saved progress,
-          // not from numbers sent by the browser (see supabase-migration-v4).
+
+
           const { error: lbErr } = await this.supabase.rpc('submit_leaderboard_score', {
             p_learner_id: l,
             p_path: path,
@@ -798,7 +891,7 @@
         }
       }
 
-      // Local mirror
+
       try {
         const lb = this._getLocalLeaderboard();
         const existingIdx = lb.findIndex(e => e.learner_id === l && e.learning_path === path && e.game_diff === diff);
@@ -837,7 +930,7 @@
             .eq('game_diff', diff)
             .order('total_score', { ascending: false })
             .order('total_stars', { ascending: false })
-            .order('updated_at', { ascending: true }) // Deterministic tie-breaking
+            .order('updated_at', { ascending: true })
             .limit(limit);
 
           if (!error && Array.isArray(data)) return data;
@@ -846,7 +939,7 @@
         }
       }
 
-      // Local fallback: strictly exclude test entries and sort deterministically
+
       const lb = this._getLocalLeaderboard();
       return lb
         .filter(e => e.learning_path === path && e.game_diff === diff && !e.is_test)
@@ -858,7 +951,7 @@
         .slice(0, limit);
     }
 
-    // Admin Leaderboard view: includes test flags and moderation options
+
     async getAdminLeaderboardEntries() {
       if (!this.isCurrentUserAdmin()) throw new Error('Access Denied: Admin authorization required.');
 
@@ -892,9 +985,9 @@
       return true;
     }
 
-    // -------------------------------------------------------------------------
-    // BUG REPORTING
-    // -------------------------------------------------------------------------
+
+
+
     async submitBugReport({ title, description, pageFeature, stepsToReproduce, expectedVsActual, attachmentPath, attachmentType }) {
       if (this.isProcessingAction) throw new Error('An action is currently processing.');
       this.isProcessingAction = true;
@@ -951,9 +1044,9 @@
     }
 
 
-    // -------------------------------------------------------------------------
-    // PLAYER ID LOGIN, EDUCATOR TOOLS, ACCOUNT SETTINGS, LEADERBOARD PAGES
-    // -------------------------------------------------------------------------
+
+
+
     async loginWithPlayerId({ playerId, password }) {
       const pid = String(playerId || '').trim().toUpperCase();
       if (!/^TLP-[0-9A-Z]{6,10}$/i.test(pid)) throw new Error('Enter your Player ID exactly as given, for example TLP-12345678.');
@@ -981,14 +1074,14 @@
       if (this.isCloudConfigured()) {
         try {
           const d = await this._invoke('learner-admin', { action: 'createLearner', name, gradeRange, startDiff, password });
-          return d; // { playerId, learnerId }
+          return d;
         } catch (err) {
           if (!/network|fetch|failed to send|requested function|not found|not_educator/i.test(err.message)) {
             throw err;
           }
         }
       }
-      // Offline / Local Demo fallback
+
       const u = this.getCurrentUser();
       const assignedPath = this.resolvePathFromGrade(gradeRange) || 'g710';
       const lrn = this._createLocalLearner({
@@ -1016,12 +1109,12 @@
       return { playerId: lrn.player_id, learnerId: lrn.id };
     }
 
-    // -------------------------------------------------------------------------
-    // ONE-TIME LEARNER SIGN-IN CODES
-    // A parent makes a code on parent.html; the learner's device redeems it on
-    // auth.html. The server keeps only the code's hash and mints a single-use
-    // magic-link token, which verifyOtp() below turns into a normal session.
-    // -------------------------------------------------------------------------
+
+
+
+
+
+
     async createLearnerSignInQr(learnerId) {
       return this._invoke('learner-qr', { action: 'create', learnerId });
     }
@@ -1036,8 +1129,8 @@
       return r;
     }
 
-    // rememberOn follows the same choice as the sign-in checkbox: on keeps the
-    // session for the next visit, off keeps it only until the tab closes.
+
+
     async completeLearnerSignIn(magicToken, rememberOn) {
       await this.init();
       if (!this.isCloudConfigured()) throw new Error('This needs the online version of the site.');
@@ -1149,14 +1242,14 @@
         }
       }
 
-      // Local fallback: scan localStorage keys for matching learnerIds
+
       const results = [];
       try {
         if (typeof localStorage !== 'undefined') {
           for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
             if (key && key.startsWith('tlp_save_') && key.endsWith('_prog')) {
-              // format: tlp_save_${userId}_${learnerId}_${path}_${diff}_prog
+
               const parts = key.split('_');
               const lId = parts[3];
               if (learnerIds.includes(lId)) {
@@ -1177,8 +1270,8 @@
       return results;
     }
 
-    // Search text is short and goes inside a PostgREST or() filter, so commas,
-    // parentheses and pattern characters are removed before it is sent.
+
+
     _cleanSearch(v) {
       return String(v == null ? '' : v).replace(/[%_,()*"'\\]/g, ' ').trim().slice(0, 40);
     }
@@ -1203,8 +1296,42 @@
       return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
     }
 
-    // Position of one player in the full table. Ties on score and stars share a
-    // rank, which matches how the board is rendered.
+
+
+
+    async saveAvatar(learnerId, avatar) {
+      if (!this.isCloudConfigured() || !this.supabase) return null;
+      const { data, error } = await this.supabase.rpc('save_avatar', { p_learner_id: learnerId, p_avatar: avatar });
+      if (error) throw new Error(error.message);
+      return data;
+    }
+    async getLifeline(learnerId) {
+      if (!this.isCloudConfigured() || !this.supabase) return null;
+      const { data, error } = await this.supabase.rpc('player_lifeline', { p_learner_id: learnerId });
+      if (error) throw new Error(error.message);
+      return data;
+    }
+    async drainLifeline(learnerId) {
+      if (!this.isCloudConfigured() || !this.supabase) return null;
+      const { data, error } = await this.supabase.rpc('player_drain_lifeline', { p_learner_id: learnerId });
+      if (error) throw new Error(error.message);
+      return data;
+    }
+    async adminLifelines() {
+      if (!this.isCloudConfigured() || !this.supabase) return [];
+      const { data, error } = await this.supabase.rpc('admin_lifelines');
+      if (error) throw new Error(error.message);
+      return data || [];
+    }
+    async adminRefreshLifeline(learnerId) {
+      if (!this.isCloudConfigured() || !this.supabase) return null;
+      const { data, error } = await this.supabase.rpc('admin_refresh_lifeline', { p_learner_id: learnerId });
+      if (error) throw new Error(error.message);
+      return data;
+    }
+
+
+
     async getLeaderboardRank({ path, diff, playerId }) {
       await this.init();
       if (!this.isCloudConfigured() || !playerId) return null;
@@ -1217,27 +1344,6 @@
       const { count: above } = await base().gt('total_score', row.total_score);
       const { count: sameScore } = await base().eq('total_score', row.total_score).gt('total_stars', row.total_stars);
       return { rank: (above || 0) + (sameScore || 0) + 1, row };
-    }
-
-    async getCoopChallenges() {
-      await this.init();
-      if (!this.isCloudConfigured()) return [];
-      const { data } = await this.supabase.from('public_coop_leaderboard').select('challenge_id').order('finished_at', { ascending: false }).limit(300);
-      return [...new Set((data || []).map(r => r.challenge_id))].slice(0, 12);
-    }
-
-    async getCoopLeaderboardPage({ challengeId, offset = 0, limit = 20, search = '' }) {
-      await this.init();
-      if (!this.isCloudConfigured()) return { rows: [], hasMore: false };
-      let q = this.supabase.from('public_coop_leaderboard')
-        .select('p1_player_id, p1_name, p2_player_id, p2_name, score, correct, steps, duration_ms, finished_at, challenge_id');
-      if (challengeId) q = q.eq('challenge_id', challengeId);
-      const s = this._cleanSearch(search);
-      if (s) q = q.or('p1_name.ilike.%' + s + '%,p2_name.ilike.%' + s + '%,p1_player_id.ilike.%' + s + '%,p2_player_id.ilike.%' + s + '%');
-      const { data, error } = await q.order('score', { ascending: false }).order('duration_ms', { ascending: true }).range(offset, offset + limit);
-      if (error) throw new Error(error.message);
-      const rows = data || [];
-      return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
     }
 
     async uploadBugAttachment(file) {
@@ -1270,7 +1376,7 @@
           name: String(f.name || '').slice(0, 40), age_group: String(f.ageGroup || '').slice(0, 40),
           level: String(f.level || '').slice(0, 40), page: String(f.page || '').slice(0, 40)
         });
-      } catch (e) { /* the Google Sheet copy is the main record; never block on this */ }
+      } catch (e) {                                                                     }
     }
 
     async getAllFeedback() {
@@ -1284,22 +1390,6 @@
       }
       try {
         return JSON.parse(localStorage.getItem('tlp-local-feedback') || '[]');
-      } catch (e) {
-        return [];
-      }
-    }
-
-    async getCoopMatchesAdmin() {
-      if (this.isCloudConfigured() && this.supabase) {
-        try {
-          const { data, error } = await this.supabase.from('coop_matches').select('*').order('finished_at', { ascending: false }).limit(100);
-          if (!error && Array.isArray(data)) return data;
-        } catch (e) {
-          console.warn('[TLP Auth] Cloud coop matches fetch failed:', e);
-        }
-      }
-      try {
-        return JSON.parse(localStorage.getItem('tlp-local-coop-matches') || '[]');
       } catch (e) {
         return [];
       }
@@ -1353,9 +1443,9 @@
       }
     }
 
-    // -------------------------------------------------------------------------
-    // ADMIN FUNCTIONS: DIAGNOSTICS & SAFE TEST PURGE
-    // -------------------------------------------------------------------------
+
+
+
     async runDiagnostics() {
       const diag = {
         timestamp: new Date().toISOString(),
@@ -1413,7 +1503,7 @@
       return this._getLocalLearners();
     }
 
-    // Preview test data count without deleting anything
+
     async previewTestData() {
       if (!this.isCurrentUserAdmin()) throw new Error('Access Denied: Admin authorization required.');
 
@@ -1433,7 +1523,7 @@
         }
       }
 
-      // Local computation
+
       const accounts = this._getLocalAccounts().filter(a => a.isTestAccount);
       const learners = this._getLocalLearners().filter(l => l.isTest);
       const lb = this._getLocalLeaderboard().filter(e => e.is_test);
@@ -1445,7 +1535,7 @@
       };
     }
 
-    // Safe purge of test data (NEVER affects real accounts or scores)
+
     async purgeTestData() {
       if (!this.isCurrentUserAdmin()) throw new Error('Access Denied: Admin authorization required.');
 
@@ -1458,7 +1548,7 @@
         }
       }
 
-      // Local safe purge
+
       const accounts = this._getLocalAccounts();
       const learners = this._getLocalLearners();
       const lb = this._getLocalLeaderboard();
@@ -1482,9 +1572,9 @@
       };
     }
 
-    // -------------------------------------------------------------------------
-    // CONSERVATIVE LEGACY MIGRATION & RECOVERY
-    // -------------------------------------------------------------------------
+
+
+
     migrateLegacySaves() {
       try {
         const migrationStatus = localStorage.getItem('tlp-migration-status');
@@ -1495,7 +1585,7 @@
           }
         }
 
-        // 1. Snapshot all legacy keys
+
         const legacySnapshot = {};
         const legacyPattern = /^tlp-(prog|ach|badges|draft|boss\d*)(@([a-z0-9]+))?$/;
         for (let i = 0; i < localStorage.length; i++) {
@@ -1510,7 +1600,7 @@
           return { status: 'no_legacy_data' };
         }
 
-        // 2. Permanently backup and archive legacy state (NEVER deleted)
+
         localStorage.setItem('tlp-legacy-backup', JSON.stringify(legacySnapshot));
         localStorage.setItem('tlp-legacy-archive', JSON.stringify({
           archivedAt: new Date().toISOString(),
@@ -1518,7 +1608,7 @@
           data: legacySnapshot
         }));
 
-        // 3. Migrate to guest / default
+
         const legacyPath = legacySnapshot['tlp-path'] || 'g710';
         const u = 'guest';
         const l = 'default';
@@ -1554,7 +1644,7 @@
           if (oldBoss) localStorage.setItem(this.buildSaveKey(u, l, legacyPath, d, 'boss'), oldBoss);
         });
 
-        // 4. Mark migration complete
+
         const migrationRecord = {
           migrated: true,
           migratedAt: new Date().toISOString(),
@@ -1600,9 +1690,9 @@
       return { prog: JSON.parse(prog), ach: JSON.parse(ach), badges: JSON.parse(badges) };
     }
 
-    // -------------------------------------------------------------------------
-    // INTERNAL LOCAL STORAGE HELPERS
-    // -------------------------------------------------------------------------
+
+
+
     _getLocalAccounts() {
       let accounts = [];
       try {
@@ -1612,7 +1702,7 @@
       }
       if (!Array.isArray(accounts)) accounts = [];
 
-      // Pre-seed default administrator if not present
+
       if (!accounts.some(a => a.email === 'admin@lostprotocol.app')) {
         accounts.push({
           id: 'usr_admin_master',

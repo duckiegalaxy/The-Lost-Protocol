@@ -1,56 +1,55 @@
-/* =============================================================================
-   BONUS LAB STYLES  (bonus.html)
-   -----------------------------------------------------------------------------
-   Styles for the logic-gate playground: the circuit canvas, the switch and gate
-   palette, the truth table and the achievement strip. The canvas itself is drawn
-   by js/pages/bonus.js; this file only sizes and colours it.
-   Areas in this file:
-     - page frame
-     - circuit board and components
-     - truth table
-     - feedback messages
-     - achievement strip
-   ============================================================================= */
 .bl{max-width:1100px;margin:28px auto 80px;position:relative;z-index:5}
-.bl h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
+.bl h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .bl .lead{color:var(--mut);margin:0 0 14px;max-width:78ch;line-height:1.55}
 .nt{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
-.nt button,.bb{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px var(--sans);cursor:pointer}
-.nt button[aria-selected=true],.bb.pri{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
+.nt button,.bb{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px var(--sans);cursor:pointer;transition:all .2s cubic-bezier(.3,1.4,.5,1)}
+.nt button::before,.bb::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,var(--a),var(--b));opacity:0;transition:opacity .2s;z-index:-1}
+.nt button:hover:not([aria-selected=true]),.bb:hover:not(.pri){color:var(--fg);transform:translateY(-2px)}
+.nt button:hover:not([aria-selected=true])::before,.bb:hover:not(.pri)::before{opacity:.15}
+.nt button[aria-selected=true],.bb.pri{background:linear-gradient(135deg,var(--a),var(--b));border-color:transparent;color:var(--ink,#0b0f14);box-shadow:0 4px 16px color-mix(in srgb,var(--a) 40%,transparent),0 0 0 1px color-mix(in srgb,var(--a) 60%,transparent)}
+.nt button[aria-selected=true]::before,.bb.pri::before{opacity:1}
 .bb.sm{min-height:36px;padding:0 14px;font-size:13px}.bb:disabled{opacity:.45;cursor:default}
-.bp{border:1px solid var(--line);border-radius:18px;padding:18px;margin:0 0 14px}
+.bp{border:1px solid var(--line);border-radius:18px;padding:18px;margin:0 0 14px;background:linear-gradient(180deg,color-mix(in srgb,var(--a) 6%,transparent),color-mix(in srgb,var(--bg) 92%,transparent));box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 .bp h2{margin:0 0 8px;font:800 22px var(--serif)}.bp h3{margin:12px 0 4px;font:800 17px var(--serif)}
 .bp p{line-height:1.55;margin:6px 0}.mm{color:var(--mut);font-size:14px}
 .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
-.gc{border:1px solid var(--line);border-radius:14px;padding:12px}
+.gc{border:1px solid var(--line);border-radius:14px;padding:12px;background:color-mix(in srgb,var(--fg) 4%,var(--bg));transition:border-color .2s,box-shadow .2s,transform .2s}
+.gc:hover{border-color:var(--a);box-shadow:0 8px 24px color-mix(in srgb,var(--a) 20%,transparent);transform:translateY(-2px)}
 .gc svg{width:80px;height:50px;display:block;margin-bottom:6px}
 .gc svg *,.ach svg *{stroke:var(--a);stroke-width:3;fill:none;stroke-linejoin:round;stroke-linecap:round}
 .tg{display:inline-flex;gap:6px;margin:6px 6px 6px 0}
-.tg button{min-width:44px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;font:800 15px var(--sans);cursor:pointer}
+.tg button{min-width:44px;min-height:40px;border-radius:10px;border:1px solid var(--line);background:transparent;color:inherit;font:800 15px var(--sans);cursor:pointer;transition:all .2s}
+.tg button:hover{background:color-mix(in srgb,var(--a) 15%,transparent);border-color:var(--a)}
 .tg button[aria-pressed=true]{background:var(--a);color:var(--ink,#0b0f14);border-color:transparent}
-.out{display:inline-block;min-width:44px;padding:6px 10px;border-radius:10px;border:1px dashed var(--a);font:800 15px var(--sans);text-align:center}
-.out.on{background:#f2c94c;color:#111;border-style:solid;box-shadow:0 0 14px #f2c94c}
+.out{display:inline-block;min-width:44px;padding:6px 10px;border-radius:10px;border:1px dashed var(--a);font:800 15px var(--sans);text-align:center;transition:all .2s}
+.out.on{background:#f2c94c;color:#111;border-style:solid;box-shadow:0 0 14px #f2c94c;animation:outPulse 1.6s ease-in-out infinite}
+@keyframes outPulse{50%{box-shadow:0 0 22px #f2c94c}}
 table.tt{border-collapse:collapse;font-size:13px;margin-top:6px}table.tt td,table.tt th{border:1px solid var(--line);padding:3px 9px;text-align:center}
 .tt tr.ok td{background:color-mix(in srgb,#3ddc84 22%,transparent)}.tt tr.bad td{background:color-mix(in srgb,#ef7a8c 22%,transparent)}
-svg#cv{width:100%;height:auto;max-height:430px;border:1px solid var(--line);border-radius:14px;touch-action:none;background:color-mix(in srgb,var(--bg) 70%,transparent)}
+svg#cv{width:100%;height:auto;max-height:430px;border:1px solid var(--line);border-radius:14px;touch-action:none;background:color-mix(in srgb,var(--bg) 70%,transparent);box-shadow:inset 0 2px 8px rgba(0,0,0,.3)}
 .comp{cursor:grab}.comp.sel .bd{stroke:#f2c94c}
 .port{fill:var(--bg);stroke:var(--a);stroke-width:3;cursor:pointer}.port.act{fill:var(--a)}
 .wire{fill:none;stroke:var(--mut);stroke-width:4;cursor:pointer}.wire.on{stroke:#f2c94c;stroke-dasharray:10 6;animation:flow .8s linear infinite}.wire.sel{stroke:#ef7a8c}
 @keyframes flow{to{stroke-dashoffset:-16}}
-.bulb{fill:#333}.bulb.on{fill:#f2c94c;filter:drop-shadow(0 0 8px #f2c94c)}
+.bulb{fill:#333}.bulb.on{fill:#f2c94c;filter:drop-shadow(0 0 8px #f2c94c);animation:bulbSurge 1.8s ease-in-out infinite}
+@keyframes bulbSurge{50%{filter:drop-shadow(0 0 18px #f2c94c)}}
 .fb{min-height:1.4em;margin-top:8px;font-weight:600}.fb.good{color:#3ddc84}.fb.bad{color:#ef7a8c}
 .arr{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin:12px 0;min-height:90px}
 .bx{min-width:48px;padding:10px 6px;border-radius:10px;border:2px solid var(--line);background:transparent;color:inherit;font:800 17px var(--sans);text-align:center;cursor:pointer;transition:transform .25s,background .25s}
 .bx small{display:block;font:600 11px var(--sans);color:var(--mut)}
 .bx.hl{border-color:var(--a);transform:translateY(-6px)}.bx.fnd{background:#3ddc84;color:#111;border-color:#3ddc84}.bx.srt{border-color:#3ddc84}.bx.dim{opacity:.35}.bx.hid{color:transparent;text-shadow:0 0 0}
+.bx.mid{border-style:dashed;border-color:var(--a);animation:midPulse 1.1s ease-in-out infinite}
+@keyframes midPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--a) 45%,transparent)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--a) 0%,transparent)}}
 .gap{width:22px;min-height:60px;border:2px dashed var(--a);border-radius:8px;background:transparent;color:var(--a);cursor:pointer;font-weight:800}
 .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
-.ach{display:inline-block;width:150px;text-align:center;padding:10px;border:1px solid var(--line);border-radius:14px;margin:6px;vertical-align:top}
+.ach{display:inline-block;width:150px;text-align:center;padding:10px;border:1px solid var(--line);border-radius:14px;margin:6px;vertical-align:top;transition:transform .2s,box-shadow .2s}
+.ach:hover{transform:translateY(-4px);box-shadow:0 8px 24px color-mix(in srgb,var(--a) 20%,transparent)}
 .ach svg{width:70px;height:56px}.ach.lk{opacity:.4}
-/* Mastery missions: extra game chapters, linked straight into the game. */
+.ach svg *{stroke:var(--a);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
 .mas{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px}
-.mcard{display:grid;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;color:inherit;text-decoration:none;transition:transform .2s,border-color .2s}
-.mcard:hover,.mcard:focus-visible{border-color:var(--a);transform:translateY(-2px)}
+.mcard{display:grid;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;color:inherit;text-decoration:none;transition:transform .2s,border-color .2s,box-shadow .2s;background:linear-gradient(180deg,color-mix(in srgb,var(--a) 4%,transparent),transparent)}
+.mcard:hover,.mcard:focus-visible{border-color:var(--a);transform:translateY(-2px);box-shadow:0 8px 24px color-mix(in srgb,var(--a) 25%,transparent)}
 .mcard .tag{font:700 10px var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--a)}
 .mcard b{font:800 18px var(--serif)}
 .mcard em{font-style:normal;font:700 13px var(--sans);color:var(--a)}
@@ -64,15 +63,17 @@ svg#cv{width:100%;height:auto;max-height:430px;border:1px solid var(--line);bord
 @keyframes an3{0%{transform:translateX(-120px) skewX(20deg);opacity:0}70%{transform:translateX(10px)}100%{transform:none;opacity:1}}
 html.reduce-fx #achPop svg{animation:none!important}
 
-/* =============================================================================
-   WORKSHOP POLISH
-   -----------------------------------------------------------------------------
-   A progress strip above the tabs, motion on the live circuit (glowing wires,
-   gates and bulb), a shake when a check fails, tier buttons for the exercises
-   and the "Which algorithm?" drill.
-   ============================================================================= */
+
+
+
+
+
+
+
 .bprog{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:4px 0 14px}
-.bseg{border:1px solid var(--line);border-radius:14px;padding:10px 14px;background:linear-gradient(160deg,rgba(255,255,255,.04),transparent)}
+.bseg{border:1px solid var(--line);border-radius:14px;padding:10px 14px;background:linear-gradient(160deg,rgba(255,255,255,.04),transparent);position:relative;overflow:hidden}
+.bseg::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a) 6%,transparent),transparent);opacity:0;transition:opacity .3s}
+.bseg:hover::before{opacity:1}
 .bseg b{display:block;font:800 11px var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
 .bseg span{display:flex;align-items:baseline;gap:6px;margin:2px 0 8px;font:800 22px var(--serif);color:var(--a)}
 .bseg span small{font:700 12px var(--sans);color:var(--mut);letter-spacing:0;text-transform:none}
@@ -80,8 +81,8 @@ html.reduce-fx #achPop svg{animation:none!important}
 .bseg i em{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--a),var(--b));transition:width .5s ease}
 .bseg i em.full{background:linear-gradient(90deg,#3ddc84,#a6f0c6)}
 
-/* Live circuit feedback. The groups get .live from drawCircuit() when their
-   output is ON, so signal flow is visible without reading the truth table. */
+
+
 .comp .bd{transition:filter .25s ease,stroke .25s ease}
 .comp.live .bd{filter:drop-shadow(0 0 6px color-mix(in srgb,var(--a) 70%,transparent))}
 .wire{transition:stroke .2s}
@@ -98,15 +99,25 @@ svg#cv.shake{animation:circShake .45s ease}
 .bx{animation:bxIn .22s ease-out}
 @keyframes bxIn{from{opacity:.55;transform:translateY(-4px)}}
 .tt tr{transition:background .3s}
+
+
+.bl h1,.bl .lead,.nt,.bprog{animation:bonusIn .6s cubic-bezier(.2,.8,.2,1) both}
+.bl .lead{animation-delay:.08s}
+.nt{animation-delay:.16s}
+.bprog{animation-delay:.24s}
+@keyframes bonusIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+
+.nt button:focus-visible,.bb:focus-visible,.tg button:focus-visible{outline:2px solid var(--a);outline-offset:2px}
 .fb.bad{animation:fbShake .4s ease}
 @keyframes fbShake{20%,60%{transform:translateX(-4px)}40%,80%{transform:translateX(4px)}}
 
-/* Exercise size selector */
+
 .tiers{display:inline-flex;gap:4px;padding:3px;border:1px solid var(--line);border-radius:999px;vertical-align:middle}
 .tiers button{min-height:34px;padding:0 12px;border:0;border-radius:999px;background:transparent;color:var(--mut);font:700 13px var(--sans);cursor:pointer;transition:background .2s,color .2s}
 .tiers button.on{background:var(--a);color:var(--ink,#0b0f14)}
 
-/* Which-algorithm drill */
+
 .quizq{font:700 17px/1.5 var(--sans);margin:10px 0 12px;max-width:60ch}
 .qopts{display:flex;flex-wrap:wrap;gap:8px}
 .qopts button{min-height:42px;padding:0 14px;border-radius:12px;border:1px solid var(--line);background:transparent;color:inherit;font:700 14px var(--sans);cursor:pointer;transition:border-color .2s,background .2s}

@@ -14,11 +14,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
-<script src="js/theme.js"></script>
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/pages/admin.css">
+<script src="js/theme.js?v=15"></script>
+<link rel="stylesheet" href="css/style.css?v=31">
+<link rel="stylesheet" href="css/pages/admin.css?v=5">
+<link rel="stylesheet" href="css/premium.css?v=10">
 </head>
-<body data-music="admin">
+<body class="page-admin" data-music="admin">
+<canvas id="rain"></canvas>
+<div id="scan"></div>
+<div class="aurora"></div>
 <header><nav><div class="wrap">
   <a class="logo glitch" data-text="The Lost Protocol" href="index.html">The Lost Protocol</a>
   <a class="navlink" href="index.html"><span class="sp" aria-hidden="true"></span>Home</a>
@@ -28,8 +32,15 @@
 
 <main>
 <div class="wrap adm">
-  <h1>Administrator dashboard</h1>
-  <p class="sub">What you can see and change here is decided by the database, not by this page. If you are not an administrator the database returns nothing.</p>
+  <div class="admin-head">
+    <div>
+      <p class="admin-kick">Owner access · Mission control</p>
+      <h1 class="glitch" data-text="Administrator dashboard">Administrator dashboard</h1>
+      <p class="sub">Your game at a glance. Review learners, support the crew and keep missions running.</p>
+    </div>
+    <a class="row-btn preview-link" href="webgame.html">Preview the game</a>
+  </div>
+  <p class="access-note">Owner-only tools. Database permissions protect every read and action; viewing a panel never changes or deletes data.</p>
 
   <div id="gate" class="warn" hidden></div>
 
@@ -40,7 +51,6 @@
       <button role="tab" aria-selected="false" data-tab="learners">Learners</button>
       <button role="tab" aria-selected="false" data-tab="bugs">Bug reports</button>
       <button role="tab" aria-selected="false" data-tab="board">Leaderboard</button>
-      <button role="tab" aria-selected="false" data-tab="coop">Co-op matches</button>
       <button role="tab" aria-selected="false" data-tab="feedback">Feedback</button>
       <button role="tab" aria-selected="false" data-tab="story">Story</button>
       <button role="tab" aria-selected="false" data-tab="streaks">Streaks</button>
@@ -48,7 +58,7 @@
       <button role="tab" aria-selected="false" data-tab="test">Test data</button>
     </div>
     <div class="msg" id="msg" role="status" aria-live="polite"></div>
-    <div class="panel" id="panel"></div>
+    <div class="panel" id="panel" role="tabpanel" tabindex="0" aria-label="Overview" aria-busy="false"></div>
   </div>
 </div>
 </main>
@@ -59,12 +69,16 @@
 </div></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/tlp-auth.js"></script>
-<script src="js/tlp-common.js"></script>
-<script src="js/streak.js"></script>
-<script src="js/story.js"></script>
-<script src="js/music.js"></script>
-<script src="js/pages/admin.js"></script>
+<script src="js/config.js?v=13"></script>
+<script src="js/tlp-auth.js?v=15"></script>
+<script src="js/tlp-common.js?v=19"></script>
+<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-background.js?v=14"></script>
+<script src="js/streak.js?v=14"></script>
+<script src="js/story.js?v=13"></script>
+<script src="js/tlp-avatar.js?v=23"></script>
+<script src="js/music.js?v=13"></script>
+<script src="js/pages/admin.js?v=13"></script>
+<script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

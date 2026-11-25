@@ -1,23 +1,13 @@
--- Live public schema of The Lost Protocol (Supabase project gkycmrivyqxknvkgdffr).
--- Generated from pg_catalog on 2026-11-15. This is the baseline migration:
--- the live database is authoritative and this file mirrors it, not the reverse.
--- It is intended for audit, disaster recovery, and as the starting point for
--- future migrations under supabase/migrations/. Do NOT apply it blindly to a
--- project that already has this schema; do NOT apply it to any other project.
-
-
--- Extensions
-
 create extension if not exists pg_stat_statements with schema extensions;
 create extension if not exists pgcrypto with schema extensions;
 create extension if not exists supabase_vault with schema vault;
 create extension if not exists "uuid-ossp" with schema extensions;
 
--- Sequences
+
 
 create sequence public.admin_audit_id_seq;
 
--- Tables
+
 
 create table public.admin_audit (id bigint not null default nextval('admin_audit_id_seq'::regclass), action text not null, target_user uuid, target_email text, note text, performed_at timestamp with time zone not null default now());
 create table public.ai_usage (user_id uuid not null, day date not null default ((now() AT TIME ZONE 'utc'::text))::date, mode text not null, used integer not null default 0);
@@ -36,7 +26,7 @@ create table public.profiles (id uuid not null, role text not null, display_name
 create table public.progress_records (id text not null, learner_id uuid not null, user_id uuid not null, learning_path text not null, game_diff text not null, prog jsonb not null default '{}'::jsonb, ach jsonb not null default '[]'::jsonb, badges jsonb not null default '[]'::jsonb, draft jsonb, boss_state jsonb, updated_at timestamp with time zone not null default now(), is_test boolean not null default false);
 create table public.site_owner (id integer not null default 1, user_id uuid not null, created_at timestamp with time zone not null default now());
 
--- Constraints
+
 
 alter table public.admin_audit add constraint admin_audit_pkey PRIMARY KEY (id);
 alter table public.ai_usage add constraint ai_usage_pkey PRIMARY KEY (user_id, day, mode);
@@ -95,7 +85,7 @@ alter table public.progress_records add constraint progress_records_learner_id_f
 alter table public.progress_records add constraint progress_records_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.site_owner add constraint site_owner_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE RESTRICT;
 
--- Indexes
+
 
 CREATE INDEX idx_bug_reports_status ON public.bug_reports USING btree (status, created_at DESC);
 CREATE INDEX coop_leaderboard_public_p1_idx ON public.coop_leaderboard_public USING btree (p1_learner);
@@ -111,11 +101,11 @@ CREATE UNIQUE INDEX tlp_one_admin ON public.profiles USING btree ((true)) WHERE 
 CREATE INDEX idx_progress_learner_id ON public.progress_records USING btree (learner_id);
 CREATE INDEX idx_progress_user_id ON public.progress_records USING btree (user_id);
 
--- Sequence ownership
+
 
 alter sequence public.admin_audit_id_seq owned by public.admin_audit.id;
 
--- Functions
+
 
 CREATE OR REPLACE FUNCTION public.ai_consume(p_mode text)
  RETURNS text
@@ -254,7 +244,7 @@ BEGIN
     IF r.status = 'waiting' AND r.guest_learner = me THEN
         UPDATE public.coop_rooms SET guest_learner = NULL, guest_ready = false, host_ready = false WHERE id = p_room;
     ELSIF r.status IN ('waiting', 'playing') THEN
-        UPDATE public.coop_rooms SET status = 'abandoned' WHERE id = p_room;   -- no result is recorded for abandoned matches
+        UPDATE public.coop_rooms SET status = 'abandoned' WHERE id = p_room;
     END IF;
     RETURN 'left';
 END $function$;
@@ -345,7 +335,7 @@ BEGIN
     IF r.status <> 'waiting' OR r.expires_at < now() THEN RETURN public.coop_room_state(p_room); END IF;
     IF r.host_learner = me THEN UPDATE public.coop_rooms SET host_ready = p_ready WHERE id = p_room;
     ELSE UPDATE public.coop_rooms SET guest_ready = p_ready WHERE id = p_room; END IF;
-    -- both ready: the SERVER starts the clock
+
     UPDATE public.coop_rooms SET status = 'playing', started_at = now()
     WHERE id = p_room AND status = 'waiting' AND host_ready AND guest_ready AND guest_learner IS NOT NULL;
     RETURN public.coop_room_state(p_room);
@@ -363,7 +353,7 @@ BEGIN
         RAISE EXCEPTION 'The confirmation sentence does not match.';
     END IF;
     IF public.is_admin() THEN RAISE EXCEPTION 'The owner administrator account cannot be deleted here.'; END IF;
-    -- an educator also removes the child accounts they created
+
     DELETE FROM auth.users WHERE id IN (
         SELECT user_id FROM public.learners WHERE parent_user_id = uid AND user_id <> uid AND created_by_educator);
     DELETE FROM auth.users WHERE id = uid;
@@ -557,7 +547,7 @@ BEGIN
     END IF;
     RETURN NEW;
 EXCEPTION WHEN OTHERS THEN
-    RETURN NEW; -- never block sign-up
+    RETURN NEW;
 END $function$;
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
  RETURNS trigger
@@ -585,14 +575,14 @@ CREATE OR REPLACE FUNCTION public.learners_player_id_guard()
 AS $function$
 BEGIN
     IF TG_OP = 'INSERT' THEN
-        -- Only the server (Edge Function / SQL Editor) may supply an ID; browsers never choose one.
+
         IF NOT (auth.uid() IS NULL AND NEW.player_id IS NOT NULL AND NEW.player_id ~ '^TLP-[0-9]{8}$') THEN
             NEW.player_id := public.generate_player_id();
         END IF;
     ELSIF OLD.player_id IS NOT NULL THEN
-        NEW.player_id := OLD.player_id;             -- permanent: never changes
+        NEW.player_id := OLD.player_id;
     ELSIF NEW.player_id IS NULL THEN
-        NEW.player_id := public.generate_player_id(); -- backfill of older rows
+        NEW.player_id := public.generate_player_id();
     END IF;
     IF NEW.start_diff IS NULL THEN NEW.start_diff := COALESCE(NEW.current_diff, 'int'); END IF;
     RETURN NEW;
@@ -613,7 +603,7 @@ BEGIN
     IF p_diff NOT IN ('beg', 'int', 'pro') THEN RAISE EXCEPTION 'Invalid difficulty'; END IF;
     IF NOT EXISTS (SELECT 1 FROM public.progress_records pr
                    WHERE pr.learner_id = p_learner AND pr.game_diff = p_diff AND pr.prog ? '29-0') THEN
-        RETURN l.completed_diffs; -- final guardian not saved yet: nothing changes
+        RETURN l.completed_diffs;
     END IF;
     IF NOT (p_diff = ANY (l.completed_diffs)) THEN
         UPDATE public.learners SET completed_diffs = array_append(completed_diffs, p_diff) WHERE id = p_learner
@@ -763,7 +753,7 @@ BEGIN
         END IF;
     END LOOP;
 
-    -- chapters_cleared can never exceed the number of chapters that have saved stars
+
     chapters := LEAST(GREATEST(COALESCE(p_chapters, 0), 0), COALESCE(array_length(seen_chapters, 1), 0));
 
     test_flag := COALESCE((SELECT is_test_account FROM public.profiles WHERE id = uid), false)
@@ -780,7 +770,7 @@ BEGIN
             total_stars = EXCLUDED.total_stars,
             chapters_cleared = EXCLUDED.chapters_cleared,
             is_test = EXCLUDED.is_test
-        -- only touch the row when something changed, so tie-breaking by earliest stays fair
+
         WHERE e.total_score IS DISTINCT FROM EXCLUDED.total_score
            OR e.total_stars IS DISTINCT FROM EXCLUDED.total_stars
            OR e.chapters_cleared IS DISTINCT FROM EXCLUDED.chapters_cleared
@@ -829,8 +819,7 @@ CREATE OR REPLACE FUNCTION public.sync_coop_leaderboard_public()
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog', 'public'
-AS $function$
-begin
+AS $function$begin
   if tg_op = 'DELETE' then
     delete from public.coop_leaderboard_public where id = old.id;
     return old;
@@ -876,8 +865,7 @@ CREATE OR REPLACE FUNCTION public.sync_coop_leaderboard_public_player()
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog', 'public'
-AS $function$
-begin
+AS $function$begin
   if tg_op = 'UPDATE' then
     update public.coop_leaderboard_public set p1_player_id = coalesce(new.player_id, 'deleted'), p1_name = coalesce(new.name, 'Deleted player') where p1_learner = new.id;
     update public.coop_leaderboard_public set p2_player_id = coalesce(new.player_id, 'deleted'), p2_name = coalesce(new.name, 'Deleted player') where p2_learner = new.id;
@@ -896,8 +884,7 @@ CREATE OR REPLACE FUNCTION public.sync_leaderboard_public_badges()
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog', 'public'
-AS $function$
-begin
+AS $function$begin
   if tg_op in ('UPDATE','DELETE') then
     update public.leaderboard_public lp
     set badges = coalesce((
@@ -926,8 +913,7 @@ CREATE OR REPLACE FUNCTION public.sync_leaderboard_public_entry()
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog', 'public'
-AS $function$
-begin
+AS $function$begin
   if tg_op = 'DELETE' then
     delete from public.leaderboard_public where id = old.id;
     return old;
@@ -988,8 +974,7 @@ CREATE OR REPLACE FUNCTION public.sync_leaderboard_public_player()
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO 'pg_catalog', 'public'
-AS $function$
-begin
+AS $function$begin
   if tg_op = 'UPDATE' then
     update public.leaderboard_public set player_id = new.player_id where learner_id = new.id;
     return new;
@@ -1009,7 +994,7 @@ CREATE OR REPLACE FUNCTION public.tlp_learners_guard()
 AS $function$
 DECLARE r text;
 BEGIN
-  IF auth.uid() IS NULL THEN RETURN NEW; END IF;        -- SQL editor / server functions
+  IF auth.uid() IS NULL THEN RETURN NEW; END IF;
   IF TG_OP = 'INSERT' THEN
     SELECT role INTO r FROM public.profiles WHERE id = auth.uid();
     IF r IN ('parent', 'admin') OR public.is_admin() THEN
@@ -1051,7 +1036,7 @@ BEGIN
   RETURN NEW;
 END $function$;
 
--- Views
+
 
 create or replace view public.public_coop_leaderboard with (security_invoker = true) as  SELECT id,
     challenge_id,
@@ -1079,7 +1064,7 @@ create or replace view public.public_leaderboard with (security_invoker = true) 
    FROM leaderboard_public
   WHERE (is_test = false);
 
--- Triggers
+
 
 CREATE TRIGGER set_bug_reports_updated_at BEFORE UPDATE ON public.bug_reports FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 CREATE TRIGGER trg_coop_leaderboard_public AFTER INSERT OR DELETE OR UPDATE ON public.coop_matches FOR EACH ROW EXECUTE FUNCTION sync_coop_leaderboard_public();
@@ -1098,7 +1083,7 @@ CREATE TRIGGER tlp_profiles_guard BEFORE INSERT OR UPDATE ON public.profiles FOR
 CREATE TRIGGER set_progress_updated_at BEFORE UPDATE ON public.progress_records FOR EACH ROW EXECUTE FUNCTION handle_updated_at();
 CREATE TRIGGER trg_leaderboard_public_badges AFTER INSERT OR DELETE OR UPDATE ON public.progress_records FOR EACH ROW EXECUTE FUNCTION sync_leaderboard_public_badges();
 
--- Row level security
+
 
 alter table public.admin_audit enable row level security;
 alter table public.ai_usage enable row level security;
@@ -1117,7 +1102,7 @@ alter table public.profiles enable row level security;
 alter table public.progress_records enable row level security;
 alter table public.site_owner enable row level security;
 
--- Policies
+
 
 create policy "Admins read audit log" on public.admin_audit as permissive for SELECT to public using (is_admin());
 create policy "Users read own AI usage" on public.ai_usage as permissive for SELECT to public using (((auth.uid() = user_id) OR is_admin()));
@@ -1176,7 +1161,7 @@ create policy "Progress updatable by owner or parent" on public.progress_records
    FROM learners
   WHERE ((learners.id = progress_records.learner_id) AND ((learners.user_id = auth.uid()) OR (learners.parent_user_id = auth.uid())))))));
 
--- Privileges
+
 
 grant MAINTAIN, REFERENCES, TRIGGER, TRUNCATE on table public.admin_audit to anon;
 grant MAINTAIN, REFERENCES, TRIGGER, TRUNCATE on table public.admin_audit to authenticated;

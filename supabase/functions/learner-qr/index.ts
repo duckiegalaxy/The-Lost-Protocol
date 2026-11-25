@@ -1,22 +1,4 @@
 // deno-lint-ignore-file
-// =============================================================================
-// THE LOST PROTOCOL — Edge Function "learner-qr"
-// One-time sign-in codes for learner accounts.
-//
-// Actions
-//   create  (signed in as Parent/Educator)  makes a 10-minute, single-use code
-//           for one learner they own. Returns the raw code once; the database
-//           keeps only its SHA-256 hash.
-//   redeem  (no sign-in needed)             validates and burns a code, then
-//           returns a one-time Supabase magic-link token for that learner.
-//   status  (signed in as Parent/Educator)  tells the parent dialog whether its
-//           code was scanned, without exposing anything about the learner.
-//
-// Why the magic link: Supabase has no browser API to start a session as another
-// user. The admin API can mint a one-time magic-link token, and the auth page
-// exchanges it for a normal session with verifyOtp(). The service key is read
-// from this function's environment and never reaches the browser.
-// =============================================================================
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const CORS = {
@@ -26,11 +8,11 @@ const CORS = {
 };
 const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...CORS, "Content-Type": "application/json" } });
 
-const TTL_MS = 10 * 60 * 1000;      // a code works for ten minutes
-const MAX_PER_HOUR = 20;            // codes a parent may create in an hour
-const KEEP_MS = 24 * 60 * 60 * 1000; // finished codes are cleaned up after a day
+const TTL_MS = 10 * 60 * 1000;
+const MAX_PER_HOUR = 20;
+const KEEP_MS = 24 * 60 * 60 * 1000;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const CODE = /^[A-Za-z0-9_-]{40,64}$/; // 32 random bytes, base64url
+const CODE = /^[A-Za-z0-9_-]{40,64}$/;
 
 const enc = new TextEncoder();
 const b64url = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -62,9 +44,9 @@ Deno.serve(async (req) => {
   const action = String(body.action ?? "");
 
   try {
-    // ---------------------------------------------------------------- redeem
-    // No account is required here: the scanner is usually a learner on a
-    // classroom device. The code itself is the credential.
+
+
+
     if (action === "redeem") {
       const raw = String(body.token ?? "");
       if (!CODE.test(raw)) return json({ error: "expired" }, 410);
@@ -76,8 +58,8 @@ Deno.serve(async (req) => {
         .eq("token_hash", hash)
         .maybeSingle();
       if (findErr) return json({ error: "server" }, 500);
-      // Unknown, already used and expired all answer the same way, so a
-      // stranger cannot tell which case they hit.
+
+
       if (!row || row.used_at || new Date(row.expires_at).getTime() <= Date.now()) {
         return json({ error: "expired" }, 410);
       }
@@ -93,8 +75,8 @@ Deno.serve(async (req) => {
       const email = acc && acc.user && acc.user.email;
       if (accErr || !email) return json({ error: "server" }, 500);
 
-      // The link is created first, but it is only returned after the code is
-      // claimed below. If the claim loses a race, the link is discarded.
+
+
       const { data: link, error: linkErr } = await admin.auth.admin.generateLink({ type: "magiclink", email });
       const magic = link && link.properties && link.properties.hashed_token;
       if (linkErr || !magic) {
@@ -102,8 +84,8 @@ Deno.serve(async (req) => {
         return json({ error: "server" }, 500);
       }
 
-      // One conditional update claims the code: of two simultaneous scans,
-      // exactly one gets a row back.
+
+
       const { data: claimed, error: claimErr } = await admin
         .from("learner_signin_tokens")
         .update({ used_at: new Date().toISOString() })
@@ -120,7 +102,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Everything else needs a signed-in Parent/Educator.
+
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) return json({ error: "signin" }, 401);
     const asUser = createClient(url, anonKey, { global: { headers: { Authorization: authHeader } } });
@@ -129,7 +111,7 @@ Deno.serve(async (req) => {
     const { data: prof } = await admin.from("profiles").select("role").eq("id", u.user.id).single();
     if (!prof || prof.role !== "parent") return json({ error: "not_educator" }, 403);
 
-    // ---------------------------------------------------------------- status
+
     if (action === "status") {
       const raw = String(body.token ?? "");
       if (!CODE.test(raw)) return json({ error: "bad_request" }, 400);
@@ -146,7 +128,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // ---------------------------------------------------------------- create
+
     if (action === "create") {
       const learnerId = String(body.learnerId ?? "");
       if (!UUID.test(learnerId)) return json({ error: "not_found" }, 404);
@@ -156,8 +138,8 @@ Deno.serve(async (req) => {
         .select("id, user_id, parent_user_id, created_by_educator, name, player_id")
         .eq("id", learnerId)
         .maybeSingle();
-      // Only an educator-created child account owned by this parent can be
-      // signed in this way. Anything else looks like a missing learner.
+
+
       if (!l || l.parent_user_id !== u.user.id || !l.created_by_educator || !l.user_id) {
         return json({ error: "not_found" }, 404);
       }
@@ -170,11 +152,11 @@ Deno.serve(async (req) => {
         .gt("created_at", hourAgo);
       if ((count ?? 0) >= MAX_PER_HOUR) return json({ error: "rate_limited" }, 429);
 
-      // Housekeeping: finished and expired rows have no further use.
+
       const cutoff = new Date(Date.now() - KEEP_MS).toISOString();
       await admin.from("learner_signin_tokens").delete().lt("created_at", cutoff);
 
-      // A new code replaces any open one for this learner.
+
       await admin.from("learner_signin_tokens")
         .delete()
         .eq("learner_id", l.id)

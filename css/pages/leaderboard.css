@@ -1,25 +1,10 @@
-/* =============================================================================
-   LEADERBOARD STYLES  (leaderboard.html)
-   -----------------------------------------------------------------------------
-   Two boards on one page: individual and co-op. The tab bar sits above a single
-   table slot that each board re-renders, so the page never grows two competing
-   scroll areas.
-   Areas in this file:
-     - page frame and tab bar
-     - rank table
-     - empty and error states
-     - responsive columns
-   ============================================================================= */
 .lbp{max-width:1000px;margin:30px auto 70px;position:relative;z-index:5}
 .lbp h1{font-size:clamp(28px,5vw,42px);margin:0 0 6px}
 .lbp .lead{color:var(--mut);margin:0 0 16px;max-width:70ch;line-height:1.5}
-.swt{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
-.swt button,.tabs2 button,.chips2 button{min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:transparent;color:inherit;font:700 15px var(--sans);cursor:pointer}
-.swt button[aria-selected=true],.tabs2 button[aria-selected=true],.chips2 button[aria-pressed=true]{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
+.tabs2 button,.chips2 button{min-height:46px;padding:0 20px;border-radius:999px;border:1px solid color-mix(in srgb,var(--a) 30%,var(--line));background:transparent;color:inherit;font:700 14px var(--sans);letter-spacing:.03em;cursor:pointer;transition:all .2s}
+.tabs2 button[aria-selected=true],.chips2 button[aria-pressed=true]{background:var(--a);border-color:transparent;color:var(--ink,#0b0f14)}
 .vw{overflow:hidden;border-radius:18px}
-.slides{display:flex;width:200%;transition:transform .45s cubic-bezier(.4,0,.2,1)}
-.slides.co{transform:translateX(-50%)}
-.slide{width:50%;box-sizing:border-box;padding:0 2px;min-width:0}
+.board-panel{width:100%;box-sizing:border-box;padding:0 2px;min-width:0}
 .tabs2{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 0 10px;scroll-snap-type:x proximity}
 .tabs2 button{flex:0 0 auto;scroll-snap-align:start}
 .chips2{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
@@ -36,11 +21,11 @@ table.t td.rk{font:800 16px var(--serif)}
 .rules{margin-top:22px;font-size:14px;color:var(--mut);line-height:1.6;max-width:80ch}
 .pidc{font:700 13px var(--sans);letter-spacing:.04em;opacity:.85}
 
-/* ---------------------------------------------------------------------------
-   SEARCH AND FILTERS
-   The same bar sits above both boards. It is wide enough for a name or a
-   Player ID and stays usable on a phone.
-   --------------------------------------------------------------------------- */
+
+
+
+
+
 .lbtools{display:flex;gap:8px;flex-wrap:wrap;align-items:stretch;margin:0 0 12px}
 .lbsearch{flex:1 1 250px;display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--mut)}
 .lbsearch:focus-within{border-color:var(--a);box-shadow:0 0 0 3px color-mix(in srgb,var(--a) 18%,transparent)}
@@ -57,9 +42,9 @@ table.t td.rk{font:800 16px var(--serif)}
 .myrank b{font:800 20px var(--serif);color:var(--a)}
 .myrank .mr-lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
 
-/* ---------------------------------------------------------------------------
-   GRADES 1-6: sticker cards with a small robot face and a big rank bubble.
-   --------------------------------------------------------------------------- */
+
+
+
 .lbkid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding:2px}
 .kcard{position:relative;display:grid;grid-template-columns:44px 36px 1fr auto;grid-template-areas:"rank face who score" "stars stars stars stars";gap:4px 10px;align-items:center;padding:14px 16px;border-radius:18px;border:2px solid color-mix(in srgb,var(--line) 80%,transparent);background:linear-gradient(155deg,rgba(255,255,255,.045),transparent)}
 .kcard.r1{border-color:#ffd166;box-shadow:0 10px 26px #ffd16622}
@@ -77,9 +62,9 @@ table.t td.rk{font:800 16px var(--serif)}
 .kscore span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
 .kstars{grid-area:stars;font-size:12px;color:var(--mut)}
 
-/* ---------------------------------------------------------------------------
-   GRADES 7-10: a sports podium above a clean scoreboard.
-   --------------------------------------------------------------------------- */
+
+
+
 .lbpodium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 14px;align-items:end}
 .pcard{position:relative;padding:16px 14px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.05),transparent);text-align:center}
 .pcard.p1{transform:translateY(-10px);border-color:#ffd166;box-shadow:0 14px 34px #ffd16622}
@@ -95,9 +80,9 @@ table.t td.rk{font:800 16px var(--serif)}
 .lbt tr.top2 td{background:color-mix(in srgb,#c9d4e3 7%,transparent)}
 .lbt tr.top3 td{background:color-mix(in srgb,#e2a06a 7%,transparent)}
 
-/* ---------------------------------------------------------------------------
-   GRADES 11-12: dense terminal grid with a score bar per player.
-   --------------------------------------------------------------------------- */
+
+
+
 .lbterm{border:1px solid var(--line);border-radius:14px;overflow:hidden;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;background:linear-gradient(180deg,rgba(80,220,255,.05),transparent)}
 .lbterm .thead,.lbterm .trow{display:grid;grid-template-columns:52px 1fr 90px 160px;gap:12px;align-items:center;padding:10px 14px}
 .lbterm .thead{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);border-bottom:1px solid var(--line);background:rgba(0,0,0,.18)}
@@ -112,9 +97,9 @@ table.t td.rk{font:800 16px var(--serif)}
 .trow.hot .trk{color:var(--b);font-weight:700}
 .tfootline{margin:0;padding:8px 14px;font-size:11px;color:var(--mut);border-top:1px solid var(--line)}
 
-/* ---------------------------------------------------------------------------
-   COLLEGE AND ADULT: a quiet editorial list; the number is the only bright part.
-   --------------------------------------------------------------------------- */
+
+
+
 .lbadult{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,color-mix(in srgb,var(--a) 5%,var(--bg)),var(--bg) 140px)}
 .ahead,.arow{display:grid;grid-template-columns:56px minmax(0,1fr) minmax(0,226px) 132px;gap:16px;align-items:center}
 .ahead{height:40px;padding:0 18px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.03);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
@@ -138,12 +123,12 @@ table.t td.rk{font:800 16px var(--serif)}
 .abar{display:block;height:4px;margin-top:7px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}
 .abar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--a),var(--b))}
 
-/* The adult board and its pager read as one panel, so pages turn in one frame. */
+
 .slide.adultBoard .lbadult{border-radius:16px 16px 0 0;border-bottom:0}
 .slide.adultBoard .pg{margin:0;padding:9px 14px;border:1px solid var(--line);border-top:0;border-radius:0 0 16px 16px;background:color-mix(in srgb,var(--a) 3%,var(--bg))}
 .slide.adultBoard .pg #indPage{color:var(--mut);font-size:13px}
 
-/* Cards own their frame, so the table wrapper takes a step back on those tabs. */
+
 .tw:has(.lbkid),.tw:has(.lbadult),.tw:has(.lbterm){border:0;overflow:visible}
 @media(max-width:700px){
  .lbpodium{grid-template-columns:1fr;gap:8px}
@@ -157,11 +142,11 @@ table.t td.rk{font:800 16px var(--serif)}
  .abar{display:none}
 }
 
-/* ---------------------------------------------------------------------------
-   CROSS-GROUP SEARCH
-   When a name or Player ID is not in the open age group, matching players from
-   other groups are listed here. Each row opens the board that player belongs to.
-   --------------------------------------------------------------------------- */
+
+
+
+
+
 .lbsrch{display:grid;gap:8px}
 .srnote{margin:0 0 4px;color:var(--mut);font-size:14px}
 .srrow{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.02);color:inherit;cursor:pointer}
@@ -169,3 +154,373 @@ table.t td.rk{font:800 16px var(--serif)}
 .srrow b{font:700 15px var(--sans)}
 .srrow small{grid-column:1;color:var(--mut);font-size:12px}
 .srrow strong{grid-row:1/span 2;grid-column:2;font:800 22px var(--serif);color:var(--a)}
+
+
+
+
+
+
+
+
+
+
+
+.lbp {
+  --lb-r1: #ffd166;
+  --lb-r2: #c9d4e3;
+  --lb-r3: #e2a06a;
+  --lb-panel: color-mix(in srgb, var(--bg) 74%, transparent);
+  --lb-panel-strong: color-mix(in srgb, var(--bg) 88%, transparent);
+  --lb-glow: color-mix(in srgb, var(--a) 16%, transparent);
+}
+
+.lbhero {
+  position: relative;
+  margin-bottom: 22px;
+  padding: 24px 24px 20px;
+  border: 1px solid color-mix(in srgb, var(--a) 26%, var(--line));
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse 80% 120% at 0% 0%, color-mix(in srgb, var(--a) 10%, transparent), transparent 55%),
+    linear-gradient(180deg, color-mix(in srgb, var(--panel, var(--bg)) 72%, transparent), transparent);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  overflow: hidden;
+}
+.lbhero::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--a), var(--b), transparent);
+  opacity: .9;
+}
+.lbkick {
+  margin: 0 0 8px;
+  font: 800 11px/1 var(--sans);
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--a);
+}
+.lbp h1 {
+  margin: 0 0 8px;
+  font-style: italic;
+  font-size: clamp(30px, 5.4vw, 48px);
+  line-height: 1.02;
+  background: linear-gradient(92deg, var(--fg) 10%, var(--a) 52%, var(--b) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.lbhero .lead { margin-bottom: 14px; max-width: 68ch; }
+.lbhero-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.lbhero-tags span,
+.staff-board-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--a) 28%, var(--line));
+  background: color-mix(in srgb, var(--a) 7%, transparent);
+  color: var(--mut);
+  font: 700 12px var(--sans);
+}
+.lbhero-tags span::before { content: '◆'; color: var(--a); font-size: 9px; }
+.staff-board-link {
+  margin-bottom: 14px;
+  color: var(--a);
+  text-decoration: none;
+  transition: border-color .2s, background .2s, transform .15s;
+}
+.staff-board-link:hover {
+  border-color: color-mix(in srgb, var(--a) 55%, var(--line));
+  background: color-mix(in srgb, var(--a) 12%, transparent);
+  transform: translateY(-1px);
+}
+
+
+.tabs2 button[aria-selected=true],
+.chips2 button[aria-pressed=true] {
+  background: linear-gradient(135deg, var(--a), color-mix(in srgb, var(--b) 72%, var(--a)));
+  border-color: transparent;
+  color: var(--ink, #0b0f14);
+  box-shadow: 0 8px 20px -8px color-mix(in srgb, var(--a) 55%, transparent);
+}
+.tabs2 button:hover:not([aria-selected=true]),
+.chips2 button:hover:not([aria-pressed=true]) {
+  border-color: color-mix(in srgb, var(--a) 42%, var(--line));
+  background: color-mix(in srgb, var(--a) 8%, transparent);
+  transform: translateY(-1px);
+}
+.tabs2 { margin-bottom: 12px; padding-bottom: 8px; }
+.chips2 { margin-bottom: 14px; }
+
+
+.lbtools { gap: 10px; margin-bottom: 14px; }
+.lbsearch {
+  border-color: color-mix(in srgb, var(--a) 24%, var(--line));
+  background: linear-gradient(180deg, rgba(255,255,255,.045), transparent), var(--lb-panel);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.lbsearch:hover { border-color: color-mix(in srgb, var(--a) 40%, var(--line)); }
+.lbsearch .ic, .lbsearch svg { color: var(--a); opacity: .85; flex: 0 0 auto; }
+.lbbtn, .today {
+  font-weight: 800;
+  transition: transform .15s, border-color .2s, box-shadow .2s, background .2s;
+}
+.lbbtn:hover, .today:hover { transform: translateY(-1px); }
+.lbbtn {
+  background: linear-gradient(135deg, var(--a), color-mix(in srgb, var(--b) 68%, var(--a)));
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--a) 60%, transparent);
+}
+.lbbtn.quiet {
+  background: var(--lb-panel);
+  color: var(--mut);
+  box-shadow: none;
+}
+.today { background: var(--lb-panel); }
+.today[aria-pressed=true] {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--b) 88%, #fff 4%), var(--b));
+  color: var(--ink, #0b0f14);
+  box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--b) 55%, transparent);
+}
+
+.lbn {
+  margin: -2px 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--a) 20%, var(--line));
+  background: color-mix(in srgb, var(--a) 5%, transparent);
+  color: var(--mut);
+  font-size: 13px;
+}
+.myrank {
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border-color: color-mix(in srgb, var(--a) 45%, transparent);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--a) 10%, transparent), transparent 45%),
+    color-mix(in srgb, var(--a) 5%, var(--lb-panel));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+  animation: lbPulse 3.2s ease-in-out infinite;
+}
+.myrank b { text-shadow: 0 0 16px color-mix(in srgb, var(--a) 35%, transparent); }
+
+
+.tw {
+  position: relative;
+  border: 1px solid color-mix(in srgb, var(--a) 22%, var(--line));
+  border-radius: 18px;
+  overflow: auto;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.03), transparent 120px),
+    var(--lb-panel);
+  box-shadow: 0 14px 40px -18px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.tw::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 14px; right: 14px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--a) 55%, transparent), transparent);
+  pointer-events: none;
+}
+
+table.t { min-width: 560px; font-size: 14px; }
+table.t thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 12px 14px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 95%, var(--a) 5%), color-mix(in srgb, var(--bg) 88%, transparent));
+  color: color-mix(in srgb, var(--mut) 85%, var(--a));
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--a) 18%, var(--line));
+}
+table.t td {
+  padding: 12px 14px;
+  border-bottom-color: color-mix(in srgb, var(--line) 72%, transparent);
+  transition: background .18s, box-shadow .18s;
+}
+table.t tbody tr:last-child td { border-bottom: 0; }
+table.t tbody tr:hover td { background: color-mix(in srgb, var(--a) 6%, transparent); }
+table.t td.rk {
+  color: var(--a);
+  font-size: 17px;
+  text-shadow: 0 0 14px color-mix(in srgb, var(--a) 35%, transparent);
+}
+
+
+
+table.t tbody tr:nth-child(1) td { box-shadow: inset 4px 0 0 var(--lb-r1); }
+table.t tbody tr:nth-child(2) td { box-shadow: inset 4px 0 0 var(--lb-r2); }
+table.t tbody tr:nth-child(3) td { box-shadow: inset 4px 0 0 var(--lb-r3); }
+table.t tbody tr:nth-child(1) td:first-child,
+table.t tbody tr:nth-child(2) td:first-child,
+table.t tbody tr:nth-child(3) td:first-child { padding-left: 18px; }
+
+table.t tbody tr:nth-child(1) td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r1) 11%, transparent), transparent 45%); }
+table.t tbody tr:nth-child(2) td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r2) 8%, transparent), transparent 45%); }
+table.t tbody tr:nth-child(3) td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r3) 8%, transparent), transparent 45%); }
+table.t tbody tr:nth-child(1):hover td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r1) 14%, transparent), color-mix(in srgb, var(--a) 5%, transparent) 60%); }
+table.t tbody tr:nth-child(2):hover td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r2) 11%, transparent), color-mix(in srgb, var(--a) 5%, transparent) 60%); }
+table.t tbody tr:nth-child(3):hover td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r3) 11%, transparent), color-mix(in srgb, var(--a) 5%, transparent) 60%); }
+
+
+table.t tr.top1 td, .lbt tr.top1 td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r1) 11%, transparent), transparent 45%); box-shadow: inset 4px 0 0 var(--lb-r1); }
+table.t tr.top2 td, .lbt tr.top2 td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r2) 8%, transparent), transparent 45%); box-shadow: inset 4px 0 0 var(--lb-r2); }
+table.t tr.top3 td, .lbt tr.top3 td { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r3) 8%, transparent), transparent 45%); box-shadow: inset 4px 0 0 var(--lb-r3); }
+
+
+.kcard, .pcard, .arow, .trow, .srrow {
+  transition: transform .18s, box-shadow .2s, border-color .2s, background .2s;
+}
+.kcard:hover, .arow:hover, .trow:hover, .srrow:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--a) 36%, var(--line));
+  box-shadow: 0 12px 28px -16px rgba(0,0,0,.55);
+}
+.pcard:hover { box-shadow: 0 16px 34px -16px rgba(0,0,0,.6); }
+.pcard.p1:hover { transform: translateY(-12px); }
+.pcard.p2:hover, .pcard.p3:hover { transform: translateY(-2px); }
+
+.kcard { background: linear-gradient(155deg, rgba(255,255,255,.055), transparent 55%), color-mix(in srgb, var(--bg) 42%, transparent); }
+.kcard.r1, .pcard.p1, .arow.r1 { box-shadow: 0 0 0 1px color-mix(in srgb, var(--lb-r1) 24%, transparent), 0 14px 30px -16px color-mix(in srgb, var(--lb-r1) 35%, transparent); }
+.krank, .arank { box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+.kcard.r1 .krank { box-shadow: 0 0 18px -4px color-mix(in srgb, var(--lb-r1) 70%, transparent); }
+.prank { color: color-mix(in srgb, var(--mut) 70%, var(--a)); }
+.pcard.p1 .prank { color: var(--lb-r1); }
+.pcard.p2 .prank { color: var(--lb-r2); }
+.pcard.p3 .prank { color: var(--lb-r3); }
+
+.lbterm { background: linear-gradient(180deg, color-mix(in srgb, var(--a) 5%, transparent), transparent 80px), rgba(0,0,0,.08); }
+.lbterm .thead { background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, var(--a) 8%), rgba(0,0,0,.14)); }
+.trow.hot { background: linear-gradient(90deg, color-mix(in srgb, var(--lb-r1) 7%, transparent), transparent 55%); }
+.tbar { background: rgba(255,255,255,.08); box-shadow: inset 0 1px 3px rgba(0,0,0,.35); }
+.tbar i { box-shadow: 0 0 10px color-mix(in srgb, var(--a) 45%, transparent); }
+
+.lbadult {
+  border: 1px solid color-mix(in srgb, var(--a) 20%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--a) 4%, var(--bg)), var(--bg) 140px);
+  box-shadow: 0 14px 40px -18px rgba(0,0,0,.5);
+}
+.ahead { background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 94%, var(--a) 6%), rgba(255,255,255,.02)); }
+.arow.lead { background: linear-gradient(90deg, color-mix(in srgb, var(--a) 5%, transparent), transparent 40%); }
+.arow.r1 .arank, .arow.r2 .arank, .arow.r3 .arank { box-shadow: 0 4px 14px -6px rgba(0,0,0,.45); }
+.abar { background: rgba(255,255,255,.08); box-shadow: inset 0 1px 3px rgba(0,0,0,.35); }
+.abar i { box-shadow: 0 0 10px color-mix(in srgb, var(--a) 40%, transparent); }
+.slide.adultBoard .pg {
+  border-color: color-mix(in srgb, var(--a) 20%, var(--line));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 92%, var(--a) 8%), color-mix(in srgb, var(--a) 3%, var(--bg)));
+}
+
+
+.msg3 {
+  min-height: 132px;
+  display: grid;
+  place-items: center;
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--mut);
+  font: 600 14px/1.55 var(--sans);
+}
+.msg3::before {
+  content: '◎';
+  display: block;
+  margin-bottom: 8px;
+  font-size: 28px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--a) 55%, var(--mut));
+  text-shadow: 0 0 18px color-mix(in srgb, var(--a) 25%, transparent);
+}
+.lbsrch { padding: 14px; }
+.srnote {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--a) 18%, var(--line));
+  background: color-mix(in srgb, var(--a) 5%, transparent);
+}
+.srrow {
+  background: linear-gradient(180deg, rgba(255,255,255,.03), transparent), var(--lb-panel);
+}
+.srrow strong { text-shadow: 0 0 14px color-mix(in srgb, var(--a) 30%, transparent); }
+
+
+.pg { gap: 12px; margin: 16px 0 8px; }
+.pg button {
+  font-weight: 800;
+  background: var(--lb-panel);
+  transition: transform .15s, border-color .2s, background .2s, box-shadow .2s;
+}
+.pg button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--a) 45%, var(--line));
+  background: color-mix(in srgb, var(--a) 8%, transparent);
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--a) 45%, transparent);
+}
+.pg span { color: var(--mut); font: 700 13px var(--sans); letter-spacing: .04em; }
+.rules {
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, transparent);
+  background: color-mix(in srgb, var(--bg) 45%, transparent);
+}
+
+
+.lbhero, .lbtools, .myrank, .tw, .lbadult, .lbterm, .lbkid, .lbpodium, .pg, .rules {
+  animation: lbRise .45s cubic-bezier(.2,.8,.2,1) both;
+}
+.lbp > :nth-child(2) { animation-delay: .03s; }
+.lbp > :nth-child(3) { animation-delay: .06s; }
+.lbp > :nth-child(4) { animation-delay: .09s; }
+
+@keyframes lbRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes lbPulse {
+  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 0 0 0 color-mix(in srgb, var(--a) 0%, transparent); }
+  50%      { box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 0 0 4px color-mix(in srgb, var(--a) 16%, transparent); }
+}
+
+
+@media (max-width: 700px) {
+  .lbhero { padding: 20px 18px 18px; }
+  .lbhero-tags span { font-size: 11px; }
+  table.t { min-width: 520px; }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .lbhero, .lbtools, .myrank, .tw, .lbadult, .lbterm, .lbkid, .lbpodium, .pg, .rules,
+  .kcard, .pcard, .arow, .trow, .srrow, .tabs2 button, .lbbtn, .today, .pg button,
+  .staff-board-link {
+    animation: none !important;
+    transition: none !important;
+  }
+  .kcard:hover, .pcard:hover, .pcard.p1:hover, .pcard.p2:hover, .pcard.p3:hover,
+  .arow:hover, .trow:hover, .srrow:hover, .tabs2 button:hover, .lbbtn:hover,
+  .today:hover, .pg button:hover, .staff-board-link:hover { transform: none; }
+}
+html.reduce-fx .lbhero,  html.reduce-fx .lbtools, html.reduce-fx .myrank,
+html.reduce-fx .tw, html.reduce-fx .lbadult, html.reduce-fx .lbterm, html.reduce-fx .lbkid,
+html.reduce-fx .lbpodium, html.reduce-fx .pg, html.reduce-fx .rules,
+html.reduce-fx .kcard, html.reduce-fx .pcard, html.reduce-fx .arow, html.reduce-fx .trow,
+html.reduce-fx .srrow, html.reduce-fx .tabs2 button, html.reduce-fx .lbbtn, html.reduce-fx .today,
+html.reduce-fx .pg button, html.reduce-fx .staff-board-link {
+  animation: none !important;
+  transition: none !important;
+}
+html.reduce-fx .kcard:hover, html.reduce-fx .pcard:hover, html.reduce-fx .pcard.p1:hover,
+html.reduce-fx .pcard.p2:hover, html.reduce-fx .pcard.p3:hover, html.reduce-fx .arow:hover,
+html.reduce-fx .trow:hover, html.reduce-fx .srrow:hover, html.reduce-fx .tabs2 button:hover,
+html.reduce-fx .lbbtn:hover, html.reduce-fx .today:hover, html.reduce-fx .pg button:hover,
+html.reduce-fx .staff-board-link:hover { transform: none; }
