@@ -12,6 +12,7 @@ The Lost Protocol is a browser game that teaches programming. Players repair a b
 - Story scenes, spoken narration, procedural music and four separate volume channels.
 - Streaks with year-long milestones, daily missions and achievements.
 - Leaderboards and a friend list.
+- Co-op relay missions with room codes, shared block programs and server-verified results.
 - Parent dashboard for creating learner accounts, setting names and passwords, and reviewing progress; separate admin tools for story and level management.
 - Offline play: the service worker caches the site, so a lesson already opened keeps working without a connection.
 
@@ -23,7 +24,7 @@ The Lost Protocol is a browser game that teaches programming. Players repair a b
 | `webgame.html` | Chapter map, missions and the block editor |
 | `auth.html` | Sign in, sign up and password reset |
 | `leaderboard.html` | Public and per-path score boards |
-| `friends.html` | Friend list and presence |
+| `friends.html` | Friend requests, presence, notifications and shared progress ranks |
 | `bonus.html` | Mastery missions and practice levels |
 | `parent.html` | Parent and educator dashboard |
 | `admin.html` | Owner-only admin tools |
@@ -55,9 +56,9 @@ Then open `http://localhost:8080`. Sign-in and scores need a network connection 
 
 ## Backend
 
-Accounts and scores live in Supabase (project `gkycmrivyqxknvkgdffr`, EU West). The browser only ever holds the publishable key in `js/config.js`. Scores are computed by database functions and edge functions, never trusted from the browser.
+Accounts and scores live in Supabase (project `gkycmrivyqxknvkgdffr`, EU West). The browser only ever holds the publishable key in `js/config.js`. Co-op results are verified by database functions and edge functions. Single-player scores are calculated in the browser, and leaderboard submission sends saved progress to a database RPC; client-side progress integrity remains a known limitation.
 
-Schema notes, migration files and the edge functions are documented in [`supabase/README.md`](supabase/README.md). The live database is authoritative; the files in `supabase/migrations/` mirror it.
+Schema notes, migration files and the edge functions are documented in [`supabase/README.md`](supabase/README.md). The live database is authoritative. The checked-in SQL is historical and does not capture the full rebuilt co-op schema, so inspect the live schema before reusing it.
 
 ## Accounts
 

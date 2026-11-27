@@ -613,6 +613,18 @@ html.reduce-fx #home .guards { animation: none; }
   #home .facts span {
     min-width: 46%;
   }
+
+  .tlp-ar-on #home .facts span {
+    width: calc(50% - 13px);
+    min-width: 0;
+    flex-wrap: wrap;
+    gap: 2px 8px;
+  }
+
+  .tlp-ar-on #home .facts .ar-btn {
+    margin: 0;
+    padding: 0;
+  }
 }
 
 

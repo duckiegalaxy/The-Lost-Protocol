@@ -48,7 +48,8 @@ begin
       when jsonb_typeof(p_avatar->'look') = 'object' then p_avatar->'look'
       when jsonb_typeof(previous_avatar->'look') = 'object' then previous_avatar->'look'
       else '{}'::jsonb
-    end
+    end,
+    'updatedAt', floor(extract(epoch from clock_timestamp()) * 1000)::bigint
   );
 
   update public.learners set avatar = saved_avatar where id = lid;

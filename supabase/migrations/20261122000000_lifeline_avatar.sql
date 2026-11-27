@@ -8,6 +8,9 @@ alter table public.learners
 alter table public.leaderboard_public
   add column if not exists avatar jsonb;
 
+grant select (avatar) on table public.leaderboard_public to anon;
+grant select (avatar) on table public.leaderboard_public to authenticated;
+
 
 update public.learners set
   lifeline_max = case assigned_path
@@ -149,7 +152,8 @@ begin
     'hat',    left(coalesce(p_avatar->>'hat', 'none'), 24),
     'face',   left(coalesce(p_avatar->>'face', 'std'), 24),
     'speech', left(coalesce(p_avatar->>'speech', ''), 24),
-    'anim',   left(coalesce(p_avatar->>'anim', 'idle'), 24)
+    'anim',   left(coalesce(p_avatar->>'anim', 'idle'), 24),
+    'updatedAt', floor(extract(epoch from clock_timestamp()) * 1000)::bigint
   );
   update public.learners set avatar = av where id = lid;
   return av;

@@ -40,7 +40,9 @@ function plate(r) {
 
 
 function av(r, px) {
-  return window.TLP_AVATAR ? TLP_AVATAR.mini(r.avatar || {}, px || 26) : '';
+  if (r.avatar && typeof r.avatar === 'object' && Object.keys(r.avatar).length && window.TLP_AVATAR) return TLP_AVATAR.mini(r.avatar, px || 26);
+  const initial = String((r && (r.display_name || r.player_id)) || '?').trim().charAt(0).toUpperCase() || '?';
+  return '<span class="avatar-fallback">' + esc(initial) + '</span>';
 }
 
 

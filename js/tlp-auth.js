@@ -98,6 +98,8 @@
       this.initPromise = null;
       this.isProcessingAction = false;
       this._saveQueues = new Map();
+      this._leaderboardAvatarAvailable = null;
+      this._leaderboardAvatarProbe = null;
 
       const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
       const query = new URLSearchParams(window.location.search);
@@ -917,21 +919,58 @@
       } catch (e) {}
     }
 
+    async _probeLeaderboardAvatar() {
+      if (this._leaderboardAvatarAvailable !== null) return this._leaderboardAvatarAvailable;
+      if (!this._leaderboardAvatarProbe) {
+        this._leaderboardAvatarProbe = (async () => {
+          const { data, error } = await this.supabase.from('public_leaderboard').select('*').limit(1);
+          if (!error && data && data[0]) this._leaderboardAvatarAvailable = Object.prototype.hasOwnProperty.call(data[0], 'avatar');
+          else if (error && ['42703', '42501'].includes(error.code)) this._leaderboardAvatarAvailable = false;
+          return this._leaderboardAvatarAvailable;
+        })().catch(() => null).finally(() => { this._leaderboardAvatarProbe = null; });
+      }
+      return this._leaderboardAvatarProbe;
+    }
+
+    async _queryPublicLeaderboard(select, configure) {
+      if (select.split(',').some((field) => field.trim() === 'avatar') && this._leaderboardAvatarAvailable === null) await this._probeLeaderboardAvatar();
+      const fields = () => select.split(',').map((field) => field.trim()).filter((field) => field && !(this._leaderboardAvatarAvailable === false && field === 'avatar')).join(', ');
+      const run = () => {
+        let query = this.supabase.from('public_leaderboard').select(fields());
+        return configure ? configure(query) : query;
+      };
+      const result = await run();
+      if (!result.error) {
+        if (fields().split(',').some((field) => field.trim() === 'avatar')) this._leaderboardAvatarAvailable = true;
+        return result;
+      }
+      if (select.split(',').some((field) => field.trim() === 'avatar') && ((result.error.code === '42703' && /avatar/i.test(result.error.message || '')) || result.error.code === '42501')) {
+        this._leaderboardAvatarAvailable = false;
+        return run();
+      }
+      return result;
+    }
+
+    async getPublicPlayer(playerId) {
+      await this.init();
+      if (!this.isCloudConfigured() || !playerId) return null;
+      const { data, error } = await this._queryPublicLeaderboard('player_id, display_name, avatar', (query) => query.eq('player_id', playerId).limit(1));
+      if (error) throw new Error(error.message);
+      return data && data[0] || null;
+    }
+
     async getLeaderboardEntries({ path, diff, limit = 50 } = {}) {
       path = path || 'g710';
       diff = diff || 'int';
 
       if (this.isCloudConfigured()) {
         try {
-          const { data, error } = await this.supabase
-            .from('public_leaderboard')
-            .select('id, display_name, learning_path, game_diff, total_score, total_stars, chapters_cleared, updated_at')
-            .eq('learning_path', path)
-            .eq('game_diff', diff)
-            .order('total_score', { ascending: false })
-            .order('total_stars', { ascending: false })
-            .order('updated_at', { ascending: true })
-            .limit(limit);
+          const { data, error } = await this._queryPublicLeaderboard(
+            'id, display_name, avatar, learning_path, game_diff, total_score, total_stars, chapters_cleared, updated_at',
+            (query) => query.eq('learning_path', path).eq('game_diff', diff)
+              .order('total_score', { ascending: false }).order('total_stars', { ascending: false })
+              .order('updated_at', { ascending: true }).limit(limit)
+          );
 
           if (!error && Array.isArray(data)) return data;
         } catch (e) {
@@ -1279,18 +1318,20 @@
     async getPublicLeaderboardPage({ path, diff, offset = 0, limit = 20, search = '', today = false, week = false }) {
       await this.init();
       if (!this.isCloudConfigured()) return { rows: [], hasMore: false };
-      let q = this.supabase.from('public_leaderboard')
-        .select('player_id, display_name, total_score, total_stars, chapters_cleared, badges, updated_at')
-        .eq('learning_path', path).eq('game_diff', diff);
-      const s = this._cleanSearch(search);
-      if (s) q = q.or('display_name.ilike.%' + s + '%,player_id.ilike.%' + s + '%');
-      if (today) q = q.gte('updated_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
-      if (week) {
-        (d => { d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); q = q.gte('updated_at', d.toISOString()); })(new Date());
-      }
-      const { data, error } = await q
-        .order('total_score', { ascending: false }).order('total_stars', { ascending: false }).order('updated_at', { ascending: true })
-        .range(offset, offset + limit);
+      const { data, error } = await this._queryPublicLeaderboard(
+        'player_id, display_name, avatar, total_score, total_stars, chapters_cleared, badges, updated_at',
+        (q) => {
+          q = q.eq('learning_path', path).eq('game_diff', diff);
+          const s = this._cleanSearch(search);
+          if (s) q = q.or('display_name.ilike.%' + s + '%,player_id.ilike.%' + s + '%');
+          if (today) q = q.gte('updated_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString());
+          if (week) {
+            (d => { d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); q = q.gte('updated_at', d.toISOString()); })(new Date());
+          }
+          return q.order('total_score', { ascending: false }).order('total_stars', { ascending: false })
+            .order('updated_at', { ascending: true }).range(offset, offset + limit);
+        }
+      );
       if (error) throw new Error(error.message);
       const rows = data || [];
       return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
@@ -1335,9 +1376,11 @@
     async getLeaderboardRank({ path, diff, playerId }) {
       await this.init();
       if (!this.isCloudConfigured() || !playerId) return null;
-      const { data: row } = await this.supabase.from('public_leaderboard')
-        .select('player_id, display_name, total_score, total_stars')
-        .eq('learning_path', path).eq('game_diff', diff).eq('player_id', playerId).maybeSingle();
+      const { data: row, error } = await this._queryPublicLeaderboard(
+        'player_id, display_name, avatar, total_score, total_stars',
+        (query) => query.eq('learning_path', path).eq('game_diff', diff).eq('player_id', playerId).maybeSingle()
+      );
+      if (error) throw new Error(error.message);
       if (!row) return null;
       const base = () => this.supabase.from('public_leaderboard')
         .select('*', { count: 'exact', head: true }).eq('learning_path', path).eq('game_diff', diff);

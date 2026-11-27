@@ -154,18 +154,54 @@
         'A base case tells it when to stop, or it would run forever.'
       ]
     },
+    byte: {
+      name: 'An eight-bit byte',
+      stage: '<div class="ex-stack">' + el('bitsrow byte', 0, '<span class="ex-bit">128</span><span class="ex-bit">64</span><span class="ex-bit">32</span><span class="ex-bit">16</span><span class="ex-bit">8</span><span class="ex-bit">4</span><span class="ex-bit">2</span><span class="ex-bit">1</span>') + el('bitsrow byte', 1, '<span class="ex-bit on">128</span><span class="ex-bit">64</span><span class="ex-bit">32</span><span class="ex-bit">16</span><span class="ex-bit">8</span><span class="ex-bit">4</span><span class="ex-bit on">2</span><span class="ex-bit">1</span>') + el('chip', 2, '00000101 = 5') + '</div>',
+      steps: [
+        'A byte has eight bits. From left to right they are worth 128, 64, 32, 16, 8, 4, 2 and 1.',
+        'Turn on the 128 bit and the 2 bit. Their values add to 130.',
+        'Leading zeros do not change a value. 00000101 is still 5 because only the 4 bit and the 1 bit are on.'
+      ]
+    },
     bits: {
       name: 'Bits',
-      stage: '<div class="ex-row">' + el('bit on', 0, '1') + el('bit on', 1, '2') + el('bit on', 2, '4') + el('bit', 2, '8') + el('nd sum', 2, '= 7') + '</div>',
+      stage: '<div class="ex-stack">' + el('bitsrow', 0, '<span class="ex-bit on">1</span><span class="ex-bit on">2</span><span class="ex-bit on">4</span><span class="ex-bit">8</span>') + el('nd sum', 2, '= 7') + '</div>',
       steps: [
         'A bit is a switch that is on or off.',
         'Each position is worth double the one before: 1, 2, 4 and 8.',
         'Add the values that are on. 4 plus 2 plus 1 makes 7.'
       ]
     },
+    convert: {
+      name: 'Base conversion',
+      stage: '<div class="ex-stack">' + el('nd sum', 0, '<b>13</b>') + el('chip', 1, '8 + 4 + 1') + el('bitsrow', 2, '<span class="ex-bit on">1</span><span class="ex-bit on">1</span><span class="ex-bit">0</span><span class="ex-bit on">1</span>') + '</div>',
+      steps: [
+        'Decimal places are worth 1, 10, 100 and so on. Binary places are worth 1, 2, 4 and 8.',
+        'To write 13 in binary, find the places that add to 13: 8, 4 and 1.',
+        'Write 1 for an on place and 0 for an off place. That gives 1101.'
+      ]
+    },
+    binmath: {
+      name: 'Binary maths',
+      stage: '<div class="ex-stack">' + el('nd sum', 0, '<b>11 + 10 = 101</b>') + el('chip', 1, '011 shift left = 110') + el('chip', 2, '1000 shift right = 100') + '</div>',
+      steps: [
+        'Binary addition uses the same place values as decimal addition. Carry a 1 when a column totals two.',
+        'A left shift appends a zero, so it doubles the number. Three becomes six.',
+        'A right shift removes bits from the end. Eight becomes four, and any remainder is dropped.'
+      ]
+    },
+    bitops: {
+      name: 'Bit operations',
+      stage: '<div class="ex-stack">' + el('bitsrow', 0, '<span class="ex-bit on">1</span><span class="ex-bit">0</span><span class="ex-bit on">1</span>') + el('bitsrow', 1, '<span class="ex-bit">0</span><span class="ex-bit on">1</span><span class="ex-bit on">1</span>') + el('chip', 2, 'AND 001 · OR 111 · XOR 110') + '</div>',
+      steps: [
+        'Bit operations compare two numbers one column at a time.',
+        'AND keeps only shared ones. OR keeps ones from either row. XOR keeps only differences.',
+        'For 101 and 011, the results are 001, 111 and 110.'
+      ]
+    },
     sum: {
       name: 'Binary addition',
-      stage: '<div class="ex-stack">' + el('bitsrow', 0, '<span class="bit on">0</span><span class="bit on">1</span><span class="bit">0</span><span class="bit on">1</span>') + el('bitsrow', 1, '<span class="bit on">0</span><span class="bit">0</span><span class="bit on">1</span><span class="bit on">1</span>') + el('bitsrow res', 2, '<span class="bit on">1</span><span class="bit">0</span><span class="bit">0</span><span class="bit">0</span>') + '</div>',
+      stage: '<div class="ex-stack">' + el('bitsrow', 0, '<span class="ex-bit on">0</span><span class="ex-bit on">1</span><span class="ex-bit">0</span><span class="ex-bit on">1</span>') + el('bitsrow', 1, '<span class="ex-bit on">0</span><span class="ex-bit">0</span><span class="ex-bit on">1</span><span class="ex-bit on">1</span>') + el('bitsrow res', 2, '<span class="ex-bit on">1</span><span class="ex-bit">0</span><span class="ex-bit">0</span><span class="ex-bit">0</span>') + '</div>',
       steps: [
         'Binary numbers add like normal numbers.',
         'Line up the bits and add each column from the right.',
@@ -223,9 +259,9 @@
 
   const MAP = ['box', 'loop', 'fork', 'boss', 'seq', 'lock', 'type', 'cast', 'string', 'boss',
     'op', 'array', 'io', 'note', 'boss', 'func', 'scope', 'recurs', 'bits', 'boss',
-    'bits', 'bits', 'sum', 'gate', 'boss', 'bug', 'search', 'best', 'slim', 'boss'];
+    'byte', 'convert', 'binmath', 'bitops', 'boss', 'bug', 'search', 'best', 'slim', 'boss'];
 
-  let cur = null;
+  let cur = null, run = 0;
 
   function setStep(n) {
     if (!cur) return;
@@ -247,6 +283,7 @@
   }
 
   function mount(fig, chapter) {
+    stop();
     const id = MAP[chapter];
     const scene = SCENES[id];
     if (!fig || !scene) return null;
@@ -271,6 +308,7 @@
   }
 
   function stop() {
+    run++;
     if (cur) cur.playing = false;
     try { if (window.TLP && TLP.Voice) TLP.Voice.stop(); } catch (e) {}
   }
@@ -278,14 +316,15 @@
   function narrate(onend) {
     if (!cur) { if (onend) onend(); return; }
     stop();
+    const currentRun = run;
     if (cur.step >= cur.scene.steps.length - 1) setStep(0);
     const from = cur.step, steps = cur.scene.steps.slice(from);
     cur.playing = true;
-    const finish = () => { if (!cur) return; cur.playing = false; if (onend) onend(); };
+    const finish = () => { if (currentRun !== run || !cur) return; cur.playing = false; if (onend) onend(); };
     if (window.TLP && TLP.Voice && TLP.Voice.speakSteps) {
-      TLP.Voice.speakSteps(steps.map(text), (i) => setStep(from + i), finish);
+      TLP.Voice.speakSteps(steps.map(text), (i) => { if (currentRun === run) setStep(from + i); }, finish);
     } else {
-      steps.forEach((s, i) => setTimeout(() => setStep(from + i), i * 2400));
+      steps.forEach((s, i) => setTimeout(() => { if (currentRun === run) setStep(from + i); }, i * 2400));
       setTimeout(finish, steps.length * 2400);
     }
   }

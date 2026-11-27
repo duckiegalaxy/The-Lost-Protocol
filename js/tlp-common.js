@@ -103,10 +103,7 @@
       if (v === '0') return false;
       if (store.get('tlp-fx') === 'off') return true;
       if (store.get('tlp-fx') === 'on') return false;
-
-
-
-      return true;
+      return false;
     },
     set: function (on) {
       store.set('tlp-reduce-fx', on ? '1' : '0');
@@ -124,7 +121,30 @@
   };
 
 
-  var Voice = {
+  var Voice = (function () {
+    var generation = 0, timers = [];
+    function active(run) { return run === generation; }
+    function later(fn, ms, run) {
+      var id = setTimeout(function () {
+        timers = timers.filter(function (timer) { return timer.id !== id; });
+        if (active(run)) fn();
+      }, ms);
+      timers.push({ id: id });
+    }
+    function splitSentences(text) {
+      var parts = [], start = 0;
+      for (var i = 0; i < text.length; i++) {
+        if (!/[.!?؟]/.test(text[i])) continue;
+        if (text[i] === '.' && /\d/.test(text[i - 1] || '') && /\d/.test(text[i + 1] || '')) continue;
+        parts.push(text.slice(start, i + 1));
+        start = i + 1;
+      }
+      if (start < text.length) parts.push(text.slice(start));
+      return parts;
+    }
+    return {
+    _begin: function () { return ++generation; },
+    _active: active,
     _isKid: function () {
 
       try {
@@ -140,81 +160,66 @@
       var vs = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
       if (arabic) return vs.filter(function (v) { return /^ar/i.test(v.lang); })[0] || null;
       var en = vs.filter(function (v) { return /^en/i.test(v.lang); });
-      var pref;
-      if (Voice._isKid()) {
-
-        pref = en.filter(function (v) {
-          return /(samantha|victoria|karen|moira|fiona|google us english|zira|hazel|susan|female|zoe|aria|jenny|sonia|ava)/i.test(v.name);
-        })[0];
-
-        if (!pref) pref = en.filter(function (v) {
-          return !/(male|man|david|mark|guy|daniel|alex)/i.test(v.name);
-        })[0];
-      } else {
-
-        pref = en.filter(function (v) {
-          return /(google uk english male|daniel|alex|microsoft (guy|david|mark)|male)/i.test(v.name);
-        })[0];
-      }
-      return pref || en[0] || null;
+      return en.filter(function (v) { return v.localService; })[0] || en[0] || null;
     },
     speak: function (text, onend) {
-      if (!window.speechSynthesis) { if (onend) onend(); return; }
-      if (Vol.factor('narr') <= 0) { if (onend) onend(); return; }
       Voice.stop();
       var clean = Voice.localize(text);
-      var arabic = /[\u0600-\u06ff]/.test(clean);
-      var parts = clean.match(/[^.!?]+[.!?]*/g) || [clean];
-      var voice = Voice.pick(arabic), i = 0;
+      if (!clean) { if (onend) onend(); return; }
+      var run = ++generation;
+      if (!window.speechSynthesis || Vol.factor('narr') <= 0) { if (onend) onend(); return; }
+      var parts = splitSentences(clean), i = 0;
       var next = function () {
+        if (!active(run)) return;
         if (i >= parts.length) { if (onend) onend(); return; }
         var t = parts[i++].trim();
         if (!t) return next();
+        var arabic = /[\u0600-\u06ff]/.test(t), voice = Voice.pick(arabic);
         var u = new SpeechSynthesisUtterance(t);
         if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = arabic ? 'ar-SA' : 'en-US'; }
-        u.rate = Voice._isKid() ? 0.82 : 0.92;
-        u.pitch = Voice._isKid() ? 1.15 : 0.75;
+        u.rate = Voice._isKid() ? 0.86 : 0.94;
+        u.pitch = 1;
         u.volume = Vol.factor('narr');
-        u.onend = function () { setTimeout(next, 160); };
-        u.onerror = function () { setTimeout(next, 0); };
+        u.onend = function () { later(next, 160, run); };
+        u.onerror = function () { later(next, 0, run); };
         speechSynthesis.speak(u);
       };
       next();
     },
-    stop: function () { try { speechSynthesis.cancel(); } catch (e) {} }
+    stop: function () {
+      generation++;
+      timers.forEach(function (timer) { clearTimeout(timer.id); });
+      timers = [];
+      try { speechSynthesis.cancel(); } catch (e) {}
+    }
   };
+  })();
 
 
   Voice.speakSteps = function (texts, onstep, onend) {
-    var list = (texts || []).map(function (t) {
-      return Voice.localize(t);
-    });
-    if (!window.speechSynthesis) {
-      list.forEach(function (_, i) { setTimeout(function () { if (onstep) onstep(i); }, i * 2100); });
-      setTimeout(function () { if (onend) onend(); }, Math.max(600, list.length * 2100));
-      return;
-    }
-    if (Vol.factor('narr') <= 0) {
-      list.forEach(function (_, i) { setTimeout(function () { if (onstep) onstep(i); }, i * 2100); });
-      setTimeout(function () { if (onend) onend(); }, Math.max(600, list.length * 2100));
-      return;
-    }
     Voice.stop();
+    var list = (texts || []).map(function (t) { return Voice.localize(t); });
+    var run = Voice._begin();
+    function timed() {
+      list.forEach(function (_, i) { setTimeout(function () { if (Voice._active(run)) { if (onstep) onstep(i); } }, i * 2100); });
+      setTimeout(function () { if (Voice._active(run) && onend) onend(); }, Math.max(600, list.length * 2100));
+    }
+    if (!window.speechSynthesis || Vol.factor('narr') <= 0) { timed(); return; }
     var i = 0;
     var next = function () {
+      if (!Voice._active(run)) return;
       if (i >= list.length) { if (onend) onend(); return; }
       if (onstep) onstep(i);
       var t = list[i++];
       if (!t) return next();
-      var arabic = /[\u0600-\u06ff]/.test(t);
-      var voice = Voice.pick(arabic);
+      var arabic = /[\u0600-\u06ff]/.test(t), voice = Voice.pick(arabic);
       var u = new SpeechSynthesisUtterance(t);
       if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = arabic ? 'ar-SA' : 'en-US'; }
-      u.rate = Voice._isKid() ? 0.82 : 0.92;
-      u.pitch = Voice._isKid() ? 1.15 : 0.75;
+      u.rate = Voice._isKid() ? 0.88 : 0.96;
+      u.pitch = 1;
       u.volume = Vol.factor('narr');
-      u.onend = function () { setTimeout(next, 160); };
-      u.onerror = function () { setTimeout(next, 0); };
+      u.onend = function () { if (Voice._active(run)) setTimeout(next, 160); };
+      u.onerror = function () { if (Voice._active(run)) setTimeout(next, 0); };
       speechSynthesis.speak(u);
     };
     next();
@@ -618,7 +623,7 @@
         '<rect x="56" y="142" width="88" height="62" rx="18"/><path d="M56 160l-22 22"/><g class="arm"><path d="M144 160l30-34"/><circle class="fl" cx="177" cy="122" r="7"/></g></svg>' +
         '<button type="button" id="tlpIdleBtn">Yes, I am here!</button>';
       kidSting();
-      sayIdle('Are you still here, ' + (n || 'Player') + '? Hello?', 1.65, 1.05);
+      sayIdle('Are you still here, ' + (n || 'Player') + '? Hello?', 1, .95);
     } else {
       p.innerHTML = '<div class="bubble" id="tlpIdleTxt">' + (n ? 'Are you still here, <b>' + esc(n) + '</b>? Hello?' : 'Are you still here? Hello?') + '</div>' +
         '<svg class="rb" viewBox="0 0 200 220" aria-hidden="true"><g class="ant"><line x1="100" y1="14" x2="100" y2="48"/><circle class="fl" cx="100" cy="12" r="8"/></g>' +
@@ -630,7 +635,7 @@
     var btn = p.querySelector('#tlpIdleBtn');
     btn.onclick = function () {
       var t = p.querySelector('#tlpIdleTxt');
-      try { speechSynthesis.cancel(); } catch (e) {}
+      Voice.stop();
       if (t) t.innerHTML = jump ? 'Signal restored. Welcome back, R-067.' : 'Okay, just checking in!';
       btn.disabled = true;
       var off = p.querySelector('#tlpAfkOff'); if (off) off.remove();

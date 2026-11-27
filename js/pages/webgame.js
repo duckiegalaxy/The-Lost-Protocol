@@ -187,7 +187,80 @@ CH.push({n:'Chapter 4',t:'Boss: The Glitch',d:'A boss that remembers every attac
 
 const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const NAMES={set:'set',change:'change',move:'move',say:'say',rep:'repeat',if:'if / else',note:'note',ask:'ask player',calc:'calculate',join:'join words',cast:'turn into',pick:'item of list',while:'repeat while',base:'convert base',def:'define function',call:'call function',bit:'switch on bit'};
-const NARRATION={};
+const NARRATION={
+  '4-0':'A program is a list of instructions. The robot follows them from top to bottom. Move forward two squares, then say hello.',
+  '4-1':'A box must contain a value before the robot can use it. Store R-067 in the word box, say it, then move three squares.',
+  '4-2':'A program can use several boxes in order. Move by box a, then box b, then box c. One plus two plus three reaches square six.',
+  '0-0':'A variable is a named box that stores a value. Put three in the steps box, then use steps to tell the robot how far to move.',
+  '0-1':'The change block adds to the value already in a box. Steps holds four, so add three to make seven, then move by steps.',
+  '0-2':'Variables can store words as well as numbers. Store R-067 in the name box, then say the value of name.',
+  '0-3':'One variable can be used more than once. Put five in steps, move by steps, then say steps to report the distance.',
+  '0-4':'Different variables can store different parts of a task. Put four in first and three in second. Move by first, then move by second.',
+  '0-5':'The order of instructions matters because values can change while a program runs. Move three squares, subtract one from steps, move two more, then say steps.',
+  '1-0':'A loop repeats the instructions inside it. Put move one inside repeat four to walk four squares.',
+  '1-1':'A loop can use a value from a box each time it repeats. Store two in steps, then repeat four moves by steps to walk eight squares.',
+  '1-2':'A variable can count how many times a loop has run. Repeat three times. Each lap, move two squares and add one to count. Then say count.',
+  '1-3':'Subtracting inside a loop can count down. Fuel starts at four. Repeat four times: move one square and subtract one from fuel. Then say fuel.',
+  '1-4':'Changing a value inside a loop changes what happens on the next lap. Steps starts at one. Repeat three times: move by steps, then add one to steps.',
+  '1-5':'A loop can add two each time instead of one. Repeat three times: move two squares and add two to pos. Then say pos.',
+  '1-6':'Instructions inside a loop repeat, but instructions after it run only once. Repeat three moves of two squares. Put say word outside the loop.',
+  '1-7':'An accumulator is a variable that keeps a running total. Repeat three times: move two squares and add two to total. After the loop, move one more square and say total.',
+  '2-0':'An if block chooses between two sets of instructions. If power is more than three, move six squares. Otherwise, move two squares.',
+  '2-1':'Each branch can store a different value. If temp is more than twenty, store hot in word. Otherwise, store cold. Then say word after the if block.',
+  '2-2':'The two branches can do different jobs. If fuel is less than four, store low in word and say it. Otherwise, move by fuel.',
+  '2-3':'Nested if blocks can choose between three outcomes. Code one moves two squares, code two moves five, and any other code moves eight.',
+  '2-4':'A decision inside a loop is checked again on every lap. Repeat three times. If power is more than four, move two squares. Otherwise, move one.',
+  '2-5':'The AND condition is true only when both comparisons are true. If power is more than four and shield is more than one, move six squares. Otherwise, move two.',
+  '2-6':'The OR condition is true when at least one comparison is true. If power is nine or shield is more than five, move five squares. Otherwise, move one.',
+  '2-7':'Two comparisons can check whether a number is inside a range. If power is more than two and less than eight, move three squares.',
+  '8-0':'A string is text. The join block places two strings next to each other. Join UNIT, a space, and R-067 to make UNIT R-067, then say it.',
+  '8-1':'A loop can build a string by joining text each time. Repeat three joins of out and ha. After the loop, say out to get hahaha.',
+  '8-2':'Several join blocks can build a longer pattern. Join the pieces in this order: a, c, c, b. Then say out to produce the arrow.',
+  '8-3':'For this bonus mission, use a loop to join beep twice. When the loop finishes, say out to produce beepbeep.',
+  '15-0':'A function is a named group of instructions. Define hop to move two squares. Then call hop three times to reach square six.',
+  '15-1':'A function can read a variable, so its behaviour changes when the variable changes. Define hop to move by steps. Set steps to three, call hop, change steps to four, then call hop again.',
+  '15-2':'A program can define different functions for different jobs. Define short to move two squares and long to move three. Call long once, then short twice.',
+  '25-0':'A bug is an error in a program. This program stops at square three instead of six. Add a second move steps block to cover the missing three squares.',
+  '25-1':'The loop currently moves six squares, but the target is five. Change it to five repeats of one square so the robot stops at the chip.',
+  '25-2':'The robot says nothing because it reads the word box before a value is stored. Move the set block above the say block.'
+};
+const NARRATION_AR={
+  '4-0':'البرنامج قائمة تعليمات. يتبعها الروبوت من الأعلى إلى الأسفل. تحرك مربعين إلى الأمام، ثم قل مرحباً.',
+  '4-1':'يجب أن يحتوي الصندوق على قيمة قبل أن يستخدمها الروبوت. خزّن R-067 في صندوق الكلمات، قلها، ثم تحرك ثلاثة مربعات.',
+  '4-2':'يمكن للبرنامج أن يستخدم عدة صناديق بالترتيب. تحرك بمقدار الصندوق a، ثم b، ثم c. واحد زائد اثنين زائد ثلاثة يصل إلى المربع السادس.',
+  '0-0':'المتغير صندوق له اسم يخزّن قيمة. ضع 3 في صندوق steps، ثم استخدم steps لتخبر الروبوت كم سيتحرك.',
+  '0-1':'تضيف كتلة change إلى القيمة الموجودة بالفعل في الصندوق. يحتوي steps على 4، لذا أضف 3 ليصبح 7، ثم تحرك بمقدار steps.',
+  '0-2':'يمكن للمتغيرات أن تخزّن الكلمات والأرقام. خزّن R-067 في صندوق name، ثم قل قيمة name.',
+  '0-3':'يمكن استخدام المتغير الواحد أكثر من مرة. ضع 5 في steps، تحرك بمقدار steps، ثم قل steps لتعلن المسافة.',
+  '0-4':'يمكن لمتغيرات مختلفة أن تخزّن أجزاء مختلفة من المهمة. ضع 4 في first و3 في second. تحرك بمقدار first، ثم بمقدار second.',
+  '0-5':'ترتيب التعليمات مهم لأن القيم قد تتغير أثناء تشغيل البرنامج. تحرك ثلاثة مربعات، واطرح 1 من steps، ثم تحرك مربعين، وقل steps.',
+  '1-0':'تكرر الحلقة التعليمات الموجودة داخلها. ضع تحرك مربعاً واحداً داخل كرر 4 لتسير أربعة مربعات.',
+  '1-1':'يمكن للحلقة أن تستخدم قيمة من صندوق في كل تكرار. خزّن 2 في steps، ثم كرر 4 تحركات بمقدار steps لتسير ثمانية مربعات.',
+  '1-2':'يمكن للمتغير أن يعدّ مرات تشغيل الحلقة. كرر 3 مرات. في كل دورة، تحرك مربعين وأضف 1 إلى count. ثم قل count.',
+  '1-3':'يمكن للطرح داخل الحلقة أن يعدّ تنازلياً. يبدأ fuel عند 4. كرر 4 مرات: تحرك مربعاً واحداً واطرح 1 من fuel. ثم قل fuel.',
+  '1-4':'تغيير قيمة داخل الحلقة يغيّر ما يحدث في الدورة التالية. يبدأ steps عند 1. كرر 3 مرات: تحرك بمقدار steps، ثم أضف 1 إلى steps.',
+  '1-5':'يمكن للحلقة أن تضيف 2 في كل مرة بدلاً من 1. كرر 3 مرات: تحرك مربعين وأضف 2 إلى pos. ثم قل pos.',
+  '1-6':'تتكرر التعليمات داخل الحلقة، لكن التعليمات بعدها تعمل مرة واحدة. كرر 3 تحركات بمقدار مربعين. ضع قل word خارج الحلقة.',
+  '1-7':'المجمع متغير يحتفظ بمجموع متراكم. كرر 3 مرات: تحرك مربعين وأضف 2 إلى total. بعد الحلقة، تحرك مربعاً آخر وقل total.',
+  '2-0':'تختار كتلة if بين مجموعتين من التعليمات. إذا كانت power أكبر من 3، فتحرك ستة مربعات. وإلا، فتحرك مربعين.',
+  '2-1':'يمكن لكل فرع أن يخزّن قيمة مختلفة. إذا كانت temp أكبر من 20، فخزّن hot في word. وإلا، فخزّن cold. ثم قل word بعد كتلة if.',
+  '2-2':'يمكن للفرعين أن يقوميا بمهمتين مختلفتين. إذا كان fuel أقل من 4، فخزّن low في word وقلها. وإلا، فتحرك بمقدار fuel.',
+  '2-3':'يمكن لكتل if المتداخلة أن تختار بين ثلاثة نتائج. يحرك code one مربعين، وcode two خمسة، وأي رمز آخر ثمانية.',
+  '2-4':'يُفحص القرار داخل الحلقة من جديد في كل دورة. كرر 3 مرات. إذا كانت power أكبر من 4، فتحرك مربعين. وإلا، فتحرك مربعاً واحداً.',
+  '2-5':'شرط AND صحيح فقط عندما تكون المقارنتان صحيحتين. إذا كانت power أكبر من 4 وshield أكبر من 1، فتحرك ستة مربعات. وإلا، فتحرك مربعين.',
+  '2-6':'شرط OR صحيح عندما تكون مقارنة واحدة على الأقل صحيحة. إذا كانت power تساوي 9 أو shield أكبر من 5، فتحرك خمسة مربعات. وإلا، فتحرك مربعاً واحداً.',
+  '2-7':'يمكن لمقارنتين فحص ما إذا كان الرقم داخل نطاق. إذا كانت power أكبر من 2 وأقل من 8، فتحرك ثلاثة مربعات.',
+  '8-0':'النص سلسلة من المحارف. تضع كتلة join نصين جنباً إلى جنب. صِل UNIT ومسافة وR-067 لتحصل على UNIT R-067، ثم قل النتيجة.',
+  '8-1':'يمكن للحلقة أن تبني نصاً بوصل أجزائه في كل تكرار. كرر وصل out مع ha ثلاث مرات. بعد الحلقة، قل out فتحصل على hahaha.',
+  '8-2':'يمكن لعدة كتل join أن تبني نمطاً أطول. صِل الأجزاء بهذا الترتيب: a، ثم c، ثم c، ثم b. بعدها قل out لسماع النص الناتج.',
+  '8-3':'في هذه المهمة الإضافية، استخدم حلقة لوصل beep مرتين. عندما تنتهي الحلقة، قل out فتحصل على beepbeep.',
+  '15-0':'الدالة مجموعة تعليمات لها اسم. عرّف hop ليتحرك مربعين. ثم نادِ hop ثلاث مرات للوصول إلى المربع السادس.',
+  '15-1':'يمكن للدالة أن تقرأ متغيراً، فيتغيّر سلوكها عندما يتغيّر المتغير. عرّف hop ليتحرك بمقدار steps. اضبط steps على 3، ونادِ hop، وغيّر steps إلى 4، ثم نادِ hop مرة أخرى.',
+  '15-2':'يمكن للبرنامج أن يعرّف دوال مختلفة لمهام مختلفة. عرّف short ليتحرك مربعين وlong ليتحرك ثلاثة. نادِ long مرة، ثم short مرتين.',
+  '25-0':'الخطأ البرمجي هو خطأ في البرنامج. يتوقف هذا البرنامج عند المربع 3 بدلاً من 6. أضف كتلة move steps ثانية لقطع الثلاثة مربعات الناقصة.',
+  '25-1':'تتحرك الحلقة ستة مربعات الآن، لكن الهدف خمسة. غيّرها إلى خمس تكرارات بمقدار مربع واحد ليصل الروبوت إلى الشريحة.',
+  '25-2':'لا يقول الروبوت شيئاً لأنه يقرأ صندوق الكلمات قبل تخزين قيمة فيه. انقل كتلة set فوق كتلة say.'
+};
 let S={ci:0,li:0,script:[],hint:0,run:false,id:0,prog:{},name:'Player',lastPts:0,lastRunPts:0,runT0:0,missionTimer:null,missionTimeLeft:0,fewestBlocksTarget:null,reverseEngineerData:null};
 let modeRun=null;
 try{S.prog=JSON.parse(localStorage.getItem('tlp-prog')||'{}');S.name=localStorage.getItem('tlp-name')||'Player'}catch(e){}
@@ -781,12 +854,18 @@ async function exec(list){for(const b of list){if(!S.run)return;const el=$('.blk
   if(b.t==='while'){let g=0;while(S.run&&cond(b)&&g++<40){await exec(b.c)}}
 
   if(b.t==='ask'){env[b.v]=val(String(INP??''));mem(b.v)}
-  if(b.t==='calc'){const x=+env[b.src]||0,n=+b.n||0;env[b.v]=b.op==='+'?x+n:b.op==='-'?x-n:b.op==='*'?x*n:b.op==='/'?(n?Math.floor(x/n):0):b.op==='&'?x&n:b.op==='|'?x|n:b.op==='^'?x^n:b.op==='<<'?x<<n:b.op==='>>'?x>>n:(n?x%n:0);mem(b.v);if(el){burst(el.getBoundingClientRect().left+el.offsetWidth/2,el.getBoundingClientRect().top+el.offsetHeight/2,8,['var(--a)','var(--b)','#ffd36a'])}}
+  if(b.t==='calc'){
+   const bitOp=['&','|','^','<<','>>'].includes(b.op),raw=env[b.src],n=+b.n||0;
+   if(bitOp){const error=binaryCalcError(b.op,raw,n);if(error){S.errId=b.id;fail(error);el&&el.classList.remove('run');return}}
+   const x=+raw||0;
+   env[b.v]=bitOp?binaryCalc(b.op,x,n):b.op==='+'?x+n:b.op==='-'?x-n:b.op==='*'?x*n:b.op==='/'?(n?Math.floor(x/n):0):(n?x%n:0);
+   mem(b.v);if(el){burst(el.getBoundingClientRect().left+el.offsetWidth/2,el.getBoundingClientRect().top+el.offsetHeight/2,8,['var(--a)','var(--b)','#ffd36a'])}
+  }
   if(b.t==='join'){env[b.v]=String(env[b.src]??'')+String(env[b.src2]??'');mem(b.v)}
   if(b.t==='cast'){const x=env[b.v];env[b.v]=b.to==='number'?(isNaN(+x)?0:+x):String(x);mem(b.v)}
   if(b.t==='pick'){const a=env[b.src],i=(b.idx==='#'?+b.n:+env[b.idx])-1;env[b.v]=Array.isArray(a)?(a[i]??0):0;mem(b.v)}
   if(b.t==='bit'){onBits.add(+b.n);const t=[...onBits].reduce((a,c)=>a+c,0);env.total=t;env.bin=t.toString(2);mem('total');if(el){ringBurst(el.getBoundingClientRect().left+el.offsetWidth/2,el.getBoundingClientRect().top+el.offsetHeight/2,'#ffd36a',3)}}
-  if(b.t==='base'){const x=env[b.src];env[b.v]=b.to==='bin'?Math.max(0,Math.floor(+x||0)).toString(2):(parseInt(String(x),2)||0);mem(b.v)}
+  if(b.t==='base'){const x=env[b.src];if(b.to==='bin'){if(!Number.isInteger(+x)||+x<0||+x>255){S.errId=b.id;fail('Convert to binary needs a whole number from 0 to 255. The box "'+b.src+'" does not contain one.');el&&el.classList.remove('run');return}env[b.v]=(+x).toString(2)}else{const raw=String(x??'').trim();if(!/^[01]+$/.test(raw)||parseInt(raw,2)>255){S.errId=b.id;fail('Convert from binary needs only 0 and 1, with a value no greater than 255. Check the box "'+b.src+'".');el&&el.classList.remove('run');return}env[b.v]=parseInt(raw,2)}mem(b.v)}
   if(b.t==='def'){FN[b.v]=b}
   if(b.t==='call'){const f=FN[b.v];if(!f){S.errId=b.id;fail('The function "'+b.v+'" is not defined yet. Define it above the place where you call it.');el&&el.classList.remove('run');return}if(++fdepth>30){S.errId=b.id;fail('Too many nested calls. A recursive function needs a stopping rule (a base case).');el&&el.classList.remove('run');return}const keep=env;env={...env};await exec(f.c);env=keep;if(onBits.size){const t=[...onBits].reduce((a,c)=>a+c,0);env.total=t;env.bin=t.toString(2)}fdepth--;mem()}
   el&&el.classList.remove('run')}}
@@ -996,13 +1075,141 @@ function goals(){const L=lv(),CS=cases(),X=CS[cc],g=[];
   }
   $('#goals').innerHTML = html;chk()}
 function chk(){const X=cases()[cc],on=(k,v)=>{const e=$('#goals [data-g="'+k+'"]');if(e){const wasOk=e.classList.contains('ok');e.classList.toggle('ok',v);if(v&&!wasOk){pulse(e,1.1,300);const rect=e.getBoundingClientRect();burst(rect.left+rect.width/2,rect.top+rect.height/2,10,['var(--ok)','#ffd36a']);screenFlash('var(--ok)',80);}}};on('pos',pos===X.goal);on('say',said===X.say);on('loop',has(S.script,'rep'));lv().rule&&on('rule',lv().rule.f(S.script))}
-let au=null,narrating=false;
+let au=null,narrating=false,binaryArabicHandler=null,binaryArabicDraw=null;
 function sectionArt(c){const si=SEC.findIndex(s=>s.ch.includes(c)||s.boss===c);return si<0?'':`<figure class="sec-art" aria-hidden="true"><img src="assets/art/sec${si+1}.jpg" alt="" loading="lazy" decoding="async"></figure>`}
-function lessonCard(L,c){const ex=(!L.boss&&window.TLP_EXPLAIN)?TLP_EXPLAIN.html(c):'';return `${S.li===0?sectionArt(c):''}<span class="hand">${CH[c].n} · ${CH[c].t}</span><span class="diff">${L.df}</span><h2>${L.t}</h2>${ex}<p>${L.learn}</p><div class="mis"><b>Mission:</b> ${L.mis}</div><button class="btn ghost sm" id="nar">Narrate lesson</button><ul class="goals" id="goals"></ul>`}
-function mountLesson(c){const f=$('#ex');if(f&&window.TLP_EXPLAIN)TLP_EXPLAIN.mount(f,c)}
+const BINARY_LAB_CHAPTERS=new Set([18,20,21,22,23]);
+const BIN_BIT_VALUES=[128,64,32,16,8,4,2,1];
+const binBits=(n,width=8)=>Math.max(0,Math.floor(Number(n)||0)).toString(2).padStart(width,'0');
+const binDigits=(n,width=8)=>binBits(n,width).split('').map(Number);
+const binWhole=(v,max=255)=>typeof v==='number'&&Number.isInteger(v)&&v>=0&&v<=max;
+function binaryCalc(op,x,y){
+  if(op==='+')return x+y;
+  if(op==='<<')return x*2**y;
+  if(op==='>>')return Math.floor(x/2**y);
+  if(op==='&')return x&y;
+  if(op==='|')return x|y;
+  return x^y;
+}
+function binaryCalcError(op,x,y){
+  if(!binWhole(x)||!binWhole(y)||((op==='<<'||op==='>>')&&y>7))return 'Use whole numbers from 0 to 255. A shift can move at most 7 places.';
+  if(op==='<<'&&binaryCalc(op,x,y)>255)return 'That left shift would make '+binaryCalc(op,x,y)+', which is larger than one byte (255). Use a smaller number or fewer places.';
+  return '';
+}
+function binaryLab(c){
+  if(!BINARY_LAB_CHAPTERS.has(c))return '';
+  const mode=c===21?'convert':(c===22||c===23)?'operators':'bits';
+  const intro=mode==='convert'?'Try both directions. The place values show how the answer is built.'
+    :mode==='operators'?'Change the numbers and operator. Compare each bit before and after the operation.'
+    :'Turn switches on and off. Each switch adds its place value to the total.';
+  let controls='',readout='';
+  if(mode==='bits'){
+    controls='<div class="binlab-controls"><span>Click a switch to turn it on or off.</span><button class="btn ghost sm" type="button" data-bin-clear>Clear</button></div>';
+    readout='<div class="binlab-readout"><div><small>Decimal</small><b data-bin-dec-out>0</b></div><div dir="ltr"><small>Binary</small><b data-bin-bin-out>00000000</b></div></div><div class="binlab-switches" data-bin-switches dir="ltr"></div>';
+  }else if(mode==='convert'){
+    controls='<div class="binlab-controls"><label>Decimal<input type="number" min="0" max="255" step="1" inputmode="numeric" data-bin-dec value="13" aria-label="Decimal value" aria-describedby="binlabExplain"></label><label>Binary<input type="text" inputmode="numeric" pattern="[01]+" maxlength="8" value="1101" data-bin-bin aria-label="Binary value" aria-describedby="binlabExplain"></label><button class="btn ghost sm" type="button" data-bin-clear>Clear</button></div>';
+    readout='<div class="binlab-readout"><div><small>Decimal</small><b data-bin-dec-out>13</b></div><div dir="ltr"><small>Binary</small><b data-bin-bin-out>1101</b></div></div><div class="binlab-grid-wrap" data-bin-grid></div>';
+  }else{
+    const op=c===23?(S.li===1?'|':S.li===2?'^':'&'):(S.li===1?'<<':S.li===2?'>>':'+');
+    const options=c===23?[['&','AND'],['|','OR'],['^','XOR']]:[['+','Add'],['<<','Shift left'],['>>','Shift right']];
+    controls='<div class="binlab-controls"><label>A<input type="number" min="0" max="255" step="1" inputmode="numeric" data-bin-a value="'+(c===23?5:3)+'" aria-label="First number" aria-describedby="binlabExplain"></label><select data-bin-op aria-label="Binary operation" aria-describedby="binlabExplain">'+options.map(([v,t])=>'<option value="'+v+'"'+(v===op?' selected':'')+'>'+t+'</option>').join('')+'</select><label>B<input type="number" min="0" max="255" step="1" inputmode="numeric" data-bin-b value="'+(c===23?3:1)+'" aria-label="Second number" aria-describedby="binlabExplain"></label></div>';
+    readout='<div class="binlab-readout"><div><small>Result</small><b data-bin-result>0</b></div><div dir="ltr"><small>Binary</small><b data-bin-bin-out>00000000</b></div></div><div class="binlab-grid-wrap" data-bin-grid></div>';
+  }
+  return '<section class="binlab" data-bin-mode="'+mode+'" aria-labelledby="binlabTitle"><div class="binlab-head"><div><span class="binlab-k">Practice tool</span><h3 id="binlabTitle">Binary lab</h3><p>'+intro+'</p></div><button class="btn ghost sm" type="button" data-bin-example>Try an example</button></div>'+controls+readout+'<p class="binlab-explain" id="binlabExplain" data-bin-explain aria-live="polite"></p></section>';
+}
+function binaryGrid(rows,values){
+  return '<div class="binlab-grid" dir="ltr" style="--bit-cols:'+values.length+'"><span class="binlab-corner"></span>'+values.map(v=>'<small>'+v+'</small>').join('')+rows.map(r=>'<b class="'+r.cls+'">'+r.label+'</b>'+r.bits.map(bit=>'<i class="'+(bit?'on':'')+'">'+bit+'</i>').join('')).join('')+'</div>';
+}
+function binaryValues(width){return Array.from({length:width},(_,i)=>2**(width-1-i))}
+function binaryExplain(n,width=8){
+  if(!n)return width===8?'All eight switches are off, so the value is 0.':'All '+width+' switches are off, so the value is 0.';
+  const bits=binDigits(n,width),values=binaryValues(width),on=values.filter((_,i)=>bits[i]);
+  return 'Place values build the number: '+on.join(' + ')+' = '+n+'. Binary writes an on switch as 1 and an off switch as 0.';
+}
+function binaryAdditionRows(x,y,width){
+  const a=binDigits(x,width),b=binDigits(y,width),carry=Array(width).fill(0);let held=0;
+  for(let i=width-1;i>=0;i--){carry[i]=held;held=Math.floor((a[i]+b[i]+held)/2)}
+  const carryLabel=window.TLP_ARABIC?TLP_ARABIC.t('carry'):'carry';
+  return [{label:'A',bits:a,cls:''},{label:'B',bits:b,cls:''},{label:carryLabel,bits:carry,cls:'carry'}];
+}
+function initBinaryLab(){
+  if(binaryArabicHandler){window.removeEventListener('tlp-arabic-change',binaryArabicHandler);binaryArabicHandler=null;binaryArabicDraw=null}
+  const root=$('#learn .binlab');if(!root)return;
+  binaryArabicHandler=()=>{if(binaryArabicDraw)binaryArabicDraw()};window.addEventListener('tlp-arabic-change',binaryArabicHandler);
+  const mode=root.dataset.binMode;
+  const explain=root.querySelector('[data-bin-explain]');
+  const decOut=root.querySelector('[data-bin-dec-out]');
+  const binOut=root.querySelector('[data-bin-bin-out]');
+  const grid=root.querySelector('[data-bin-grid]');
+  const example=root.querySelector('[data-bin-example]');
+  const clear=root.querySelector('[data-bin-clear]');
+  const showError=(text)=>{root.classList.add('invalid');root.querySelectorAll('input,select').forEach(x=>x.setAttribute('aria-invalid','true'));if(explain)explain.textContent=text};
+  const clearError=()=>{root.classList.remove('invalid');root.querySelectorAll('[aria-invalid]').forEach(x=>x.setAttribute('aria-invalid','false'))};
+  const validNumber=(v,max=255)=>v!==''&&Number.isInteger(Number(v))&&Number(v)>=0&&Number(v)<=max;
+  if(mode==='bits'){
+    const holder=root.querySelector('[data-bin-switches]');
+    let total=0;
+    holder.innerHTML=BIN_BIT_VALUES.map(v=>'<button type="button" class="bin-bit" data-bit="'+v+'" aria-pressed="false" aria-label="Bit worth '+v+', off" aria-describedby="binlabExplain"><small>'+v+'</small><b>0</b></button>').join('');
+    const draw=()=>{
+      holder.querySelectorAll('[data-bit]').forEach(b=>{const value=Number(b.dataset.bit),on=total&value;b.classList.toggle('on',!!on);b.setAttribute('aria-pressed',on?'true':'false');b.querySelector('b').textContent=on?'1':'0';const label='Bit worth '+value+', '+(on?'on':'off');b.setAttribute('aria-label',window.TLP_ARABIC?TLP_ARABIC.t(label):label)});
+      decOut.textContent=total;binOut.textContent=binBits(total);explain.textContent=binaryExplain(total);
+    };
+    holder.onclick=e=>{const b=e.target.closest('[data-bit]');if(!b)return;total^=Number(b.dataset.bit);draw()};
+    if(clear)clear.onclick=()=>{total=0;draw()};
+    if(example)example.onclick=()=>{total=5;draw()};
+    binaryArabicDraw=draw;draw();
+    return;
+  }
+  if(mode==='convert'){
+    const dec=root.querySelector('[data-bin-dec]'),bin=root.querySelector('[data-bin-bin]');
+    const draw=n=>{
+      clearError();decOut.textContent=n;binOut.textContent=n.toString(2);
+      const label=window.TLP_ARABIC?TLP_ARABIC.t('bits'):'bits';
+      grid.innerHTML=binaryGrid([{label,bits:binDigits(n),cls:''}],binaryValues(8));explain.textContent=binaryExplain(n);
+    };
+    const fromDecimal=()=>{
+      if(!validNumber(dec.value)){showError('Enter a whole number from 0 to 255.');return}
+      const n=Number(dec.value);bin.value=n.toString(2);draw(n);
+    };
+    const fromBinary=()=>{
+      const raw=bin.value.trim();
+      if(!/^[01]+$/.test(raw)||parseInt(raw,2)>255){showError('Binary uses only 0 and 1, with a value no greater than 255.');return}
+      const n=parseInt(raw,2);dec.value=String(n);draw(n);
+    };
+    dec.oninput=fromDecimal;bin.oninput=fromBinary;
+    if(clear)clear.onclick=()=>{dec.value='0';bin.value='0';draw(0)};
+    if(example)example.onclick=()=>{dec.value='13';bin.value='1101';draw(13)};
+    binaryArabicDraw=()=>{if(validNumber(dec.value))draw(Number(dec.value))};draw(13);
+    return;
+  }
+  const a=root.querySelector('[data-bin-a]'),b=root.querySelector('[data-bin-b]'),op=root.querySelector('[data-bin-op]');
+  const result=root.querySelector('[data-bin-result]');
+  const symbols={'+':'+','<<':'<<','>>':'>>','&':'&','|':'|','^':'^'};
+  const draw=()=>{
+    const x=Number(a.value),y=Number(b.value),shift=op.value==='<<'||op.value==='>>';b.max=shift?'7':'255';
+    const error=binaryCalcError(op.value,x,y);if(error){showError(error);return}
+    const n=binaryCalc(op.value,x,y);let text;
+    if(op.value==='+')text='Add each column from the right. When a column totals 2, write 0 and carry 1 into the next column. If a carry makes the total 3, write 1 and carry 1 again: 1 + 1 + 1 = 11 in binary.';
+    else if(op.value==='<<')text='Shifting left by '+y+' appends '+y+' '+(y===1?'zero':'zeros')+'. It multiplies '+x+' by '+2**y+', giving '+n+'.';
+    else if(op.value==='>>')text='Shifting right by '+y+' drops the last '+y+' bit'+(y===1?'':'s')+'. It divides '+x+' by '+2**y+' and keeps only the whole part, giving '+n+'.';
+    else if(op.value==='&')text='AND keeps a 1 only where both rows contain 1. Every other result bit is 0.';
+    else if(op.value==='|')text='OR keeps a 1 wherever either row contains 1. A result bit is 0 only when both input bits are 0.';
+    else text='XOR keeps a 1 only where the two rows differ. Matching bits become 0.';
+    const width=Math.max(8,n.toString(2).length),label=key=>window.TLP_ARABIC?TLP_ARABIC.t(key):key;
+    clearError();result.textContent=x+' '+label(symbols[op.value])+' '+y+' = '+n;binOut.textContent=n.toString(2);
+    const rows=op.value==='+'?binaryAdditionRows(x,y,width):[{label:'A',bits:binDigits(x,width),cls:''}];
+    if(op.value!=='+'&&op.value!=='<<'&&op.value!=='>>')rows.push({label:'B',bits:binDigits(y,width),cls:''});
+    rows.push({label:'=',bits:binDigits(n,width),cls:'res'});
+    grid.innerHTML=binaryGrid(rows,binaryValues(width));explain.textContent=text;
+  };
+  a.oninput=draw;b.oninput=draw;op.onchange=draw;
+  if(example)example.onclick=()=>{const values={'+':[7,3],'<<':[64,1],'>>':[13,1],'&':[5,3],'|':[5,2],'^':[5,3]};[a.value,b.value]=values[op.value];draw()};
+  binaryArabicDraw=draw;draw();
+}
+function lessonCard(L,c){const ex=(!L.boss&&window.TLP_EXPLAIN)?TLP_EXPLAIN.html(c):'';return `${S.li===0?sectionArt(c):''}<span class="hand">${CH[c].n} · ${CH[c].t}</span><span class="diff">${L.df}</span><h2>${L.t}</h2>${ex}<p>${L.learn}</p>${binaryLab(c)}<div class="mis"><b>Mission:</b> ${L.mis}</div><button class="btn ghost sm" id="nar">Narrate lesson</button><ul class="goals" id="goals"></ul>`}
+function mountLesson(c){const f=$('#ex');if(f&&window.TLP_EXPLAIN)TLP_EXPLAIN.mount(f,c);initBinaryLab()}
 function narrationLabel(){const b=$('#nar');if(!b)return;b.textContent=narrating?'Stop narration':'Narrate lesson';b.setAttribute('aria-pressed',narrating?'true':'false');b.classList.toggle('on',narrating)}
-function stopNarration(){narrating=false;try{if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}if(au){try{au.pause()}catch(e){}au=null}try{if(window.TLP_EXPLAIN)TLP_EXPLAIN.stop()}catch(e){}narrationLabel()}
-function narrationText(){const L=lv();return String(L.learn||'').replace(/<[^>]+>/g,' ')+' Your mission: '+String(L.mis||'').replace(/<[^>]+>/g,' ')}
+function stopNarration(){narrating=false;try{TLP.Voice.stop()}catch(e){}if(au){try{au.pause()}catch(e){}au=null}try{if(window.TLP_EXPLAIN)TLP_EXPLAIN.stop()}catch(e){}narrationLabel()}
+function narrationText(){const L=lv(),k=key(S.ci,S.li);if(PATH==='g16'&&NARRATION[k])return window.TLP_ARABIC&&TLP_ARABIC.isActive()?(NARRATION_AR[k]||TLP_ARABIC.t(NARRATION[k])):NARRATION[k];return String(L.learn||'').replace(/<[^>]+>/g,' ')+' Your mission: '+String(L.mis||'').replace(/<[^>]+>/g,' ')}
 function speakNarration(done){try{if(window.TLP&&TLP.Voice&&TLP.Voice.speak){TLP.Voice.speak(narrationText(),done);return}}catch(e){}done()}
 function narrate(){
   if(narrating){stopNarration();return}
@@ -1015,6 +1222,11 @@ function narrate(){
   }
 
 
+  const k=key(S.ci,S.li);
+  const done=()=>{if(!narrating)return;narrating=false;au=null;narrationLabel()};
+  if(PATH==='g16'&&NARRATION[k]){
+   narrating=true;narrationLabel();speakNarration(done);return;
+  }
   const ex=window.TLP_EXPLAIN&&TLP_EXPLAIN.mounted();
   if(ex){
    narrating=true;narrationLabel();
@@ -1022,18 +1234,7 @@ function narrate(){
    return;
   }
   narrating=true;narrationLabel();
- const k=key(S.ci,S.li);
- const done=()=>{if(!narrating)return;narrating=false;au=null;narrationLabel()};
- if(NARRATION[k]){
-  try{au=new Audio(NARRATION[k])}catch(e){au=null}
-  if(au){
-   au.onended=done;au.onerror=()=>{au=null;if(narrating)speakNarration(done)};
-   const p=au.play();
-   if(p&&p.catch)p.catch(()=>{au=null;if(narrating)speakNarration(done)});
-   return;
-  }
- }
- speakNarration(done);
+  speakNarration(done);
 }
 $('#run').onclick=run;
 $('#reset').onclick=()=>{const resetBtn=$('#reset');if(resetBtn){pulse(resetBtn,1.1,150);const rect=resetBtn.getBoundingClientRect();burst(rect.left+rect.width/2,rect.top+rect.height/2,8,['var(--a)','var(--b)'])}reset()};
@@ -1049,7 +1250,7 @@ $('#name').oninput=e=>{S.name=e.target.value.trim()||'Player';save();hud()};
 const any=(a,f)=>a.some(b=>f(b)||any(kids(b),f));
 const LEARN=(window.TLP_STORY&&TLP_STORY.learnAll())||[];
 const learnedHTML=c=>`<div class="learned"><b>What you learned in ${CH[c].t.replace('Boss: ','')}</b><ul>${LEARN[c].map(x=>'<li>'+x+'</li>').join('')}</ul><button class="btn ghost sm" id="lis">Listen again</button></div>`;
-function stopSay(){narrating=false;try{speechSynthesis.cancel()}catch(e){}if(au){try{au.pause()}catch(e){}au=null}narrationLabel()}
+function stopSay(){narrating=false;try{TLP.Voice.stop()}catch(e){}if(au){try{au.pause()}catch(e){}au=null}narrationLabel()}
 function sayLearned(c){stopSay();try{if(NARRATION['ch'+c]){au=new Audio(NARRATION['ch'+c]);au.play().catch(()=>{});return}
  TLP.Voice.speak('Congratulations '+S.name+'! You finished '+CH[c].n+', '+CH[c].t.replace('Boss: ','')+'. Here is what you learned. '+LEARN[c].join(' '))}catch(e){}}
 function confetti(){if(matchMedia('(prefers-reduced-motion:reduce)').matches||still)return;for(let i=0;i<140;i++){const e=document.createElement('span');e.className='spark';e.style.cssText=`left:${Math.random()*innerWidth}px;top:-14px;width:${6+Math.random()*7}px;height:${10+Math.random()*8}px;background:hsl(${Math.random()*360} 85% 62%)`;document.body.appendChild(e);e.animate([{transform:'translate(0,0) rotate(0)'},{transform:`translate(${(Math.random()-.5)*240}px,${innerHeight+40}px) rotate(${Math.random()*900}deg)`}],{duration:2200+Math.random()*2200,delay:Math.random()*900,easing:'cubic-bezier(.2,.6,.4,1)',fill:'backwards'}).onfinish=()=>e.remove()}}
@@ -1287,21 +1488,21 @@ CH.push(
 );
 CH.push(
 {n:'',t:'Bits and Bytes',d:'The on/off switches inside every computer.',L:[
- L1('A full row','Easy','A <b>bit</b> is one on/off switch. Each bit has a value: 1, 2, 4, 8... A <b>byte</b> is 8 bits. Adding the values of the switches that are on gives the number.','Switch on the bits worth 1, 2, 4 and 8, then say the total.',{vars:{total:0,bin:'0'},allow:['bit','say'],cases:[{vars:{},say:'15'}],par:5,hints:['Four switches, all on.','Each bit block switches on one value.','Bit 1, bit 2, bit 4, bit 8, then say total.']}),
- L1('The big switch','Medium','A byte has 8 bits worth 1, 2, 4, 8, 16, 32, 64 and 128. The biggest switch is 128. All eight on makes 255, the largest byte.','Make 130 with as few bit switches as you can, then say the total.',{vars:{total:0,bin:'0'},allow:['bit','say'],cases:[{vars:{},say:'130'}],par:3,hints:['130 is 128 plus something.','130 - 128 = 2.','Bit 128, bit 2, say total.']}),
- L1('Spot the pattern','Medium','Writing the switches as 1 (on) and 0 (off) gives the <b>binary</b> form. 5 is 101: a 4, no 2 and a 1.','Make 5 with bits and say its binary form from the bin box.',{vars:{total:0,bin:'0'},allow:['bit','say'],cases:[{vars:{},say:'101'}],par:3,hints:['5 = 4 + 1.','bin writes the switches as 1 and 0.','Bit 4, bit 1, say bin.']})]},
+ L1('A full row','Easy','A <b>bit</b> stores either 0 or 1. In an 8-bit <b>byte</b>, the places from right to left are worth 1, 2, 4, 8, 16, 32, 64 and 128. Add the values where the bit is 1. All eight off makes 0; all eight on makes 255.','Switch on the bits worth 1, 2, 4 and 8, then say the total.',{vars:{total:0,bin:'0'},allow:['bit','say'],cases:[{vars:{},say:'15'}],par:5,hints:['Read the place values from right to left: 1, 2, 4, 8.','15 needs all four of those switches: 8 + 4 + 2 + 1.','Bit 1, bit 2, bit 4, bit 8, then say total.']}),
+ L1('The big switch','Medium','Each place is worth twice the place to its right. The largest bit in a byte is 128. The number 130 is 128 + 2, so its binary form is <code>10000010</code>: only two switches need to be on.','Make 130 with as few bit switches as you can, then say the total.',{vars:{total:0,bin:'0'},allow:['bit','say'],cases:[{vars:{},say:'130'}],par:3,hints:['Start with the largest place that fits: 128.','130 - 128 = 2, so one more switch is enough.','Bit 128, bit 2, say total.']}),
+ L1('Spot the pattern','Medium','Binary writes an on switch as 1 and an off switch as 0. Read the digits from right to left using their place values. <code>00000101</code> means 4 + 1 = 5. Leading zeros do not change the value.','Make 5 with bits and say its binary form from the bin box.',{vars:{total:0,bin:'0'},allow:['bit','say'],cases:[{vars:{},say:'101'}],par:3,hints:['Which two place values add to 5?','Turn on 4 and 1. The bin box removes the unused leading zeros.','Bit 4, bit 1, say bin.']})]},
 {n:'',t:'Binary Counting',d:'Converting between normal numbers and binary.',L:[
- L1('Decimal to binary','Easy','You can convert a normal number into binary text. 6 in binary is 110.','n holds 6. Convert it to binary and say the result.',{vars:{n:6,b:''},allow:['base','say'],cases:[{vars:{},say:'110'}],par:2,path:'hook',hints:['Use the convert block.','Choose "to binary" and store in b.','Convert n to binary into b, then say b.']}),
- L1('Binary to decimal','Medium','Reading binary the other way: each digit is a switch. 101 means 4 + 0 + 1 = 5.','b holds the binary word 101. Convert it to a number and walk that far.',{vars:{b:'101',n:0},allow:['base','move'],goal:5,par:2,path:'snake',hints:['Convert from binary to a number.','Store the number in n.','Convert b from binary into n, then move n.']}),
- L1('There and back','Hard','Converting there and back should give the same number. Programmers use this to check their work.','n holds 4. Convert it to binary and say it, then convert it back and walk that far.',{vars:{n:4,b:'',m:0},allow:['base','move','say'],cases:[{vars:{},goal:4,say:'100'}],par:4,path:'s',hints:['Two conversions, in opposite directions.','The word goes in b, the number comes back in m.','Convert n to binary into b, say b, convert b from binary into m, move m.']})]},
+ L1('Decimal to binary','Easy','To convert a decimal number, start at the largest place value and decide whether each switch is needed. For 6, the 4 and 2 places are on, so 6 is <code>110</code>. You can also keep subtracting the largest place value that fits.','n holds 6. Convert it to binary and say the result.',{vars:{n:6,b:''},allow:['base','say'],cases:[{vars:{},say:'110'}],par:2,path:'hook',hints:['6 is made from 4 + 2, with no 1.','Use the convert block, choose "to binary", and store the text in b.','Convert n to binary into b, then say b.']}),
+ L1('Binary to decimal','Medium','To read binary as a decimal number, write the place values above the digits, multiply each place by its 0 or 1, then add. For <code>00101</code>, only 4 and 1 are on, so the value is 5.','b holds the binary word 101. Convert it to a number and walk that far.',{vars:{b:'101',n:0},allow:['base','move'],goal:5,par:2,path:'snake',hints:['101 has a 1 in the 4 place and the 1 place.','Choose "from binary to a number" and store the result in n.','Convert b from binary into n, then move n.']}),
+ L1('There and back','Hard','A round-trip conversion is a useful check. Convert the number in n to binary text in b, then convert b back into m. The final number should match the original. Leading zeros may appear or disappear, but the value stays the same.','n holds 4. Convert it to binary and say it, then convert it back and walk that far.',{vars:{n:4,b:'',m:0},allow:['base','move','say'],cases:[{vars:{},goal:4,say:'100'}],par:4,path:'s',hints:['First choose "to binary" and store in b.','After saying b, choose "from binary to a number" and store in m.','Convert n to binary into b, say b, convert b from binary into m, move m.']})]},
 {n:'',t:'Binary Maths',d:'Adding and shifting numbers in binary.',L:[
- L1('Add two binary numbers','Medium','To add binary numbers, convert them first. 11 is 3 and 10 is 2, so together they make 5.','a holds 11 and b holds 10 (binary words). Convert both and walk their sum.',{vars:{a:'11',b:'10',x:0,y:0},allow:['base','move'],goal:5,par:4,path:'maze',hints:['Convert each word to a number.','Walk both numbers one after the other.','Convert a into x, convert b into y, move x, move y.']}),
- L1('Shift left doubles','Medium','Shifting every bit one place <b>left</b> doubles the number. 3 (011) becomes 6 (110).','a holds 3. Shift it left by 1 and walk the result.',{vars:{a:3,r:0},allow:['calc','move'],goal:6,par:2,path:'stairs',rule:{txt:'use a shift operator.',f:s=>any(s,b=>b.t==='calc'&&(b.op==='<<'||b.op==='>>'))},hints:['Shift left means multiply by two.','Use calculate with the shift left operator.','Calculate r = a shift left 1, then move r.']}),
- L1('Shift right halves','Hard','Shifting <b>right</b> halves the number and drops the remainder.','a holds 8. Shift it right by 1, then walk the result twice.',{vars:{a:8,r:0},allow:['calc','move'],goal:8,par:3,path:'hook',rule:{txt:'use a shift operator.',f:s=>any(s,b=>b.t==='calc'&&(b.op==='<<'||b.op==='>>'))},hints:['Half of 8 is 4.','Walk 4 twice makes 8.','Calculate r = a shift right 1, move r, move r.']})]},
+ L1('Add two binary numbers','Medium','Binary addition follows the same place-value rules as decimal addition. Add from the right. If a column totals 2, write 0 and carry 1 to the next column. For <code>11 + 10</code>, the result is <code>101</code>, which is 3 + 2 = 5.','a holds 11 and b holds 10 (binary words). Convert both and walk their sum.',{vars:{a:'11',b:'10',x:0,y:0},allow:['base','move'],goal:5,par:4,path:'maze',hints:['Convert each binary word into a normal number first.','11 is 3 and 10 is 2. Moving by both values walks 5 cells.','Convert a into x, convert b into y, move x, move y.']}),
+ L1('Shift left doubles','Medium','Shifting every bit one place <b>left</b> appends a zero and doubles the number. For example, 3 is <code>11</code>; shift left once and it becomes <code>110</code>, which is 6. Shifting left k places multiplies by 2 to the power of k.','a holds 3. Shift it left by 1 and walk the result.',{vars:{a:3,r:0},allow:['calc','move'],goal:6,par:2,path:'stairs',rule:{txt:'shift the number left.',f:s=>any(s,b=>b.t==='calc'&&b.op==='<<')},hints:['One left shift means 3 × 2.','In the calculate block, choose "shift left" and use 1.','Calculate r = a shift left 1, then move r.']}),
+ L1('Shift right halves','Hard','Shifting <b>right</b> removes bits from the right end and divides by 2 for each place. It keeps only the whole part, so an odd number loses its remainder. For example, 8 is <code>1000</code>; shift right once and it becomes <code>100</code>, which is 4.','a holds 8. Shift it right by 1, then walk the result twice.',{vars:{a:8,r:0},allow:['calc','move'],goal:8,par:3,path:'hook',rule:{txt:'shift the number right.',f:s=>any(s,b=>b.t==='calc'&&b.op==='>>')},hints:['One right shift turns 8 into 4.','Choose "shift right" in the calculate block.','Calculate r = a shift right 1, move r, move r.']})]},
 {n:'',t:'Bit Operations',d:'AND, OR and XOR work on every bit at once.',L:[
- L1('AND keeps what both share','Medium','Bitwise <b>AND</b> keeps a bit only if it is on in both numbers. 5 is 101 and 3 is 011, so only the last bit survives: 001, which is 1.','a holds 5. Combine it with 3 using AND and walk the result.',{vars:{a:5,r:0},allow:['calc','move'],goal:1,par:2,path:'s',rule:{txt:'use the AND operator.',f:s=>any(s,b=>b.t==='calc'&&b.op==='&')},hints:['Both bits must be on.','Pick AND (bits) in the calculate block.','Calculate r = a AND 3, then move r.']}),
- L1('OR keeps what either has','Medium','Bitwise <b>OR</b> keeps a bit if it is on in either number. 101 OR 010 gives 111, which is 7.','a holds 5. Combine it with 2 using OR and walk the result.',{vars:{a:5,r:0},allow:['calc','move'],goal:7,par:2,path:'maze',rule:{txt:'use the OR operator.',f:s=>any(s,b=>b.t==='calc'&&b.op==='|')},hints:['Either bit being on is enough.','Pick OR (bits).','Calculate r = a OR 2, then move r.']}),
- L1('XOR keeps the differences','Hard','Bitwise <b>XOR</b> keeps a bit only if the numbers <i>differ</i> there. 101 XOR 011 gives 110, which is 6.','a holds 5. Combine it with 3 using XOR and walk the result.',{vars:{a:5,r:0},allow:['calc','move'],goal:6,par:2,path:'stairs',rule:{txt:'use the XOR operator.',f:s=>any(s,b=>b.t==='calc'&&b.op==='^')},hints:['A bit is kept only when the two differ.','Pick XOR (bits).','Calculate r = a XOR 3, then move r.']})]},
+ L1('AND keeps what both share','Medium','Bitwise <b>AND</b> compares two numbers one column at a time. The result bit is 1 only when both input bits are 1. For 5 (<code>101</code>) and 3 (<code>011</code>), only the last column has two 1s, so the result is <code>001</code>, which is 1.','a holds 5. Combine it with 3 using AND and walk the result.',{vars:{a:5,r:0},allow:['calc','move'],goal:1,par:2,path:'s',rule:{txt:'use the AND operator.',f:s=>any(s,b=>b.t==='calc'&&b.op==='&')},hints:['Compare the columns: 1 AND 0 is 0, 0 AND 1 is 0, and 1 AND 1 is 1.','Pick AND (bits) in the calculate block.','Calculate r = a AND 3, then move r.']}),
+ L1('OR keeps what either has','Medium','Bitwise <b>OR</b> keeps a 1 whenever at least one input bit is 1. It returns 0 only when both bits are 0. For 5 (<code>101</code>) and 2 (<code>010</code>), every column has a 1 in one row, so the result is <code>111</code>, which is 7.','a holds 5. Combine it with 2 using OR and walk the result.',{vars:{a:5,r:0},allow:['calc','move'],goal:7,par:2,path:'maze',rule:{txt:'use the OR operator.',f:s=>any(s,b=>b.t==='calc'&&b.op==='|')},hints:['Either row can supply the 1 in each column.','Pick OR (bits) in the calculate block.','Calculate r = a OR 2, then move r.']}),
+ L1('XOR keeps the differences','Hard','Bitwise <b>XOR</b> keeps a 1 only when the two input bits are different. Matching bits become 0. For 5 (<code>101</code>) and 3 (<code>011</code>), the columns differ in the first two places, so the result is <code>110</code>, which is 6.','a holds 5. Combine it with 3 using XOR and walk the result.',{vars:{a:5,r:0},allow:['calc','move'],goal:6,par:2,path:'stairs',rule:{txt:'use the XOR operator.',f:s=>any(s,b=>b.t==='calc'&&b.op==='^')},hints:['Keep a bit when one row has 1 and the other has 0.','Pick XOR (bits) in the calculate block.','Calculate r = a XOR 3, then move r.']})]},
 {n:'',t:'The Byte',d:'The fifth guardian guards the binary vault.',L:[{t:'The Byte',df:'Boss',learn:'',mis:'',vars:{},allow:['set','change','move','say','rep','if','bit','base','calc'],boss:1,par:99,hints:[]}]},
 {n:'',t:'Debugging',d:'Find the mistake in a script that is almost right.',L:[
  L1('The missing step','Easy','A <b>bug</b> is a mistake in code. Debugging means finding it and fixing it. This script has one.','The script should reach cell 6, but it stops at cell 3. Fix it.',{vars:{steps:3},allow:['move','say'],goal:6,par:2,start:()=>[BK('move',{src:'steps'})],hints:['Run it and watch where the robot stops.','It only walks once.','Add a second move steps.']}),
@@ -1387,7 +1588,7 @@ const fo=sel=>(lv().fns||[]).map(f=>`<option value="${f}"${f==sel?' selected':''
 const sopt=(a,sel)=>a.map(([v,t])=>`<option value="${v}"${v==sel?' selected':''}>${t}</option>`).join('');
 const OPW={'>':'is more than','<':'is less than','=':'is exactly'};
 const one=b=>({set:`set ${b.v} to ${b.val}`,change:`change ${b.v} by ${b.n}`,move:`move ${b.src==='#'?b.n:b.src}`,say:`say ${b.src}`,rep:`repeat ${b.n} times`,if:`if ${b.v} ${OPW[b.op]||b.op} ${b.rv&&b.rv!=='#'?b.rv:b.n}${b.j&&b.j!=='none'?' '+b.j+' '+b.v2+' '+(OPW[b.op2]||b.op2)+' '+b.n2:''}`,while:`repeat while ${b.v} ${OPW[b.op]||b.op} ${b.rv&&b.rv!=='#'?b.rv:b.n}`,base:`convert ${b.src} ${b.to==='bin'?'to binary':'from binary'} into ${b.v}`,note:`note: ${b.val||'...'}`,ask:`ask the player into ${b.v}`,calc:`set ${b.v} to ${b.src} ${b.op} ${b.n}`,join:`join ${b.src} and ${b.src2} into ${b.v}`,cast:`turn ${b.v} into ${b.to}`,pick:`set ${b.v} to item ${b.idx==='#'?b.n:b.idx} of ${b.src}`,def:`define ${b.v}`,call:`call ${b.v}`,bit:`switch on bit ${b.n}`})[b.t]||b.t;
-const WHY={set:'Puts a value into a labelled box (a variable). Whatever was there before is replaced.',change:'Adds to the number already in the box. Use a negative number to take away.',move:'Walks the robot forward along the path. Give it a number, or pick a box to use the value inside it.',say:'Makes the robot speak whatever is inside the box you choose.',rep:'Runs the blocks inside it again and again, so you only write the step once.',if:'Asks a yes or no question. If yes, the blocks under then run. If no, the else blocks run.',note:'A comment. The computer ignores it, but people reading your code understand it.',ask:'Input: waits for what the player types and stores it in a box.',calc:'An operator block: calculates a new value (plus, minus, times, divide or remainder).',join:'Glues two pieces of text together into one string.',cast:'Type casting: converts a box from one type to another, like a word into a number.',pick:'Reads one item from an array (a list in a box) by its number.',def:'Defines a function: a named group of blocks that does nothing until it is called.',call:'Calls a function: runs the blocks stored under its name.',bit:'Switches on one bit. The total is the sum of every bit that is on.',while:'Repeats the blocks inside for as long as its condition stays true, then stops.',base:'Converts a value between a normal number and binary text, in either direction.'};
+const WHY={set:'Puts a value into a labelled box (a variable). Whatever was there before is replaced.',change:'Adds to the number already in the box. Use a negative number to take away.',move:'Walks the robot forward along the path. Give it a number, or pick a box to use the value inside it.',say:'Makes the robot speak whatever is inside the box you choose.',rep:'Runs the blocks inside it again and again, so you only write the step once.',if:'Asks a yes or no question. If yes, the blocks under then run. If no, the else blocks run.',note:'A comment. The computer ignores it, but people reading your code understand it.',ask:'Input: waits for what the player types and stores it in a box.',calc:'Calculates a new value. Plus, minus, times, divide and remainder work on numbers. AND, OR and XOR compare each binary bit. Shift left doubles once per place; shift right divides and drops the remainder.',join:'Glues two pieces of text together into one string.',cast:'Type casting: converts a box from one type to another, like a word into a number.',pick:'Reads one item from an array (a list in a box) by its number.',def:'Defines a function: a named group of blocks that does nothing until it is called.',call:'Calls a function: runs the blocks stored under its name.',bit:'Switches on one bit. Its place value is added to the total. The binary box shows every place as 1 or 0.',while:'Repeats the blocks inside for as long as its condition stays true, then stops.',base:'Converts a whole number from 0 to 255 into binary text, or reads binary text made only of 0 and 1 back into a number. Invalid input stops the program instead of silently becoming zero.'};
 const tx=b=>{const k=b.c.map(tx).join('; '),e=(b.e||[]).map(tx).join('; ');return b.t==='rep'?`repeat ${b.n} {${k}}`:b.t==='if'?`if ${b.v} ${b.op} ${b.n}${b.j&&b.j!=='none'?' '+b.j+' '+b.v2+' '+b.op2+' '+b.n2:''} {${k}} else {${e}}`:b.t==='while'?`while ${b.v} ${b.op} ${b.n} {${k}}`:b.t==='def'?`define ${b.v} {${k}}`:one(b)};
 const sg=b=>[b.t,b.v,b.val,b.src,b.src2,b.to,b.idx,b.op,+b.n,b.rv,b.rv2,b.j,b.v2,b.op2,b.n2,b.c.map(sg),b.e.map(sg)],sig=a=>JSON.stringify(a.map(sg));
 function snd(k){if(mute)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const t=AC.currentTime;

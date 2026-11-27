@@ -264,6 +264,38 @@
     ['Keep your hearts for more stars.',    'احتفظ بقلوبك لنجوم أكثر.'],
     ['Round rule:',                         'قاعدة الجولة:'],
     ['Also:',                               'وأيضاً:'],
+    ['Practice tool',                       'أداة تدريب'],
+    ['Binary lab',                          'مختبر binary'],
+    ['Decimal',                             'العشري'],
+    ['Result',                              'النتيجة'],
+    ['First number',                        'الرقم الأول'],
+    ['Second number',                       'الرقم الثاني'],
+    ['Binary operation',                    'عملية binary'],
+    ['Clear',                               'مسح'],
+    ['Try an example',                      'جرّب مثالاً'],
+    ['Click a switch to turn it on or off.', 'انقر على مفتاح لتشغيله أو إطفائه.'],
+    ['Try both directions. The place values show how the answer is built.', 'جرّب الاتجاهين. قيم المنازل توضّح كيف بُنيت النتيجة.'],
+    ['Change the numbers and operator. Compare each bit before and after the operation.', 'غيّر الأرقام والعملية، ثم قارن كل bit قبل العملية وبعدها.'],
+    ['Turn switches on and off. Each switch adds its place value to the total.', 'شغّل المفاتيح وأطفئها. كل مفتاح يضيف قيمة منزلته إلى المجموع.'],
+    ['Enter a whole number from 0 to 255.', 'أدخل رقماً صحيحاً من 0 إلى 255.'],
+    ['Binary uses only 0 and 1, with a value no greater than 255.', 'يستخدم binary فقط 0 و1، بقيمة لا تتجاوز 255.'],
+    ['Use whole numbers from 0 to 255. A shift can move at most 7 places.', 'استخدم أرقاماً صحيحة من 0 إلى 255. الإزاحة لا تتجاوز 7 منازل.'],
+    ['All eight switches are off, so the value is 0.', 'المفاتيح الثمانية مطفأة، لذا القيمة 0.'],
+    ['Place values build the number',       'قيم المنازل تبني الرقم'],
+    ['Binary writes an on switch as 1 and an off switch as 0.', 'يكتب binary المفتاح المشغّل بالرقم 1 والمطفأ بالرقم 0.'],
+    ['Add each column from the right.',      'اجمع كل عمود من اليمين.'],
+    ['AND keeps a 1 only where both rows contain 1.', 'يُبقي AND الرقم 1 فقط حيث يحتوي الصفّان على 1.'],
+    ['OR keeps a 1 wherever either row contains 1.', 'يُبقي OR الرقم 1 أينما يحتوي أحد الصفّين على 1.'],
+    ['XOR keeps a 1 only where the two rows differ.', 'يُبقي XOR الرقم 1 فقط عندما يختلف الصفّان.'],
+    ['Decimal places are worth 1, 10, 100 and so on. Binary places are worth 1, 2, 4 and 8.', 'منازل العشري تساوي 1 و10 و100 وهكذا. ومنازل binary تساوي 1 و2 و4 و8.'],
+    ['To write 13 in binary, find the places that add to 13: 8, 4 and 1.', 'لكتابة 13 في binary، ابحث عن المنازل التي مجموعها 13: 8 و4 و1.'],
+    ['Write 1 for an on place and 0 for an off place. That gives 1101.', 'اكتب 1 للمنزل المشغّل و0 للمطفأ. النتيجة 1101.'],
+    ['Binary addition uses the same place values as decimal addition. Carry a 1 when a column totals two.', 'يستخدم جمع binary قيم المنازل نفسها في الجمع العشري. انقل 1 عندما يصبح مجموع العمود 2.'],
+    ['A left shift appends a zero, so it doubles the number. Three becomes six.', 'الإزاحة لليسار تضيف صفراً، لذا تضاعف الرقم. الرقم 3 يصبح 6.'],
+    ['A right shift removes bits from the end. Eight becomes four, and any remainder is dropped.', 'الإزاحة لليمين تحذف البتات من النهاية. الرقم 8 يصبح 4، ويُهمل أي باقٍ.'],
+    ['Bit operations compare two numbers one column at a time.', 'تقارن عمليات البتات رقمين عموداً بعمود.'],
+    ['AND keeps only shared ones. OR keeps ones from either row. XOR keeps only differences.', 'يُبقي AND القيم 1 المشتركة فقط، وOR القيم 1 من أي صف، وXOR الاختلافات فقط.'],
+    ['For 101 and 011, the results are 001, 111 and 110.', 'للرقمين 101 و011 تكون النتائج 001 و111 و110.'],
   ];
 
 
@@ -359,6 +391,18 @@
 };
 
   var GAME_EXACT = {
+  "An eight-bit byte": "بايت من ثمانية bits",
+  "A byte has eight bits. From left to right they are worth 128, 64, 32, 16, 8, 4, 2 and 1.": "يحتوي البايت على ثمانية bits. من اليسار إلى اليمين تساوي قيمها 128 و64 و32 و16 و8 و4 و2 و1.",
+  "Turn on the 128 bit and the 2 bit. Their values add to 130.": "شغّل bit بقيمة 128 وbit بقيمة 2. يجمع مجموع قيمتيهما إلى 130.",
+  "Leading zeros do not change a value. 00000101 is still 5 because only the 4 bit and the 1 bit are on.": "لا تغيّر الأصفار في البداية قيمة الرقم. يبقى 00000101 يساوي 5 لأن bit بقيمة 4 وbit بقيمة 1 فقط مشغّلتان.",
+  "Decimal value": "القيمة العشرية",
+  "Binary value": "القيمة الثنائية",
+  "bits": "بتات",
+  "carry": "الحمل",
+  "Add each column from the right. When a column totals 2, write 0 and carry 1 into the next column. If a carry makes the total 3, write 1 and carry 1 again: 1 + 1 + 1 = 11 in binary.": "اجمع كل عمود من اليمين. عندما يصبح مجموع العمود 2، اكتب 0 وانقل 1 إلى العمود التالي. إذا جعل الحمل المجموع 3، فاكتب 1 وانقل 1 مرة أخرى: 1 + 1 + 1 = 11 في نظام binary.",
+  "AND keeps a 1 only where both rows contain 1. Every other result bit is 0.": "يُبقي AND الرقم 1 فقط حيث يحتوي الصفّان على 1. كل bit أخرى في النتيجة تساوي 0.",
+  "OR keeps a 1 wherever either row contains 1. A result bit is 0 only when both input bits are 0.": "يُبقي OR الرقم 1 أينما يحتوي أحد الصفّين على 1. تكون bit النتيجة 0 فقط عندما تكون bit المدخلين 0.",
+  "XOR keeps a 1 only where the two rows differ. Matching bits become 0.": "يُبقي XOR الرقم 1 فقط عندما يختلف الصفّان. تصبح bit المتطابقة 0.",
   "A variable is a labelled box. This one is called score.": "المتغير variable صندوقٌ له اسم. هذا الصندوق اسمه score.",
   "set puts a value inside. The box now remembers 7.": "كتلة set تضع قيمة في الداخل. الصندوق يتذكّر الآن 7.",
   "change adds to it. 7 plus 3 makes 10, and the old value is gone.": "كتلة change تضيف إليه. 7 زائد 3 يساوي 10، وتختفي القيمة القديمة.",
@@ -1899,7 +1943,13 @@
 
   function templateTranslation(t) {
     var match;
-    if ((match = t.match(/^(.+?)\s*[>›»←→↑↓]+$/))) return translate(match[1]) + ' ' + t.slice(-1);
+    if ((match = t.match(/^(.+?)\s*(->|=>|>|›|»|←|→|↑|↓)$/))) return translate(match[1]) + ' ' + match[2];
+    if ((match = t.match(/^Bit worth (\d+), (on|off)\.?$/i))) return 'البِت بقيمة ' + match[1] + '، ' + (match[2].toLowerCase() === 'on' ? 'مشغّل' : 'مطفأ');
+    if ((match = t.match(/^All (\d+) switches are off, so the value is 0\.$/i))) return 'المفاتيح الـ' + match[1] + ' مطفأة، لذا القيمة 0.';
+    if ((match = t.match(/^Place values build the number: ([\d +]+) = (\d+)\./i))) return 'قيم المنازل تبني الرقم: ' + match[1] + ' = ' + match[2] + '.';
+    if ((match = t.match(/^Shifting left by (\d+) appends (\d+) zeros?\. It multiplies (\d+) by (\d+), giving (\d+)\.$/i))) return 'الإزاحة إلى اليسار بمقدار ' + match[1] + ' تضيف ' + match[2] + ' صفراً. تضرب ' + match[3] + ' في ' + match[4] + '، والنتيجة ' + match[5] + '.';
+    if ((match = t.match(/^Shifting right by (\d+) drops the last (\d+) bits?\. It divides (\d+) by (\d+) and keeps only the whole part, giving (\d+)\.$/i))) return 'الإزاحة إلى اليمين بمقدار ' + match[1] + ' تحذف آخر ' + match[2] + ' bit. تقسم ' + match[3] + ' على ' + match[4] + ' وتحتفظ بالجزء الصحيح فقط، والنتيجة ' + match[5] + '.';
+    if ((match = t.match(/^That left shift would make (\d+), which is larger than one byte \(255\)\. Use a smaller number or fewer places\.$/i))) return 'الإزاحة اليسرى ستعطي ' + match[1] + '، وهو أكبر من byte واحدة (255). استخدم رقماً أصغر أو عدد منازل أقل.';
     if ((match = t.match(/^robo\s*unison:\s*(.+)$/i))) return 'RoboUnison: ' + translate(match[1]);
     if ((match = t.match(/^(\d+)\s+rewards ready!$/i))) return match[1] + (match[1] === '1' ? ' مكافأة جاهزة!' : ' مكافآت جاهزة!');
     if ((match = t.match(/^quests\s+(\d+)\s+rewards ready!$/i))) return 'مهام: ' + match[1] + (match[1] === '1' ? ' مكافأة جاهزة!' : ' مكافآت جاهزة!');
@@ -1934,18 +1984,30 @@
     if ((match = t.match(/^(\d+)\s+earned$/i))) return match[1] + ' مكتسبة';
     if ((match = t.match(/^rotation\s+(\d{4})-(\d{2})\s+utc$/i))) return 'دورة ' + match[1] + '-' + match[2] + ' UTC';
     if ((match = t.match(/^(\d+)\s+day streak$/i))) return 'سلسلة ' + match[1] + (match[1] === '1' ? ' يوم' : ' أيام');
+    if ((match = t.match(/^(.+?)\s*·\s*\+(\d+)\s+Sparks$/i))) return translate(match[1]) + ' · +' + match[2] + ' Sparks';
     if ((match = t.match(/^next reward in\s+(\d+)\s+days?:\s*(.+)$/i))) return 'المكافأة التالية خلال ' + match[1] + (match[1] === '1' ? ' يوم: ' : ' أيام: ') + translate(match[2]);
     if ((match = t.match(/^total days\s+(\d+)$/i))) return 'إجمالي الأيام ' + match[1];
     if ((match = t.match(/^(\d+)\s+sparks$/i))) return match[1] + ' Sparks';
+    if ((match = t.match(/^(Common|Rare|Epic|Legendary)\s*·\s*(SPARKS|NEW REWARD|DUPLICATE)$/i))) {
+      return translate(match[1]) + ' · ' + translate(match[2]);
+    }
     if ((match = t.match(/^\+(\d+)\s+pts$/i))) return '+' + match[1] + ' نقطة';
     if ((match = t.match(/^spin for\s+(\d+)(⚡)?$/i))) return 'أدر العجلة مقابل ' + match[1] + (match[2] || '');
+    if ((match = t.match(/^spin\s*[—-]\s*(\d+)(⚡)?$/i))) return 'أدر العجلة — ' + match[1] + (match[2] || '');
+    if ((match = t.match(/^new wheel in\s+(.+)$/i))) return 'العجلة الجديدة خلال ' + match[1];
+    if ((match = t.match(/^spins this week:\s*(\d+)$/i))) return 'الجولات هذا الأسبوع: ' + match[1];
+    if ((match = t.match(/^music:\s*(.+)$/i))) return 'الموسيقى: ' + translate(match[1]);
+    if ((match = t.match(/^🎡\s+(.+?)\s+—\s+added to your collection!$/i))) return '🎡 ' + translate(match[1]) + ' — أُضيف إلى مجموعتك!';
+    if ((match = t.match(/^🎡\s+(.+?)\s+—\s+duplicate converted to\s+(\d+)\s+Sparks\.$/i))) return '🎡 ' + translate(match[1]) + ' — تم تحويل المكرر إلى ' + match[2] + ' Sparks.';
+    if ((match = t.match(/^\+(\d+)⚡\s+added by admin\.$/i))) return '+ ' + match[1] + '⚡ أضافها المسؤول.';
+    if ((match = t.match(/^balance set to\s+(\d+)⚡\.$/i))) return 'تم ضبط الرصيد على ' + match[1] + '⚡.';
     if ((match = t.match(/^(\d+)\s+chapters\s*·\s*(\d+)\s+stars$/i))) return match[1] + ' فصول · ' + match[2] + ' نجوم';
     if ((match = t.match(/^(\d+)\s+ch$/i))) return match[1] + ' فصل';
     if ((match = t.match(/^(\d+)\s+of\s+(\d+)\s+guardians alive$/i))) return match[1] + ' من ' + match[2] + ' حراس أحياء';
     if ((match = t.match(/^light restored:\s*(\d+)\s+of\s+(\d+)$/i))) return 'الضوء المستعاد: ' + match[1] + ' من ' + match[2];
     if ((match = t.match(/^section\s+(\d+)\s+of\s+(\d+)$/i))) return 'القسم ' + match[1] + ' من ' + match[2];
     if ((match = t.match(/^section\s+(\d+)\s*·\s*chapter\s+(\d+)\s*·\s*(.+)$/i))) return 'القسم ' + match[1] + ' · الفصل ' + match[2] + ' · ' + translate(match[3]);
-    if ((match = t.match(/^section\s+(\d+)\s+(.+)$/i))) return 'القسم ' + match[1] + ' ' + translate(match[2]);
+    if ((match = t.match(/^section\s+(\d+)\s*(?:·\s*)?(.+)$/i))) return 'القسم ' + match[1] + ' ' + translate(match[2]);
     if ((match = t.match(/^players so far:\s*(\d+)\s+beginners\s*·\s*(\d+)\s+intermediate\s*·\s*(\d+)\s+professionals$/i))) {
       return 'اللاعبون حتى الآن: ' + match[1] + ' مبتدئين · ' + match[2] + ' متوسطين · ' + match[3] + ' محترفين';
     }
@@ -2001,6 +2063,22 @@
       return (match[1].toLowerCase() === 'round rule' ? 'قاعدة الجولة: ' : 'أيضاً: ') + translate(match[2]);
     }
     if ((match = t.match(/^mission:\s*(.+)$/i))) return 'المهمة: ' + translate(match[1]);
+    if ((match = t.match(/^playing\s+(.+?)(?:\s+·\s+(.+))?$/i))) return 'يلعب ' + translate(match[1]) + (match[2] ? ' · ' + translate(match[2]) : '');
+    if ((match = t.match(/^seen\s+just now$/i))) return 'رُؤي الآن';
+    if ((match = t.match(/^seen\s+(\d+)\s+min ago$/i))) return 'رُؤي منذ ' + match[1] + ' دقيقة';
+    if ((match = t.match(/^seen\s+(\d+)\s+hr ago$/i))) return 'رُؤي منذ ' + match[1] + ' ساعة';
+    if ((match = t.match(/^seen\s+(\d+)\s+days? ago$/i))) return 'رُؤي منذ ' + match[1] + ' أيام';
+    if (/^1\s+open$/i.test(t)) return 'طلب مفتوح واحد';
+    if ((match = t.match(/^(\d+)\s+open$/i))) return match[1] + ' طلبات مفتوحة';
+    if ((match = t.match(/^(.+?)\s+sent you a friend request$/i))) return 'أرسل لك «' + match[1] + '» طلب صداقة';
+    if ((match = t.match(/^(.+?)\s+accepted your friend request$/i))) return 'قبل «' + match[1] + '» طلب صداقتك';
+    if ((match = t.match(/^(.+?)\s+declined your friend request$/i))) return 'رفض «' + match[1] + '» طلب صداقتك';
+    if ((match = t.match(/^(.+?)\s+removed you from their friends$/i))) return 'أزال «' + match[1] + '» صداقتك';
+    if ((match = t.match(/^(.+?)\s+is online now\.$/i))) return '«' + match[1] + '» متصل الآن.';
+    if ((match = t.match(/^(.+?)\s+is locked\.\s*(.+)$/i))) return translate(match[1]) + ' مقفل. ' + translate(match[2]);
+    if ((match = t.match(/^you and ['‘](.+?)['’] are now friends\.$/i))) return 'أنت و«' + match[1] + '» أصبحتما صديقين.';
+    if ((match = t.match(/^friend request accepted\.\s*(.+?)\s+was added to your friends\.$/i))) return 'تم قبول طلب الصداقة. أُضيف «' + match[1] + '» إلى أصدقائك.';
+    if ((match = t.match(/^remove\s+['‘]?(.+?)['’]?\?\s+this removes the friendship for both players\.$/i))) return 'هل تريد إزالة «' + match[1] + '»؟ سيؤدي ذلك إلى إزالة الصداقة بين اللاعبين.';
     if (/^(?:the robot (?:stopped|never said|said)|test\s+\d+:\s+the robot (?:stopped|never said|said))/i.test(t)) {
       var storyAt = t.indexOf(' RoboUnison:');
       var mainFailure = storyAt >= 0 ? t.slice(0, storyAt) : t;
@@ -2039,27 +2117,24 @@
     var exact = EXACT_INDEX[t.toLowerCase()];
     if (exact) return exact;
     var template = templateTranslation(t);
-    if (template) return template;
+    if (template && /[\u0600-\u06ff]/.test(template)) return template;
     if (!PHRASE_RE) return raw;
     var translated = t.replace(PHRASE_RE, function (whole, prefix, phrase) {
       return prefix + (PHRASES[phrase.toLowerCase()] || whole);
     });
     if (translated === t) return raw;
-    if (/\b[A-Za-z]{2,}(?:\s+[A-Za-z]{2,}){3,}\b/.test(translated)) return raw;
-    if (t.length > 35) {
-      var arabicLetters = (translated.match(/[\u0600-\u06ff]/g) || []).length;
-      var latinLetters = (translated.match(/[A-Za-z]/g) || []).length;
-      if (arabicLetters < latinLetters * 0.35) return raw;
-    }
+    var keepLatin = /^(?:TLP|Sparks?|RoboUnison|Player|ID|Guest|Code|Coding|Block|Blocks|Program|Programs|Robot|Function|Functions|Loop|Loops|Array|Arrays|String|Strings|Boolean|Variable|Variables|Input|Output|Index|Syntax|Bug|Debug|Recursion|Scope|Binary|Bit|Bits|AND|OR|XOR|Run|Move|Say|Set|Change|Repeat|If|Else|While|Convert|Note|Ask|Join|Turn|Define|Call|Switch|Local|Global|True|False|Co-Admin|GG|UTC|Bonus|The|Lost|Protocol|Online|Offline)$/i;
+    var untranslated = translated.match(/[A-Za-z]{2,}/g) || [];
+    if (!/[\u0600-\u06ff]/.test(translated) || untranslated.some(function (word) { return !keepLatin.test(word); })) return raw;
     return translated;
   }
 
   function injectCSS() {
     if (document.getElementById('tlp-ar-css')) return;
     var css = [
-      '.ar-line{display:block;margin-top:5px;padding:7px 11px;border-radius:9px;border:1px solid color-mix(in srgb,var(--a,#5ac8e8) 30%,transparent);color:color-mix(in srgb,var(--a,#5ac8e8) 88%,var(--fg));background:color-mix(in srgb,var(--a,#5ac8e8) 6%,transparent);font:500 15px/1.85 Tahoma,Arial,sans-serif;direction:rtl;unicode-bidi:plaintext;text-align:right;animation:arIn .3s ease;opacity:0;transform:translateX(8px)}',
-      '.ar-line.show{opacity:1;transform:none}',
-      '.ar-btn{display:inline-block;max-width:100%;margin-inline-start:.45em;padding:2px 8px;border-radius:999px;border:1px solid color-mix(in srgb,var(--a,#5ac8e8) 35%,transparent);color:color-mix(in srgb,var(--a,#5ac8e8) 92%,var(--fg));background:color-mix(in srgb,var(--a,#5ac8e8) 8%,transparent);font:600 .78em Tahoma,Arial,sans-serif;direction:rtl;unicode-bidi:isolate;vertical-align:baseline;white-space:normal;text-align:right}',
+      '.ar-line{display:block;box-sizing:border-box;max-width:100%;min-width:0;margin:.42em 0 0;padding:0;border:0;color:color-mix(in srgb,var(--fg) 78%,var(--a,#5ac8e8));background:transparent;font:500 .9em/1.7 Tahoma,Arial,sans-serif;direction:rtl;unicode-bidi:plaintext;text-align:start;overflow-wrap:anywhere;animation:arIn .25s ease;opacity:0;transform:translateY(3px)}',
+      '.ar-line.show,.ar-btn.show{opacity:1;transform:none}',
+      '.ar-btn{display:flex;flex:1 1 100%;align-items:center;justify-content:center;box-sizing:border-box;width:100%;max-width:100%;min-width:0;margin:.22em 0 0;padding:.12em 0 0;border:0;color:color-mix(in srgb,var(--fg) 80%,var(--a,#5ac8e8));background:transparent;font:600 .76em/1.5 Tahoma,Arial,sans-serif;direction:rtl;unicode-bidi:isolate;text-align:center;white-space:normal;overflow-wrap:anywhere;animation:arIn .25s ease;opacity:0;transform:translateY(3px)}',
       '#arToggle{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--fg) 6%,transparent);color:var(--fg);font:700 13px var(--sans);cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:border-color .2s,background .2s;flex:none}',
       '#arToggle:hover{border-color:var(--a)}',
       '#arToggle:focus-visible{outline:2px solid var(--a);outline-offset:2px}',
@@ -2073,9 +2148,43 @@
       '@media(max-width:380px){#arToggle span{display:none}#arToggle{width:34px;padding:0;justify-content:center}}',
       '.tlp-ar-on code,.tlp-ar-on pre,.tlp-ar-on .blk,.tlp-ar-on .pro-code,.tlp-ar-on .sline b,.tlp-ar-on .player-id{direction:ltr;unicode-bidi:isolate}',
       '.tlp-ar-on .ar-line code,.tlp-ar-on .ar-btn code{direction:ltr;unicode-bidi:isolate;display:inline-block}',
-      '@keyframes arIn{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:none}}',
-      '@media(prefers-reduced-motion:reduce){.ar-line{animation:none;opacity:1;transform:none}}',
-      'html.reduce-fx .ar-line{animation:none;opacity:1;transform:none}'
+      '.tlp-ar-on .goals li{align-items:flex-start;flex-wrap:wrap}',
+      '.tlp-ar-on .goals li>.ar-line{flex:1 1 100%;margin:.45em 0 0;padding:.35em .7em;border-top:2px solid color-mix(in srgb,var(--a) 55%,transparent);border-radius:8px;background:color-mix(in srgb,var(--a) 7%,transparent);font-size:.88em}',
+      '.tlp-ar-on .sobj .ar-line,#cine.c-story .sobj .ar-line{margin-top:8px;padding:8px 10px;border-top:2px solid var(--a);border-radius:8px;background:color-mix(in srgb,var(--a) 9%,transparent);font-size:14px;line-height:1.75}',
+      '.tlp-ar-on h1 .ar-line,.tlp-ar-on h2 .ar-line,.tlp-ar-on h3 .ar-line{padding:0;border:0;background:transparent;font-weight:600;line-height:1.4;margin:.3em 0 0;max-width:32ch}',
+      '.tlp-ar-on h1 .ar-line{font-size:.5em}',
+      '.tlp-ar-on h2 .ar-line{font-size:.58em}',
+      '.tlp-ar-on h3 .ar-line{font-size:.64em}',
+      '.tlp-ar-on #home .hero h1{font-size:clamp(42px,5.2vw,74px);max-width:13ch}',
+      '.tlp-ar-on #home .hero h1 .ar-line{font-size:clamp(16px,2vw,24px);line-height:1.5;margin-top:.38em;max-width:30ch}',
+      '.tlp-ar-on .lbhero h1 .ar-line,.tlp-ar-on .acct-head h1 .ar-line,.tlp-ar-on .fr-hero h1 .ar-line{font-size:clamp(16px,1.8vw,22px);line-height:1.45;margin-top:.35em}',
+      '.tlp-ar-on .lbhero .lead,.tlp-ar-on .acct-head .lead,.tlp-ar-on .fr-hero .lead{font-size:14px;line-height:1.75}',
+      '.tlp-ar-on .lbhero-tags span{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;height:auto;min-height:32px}',
+      '.tlp-ar-on .lbhero-tags .ar-btn{display:block;flex:none;width:auto;margin:0;padding:0;font-size:11px;line-height:1.4;text-align:start}',
+      '.tlp-ar-on .lbkick .ar-line,.tlp-ar-on .fr-kicker .ar-line,.tlp-ar-on #home .kick .ar-line{font-size:12px;line-height:1.5;margin-top:5px;letter-spacing:0;text-transform:none}',
+      '.tlp-ar-on .chip{line-height:1.1}',
+      '.tlp-ar-on .chip>.ar-line{display:block;width:100%;max-width:100%;margin:1px 0 0;padding:0;font-size:10px;font-weight:800;line-height:1.25;letter-spacing:0;text-align:center;color:var(--a)}',
+      '.tlp-ar-on .chip small{font-size:9px;letter-spacing:.04em}',
+      '@media(max-width:560px){',
+      '.tlp-ar-on body:has(#game:not([hidden])) .track:not(.maze) .chip{width:calc(100%/9 + 8px);min-width:0;margin-left:-4px;padding-inline:2px}',
+      '.tlp-ar-on body:has(#game:not([hidden])) .track:not(.maze) .chip::before{display:none}',
+      '.tlp-ar-on body:has(#game:not([hidden])) .track:not(.maze) .goal-marker{width:1em;height:1em;font-size:26px;animation:goalMarkerPulse 1.8s ease-in-out infinite}',
+      '.tlp-ar-on body:has(#game:not([hidden])) .track:not(.maze) .goal-marker::after{display:none}',
+      '.tlp-ar-on body:has(#game:not([hidden])) .track:not(.maze) .chip small{padding:3px 4px;font-size:8px;letter-spacing:.02em}',
+      '.tlp-ar-on body:has(#game:not([hidden])) .track:not(.maze) .chip>.ar-line{font-size:9px;line-height:1.2}',
+      '}',
+      '.tlp-ar-on .acct label.l{letter-spacing:.04em;text-transform:none}',
+      '.tlp-ar-on .acct label.l .ar-btn{justify-content:flex-start;text-align:start;font-size:12px;line-height:1.5;margin-top:4px;color:var(--fg)}',
+      '.tlp-ar-on .acct .consent .ar-btn{justify-content:flex-start;text-align:start;font-size:.9em;line-height:1.65}',
+      '.tlp-ar-on #home-wotd .wotd-card{margin-top:0}',
+      '.tlp-ar-on #home-wotd .wotd-def,.tlp-ar-on #home-wotd .wotd-origin,.tlp-ar-on #home-wotd .wotd-ex{line-height:1.75}',
+      '.tlp-ar-on #home-wotd .wotd-ar{margin-top:10px;padding-top:10px}',
+      '.tlp-ar-on button:has(.ar-btn),.tlp-ar-on a:has(.ar-btn){flex-wrap:wrap}',
+      '.tlp-ar-on button>.ar-btn,.tlp-ar-on a>.ar-btn{flex:1 1 100%;margin:.22em 0 0;padding:.12em 0 0;font-size:.74em}',
+      '.tlp-ar-on .fcard .ar-btn,.tlp-ar-on .fbrow .ar-btn,.tlp-ar-on .frequest .fwho .ar-btn{display:none}',
+      '@keyframes arIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}',
+      '@media(prefers-reduced-motion:reduce){.ar-line,.ar-btn{animation:none;opacity:1;transform:none}}',
+      'html.reduce-fx .ar-line,html.reduce-fx .ar-btn{animation:none;opacity:1;transform:none}'
     ].join('');
     var st = document.createElement('style');
     st.id = 'tlp-ar-css';
@@ -2085,8 +2194,8 @@
 
   var SOURCE_ATTR = 'data-tlp-ar-source';
   var ATTRS = ['aria-label', 'title', 'placeholder', 'alt'];
-  var CONTROL_SEL = 'button,a,[role="button"],.navlink,.fxb,.hm,.tlpm-btn,.navmenu-btn,.navmenu-btn>span,.themetog,.today,.lbbtn,.econ-btn,.ex-btn,.chip,.tab,.nt button,.tabs button,.tabs2 button,.chips2 button,label,legend,.av-item b,.econ-item b,.shop-item b,.wheel-prize-name,.daily-payoff b,.badge-lab,.who b,.who small,.sline b,.setrow b,.setrow small,.pick b,.choice b,.role-card b,.mode-card b,.ex-k,.idbox span,th,.thead span,.ahead span,.lbhero-tags span,.kscore span,.pcard>span,.mr-lbl,.hud-eyebrow,.hud-who b,.hud-score span,.how span,.eb-tx b,.eb-tx small,.pstats span,.pstats small,.pcount span,.psteps b,.selfact small,.selfact b,.pn>div>small,.kick,.facts span,.lf-title,.lf-sub,.lf-tip,.tc-head span,.tc-head small,.tc-stat span,.label,.pvcard>b,.cchip,.fbl,.fbchips button,.wotd-label,.wotd-type,.pvb-runline,#pathBadge,#themes small,.diff,.trk-lab,.lab,.coach .cbody>b,#tourK,button>b,button>small,.mode-reset,#contName,.psum>b,.tscopy>b,.tsbest small,.tsfoot>span,.dhead>b,.dhead>span,.dmt>b,.dmt>span,.ss-txt small,.ss-stats,.ss-stats>span,.gd small,.dclaim,.hs-lbl,.actt,#tally,.mem-label,.mem-sub,.ch-label,.ch-pts,.ch-title,.why b,.toast b,#toast b';
-  var PROSE_SEL = 'p,li,h1,h2,h3,h4,h5,h6,blockquote,figcaption,.hand,.mis,.learned b,.learned li,.payoff span,.nextup,.goals li,.sline span,.clines p,.msg,.msg3,.toast,.gate,.warn,.lead,.sub,.rules,.admin-kick,.lbkick,.gcap,.touchnote,.daily-payoff span,.sobj,.wheel-conversion,.econ-modal p,.econ-modal h2,.econ-modal h3,.av-copy,.story-copy,.friend-card p,.report-copy,.pick span,.choice span,.role-card span,.mode-card span,label span,button span,a span,.pwhint,.note,.s-name,.pvlist li,.kstars,.ameta span,.tfootline,.srnote,#gate,footer span,.warnbox,.palt,.pfind,.qrstat,.msg2,.pkick,.meta,.pfine,.msg4,.frnote,.m,.fr-kicker,.home-who,.wotd-def,.wotd-origin,.wotd-ex,.fbcheck,#msg,.empty,.pvb-k,.pvb-blk,.psteps li div>span,.psum>span,.tscopy>span,.gtxt,.mode-best,.dfoot,.mem-ans,.why li,.toast>div,#toast>div';
+  var CONTROL_SEL = 'button,a,[role="button"],.navlink,.fxb,.hm,.tlpm-btn,.navmenu-btn,.navmenu-btn>span,.themetog,.today,.lbbtn,.econ-btn,.ex-btn,.tab,.nt button,.tabs button,.tabs2 button,.chips2 button,label,legend,.av-item b,.econ-item b,.shop-item b,.wheel-prize-name,.daily-payoff b,.badge-lab,.who b,.who small,.sline b,.setrow b,.setrow small,.pick b,.choice b,.role-card b,.mode-card b,.ex-k,.binlab-k,.binlab-readout small,.idbox span,th,.thead span,.ahead span,.lbhero-tags span,.kscore span,.pcard>span,.mr-lbl,.hud-eyebrow,.hud-who b,.hud-score span,.how span,.eb-tx b,.eb-tx small,.pstats span,.pstats small,.pcount span,.psteps b,.selfact small,.selfact b,.self-profile small,.av-save-state,.fr-step,.sync-mode,.pn>div>small,.wheel-reveal-kicker,.wheel-kicker,.wheel-timer,.wheel-spins,.kick,.facts span,.lf-title,.lf-sub,.lf-tip,.tc-head span,.tc-head small,.tc-stat span,.label,.pvcard>b,.cchip,.fbl,.fbchips button,.wotd-label,.wotd-type,.pvb-runline,#pathBadge,#themes small,.diff,.trk-lab,.lab,.coach .cbody>b,#tourK,button>b,button>small,.mode-reset,#contName,.psum>b,.tscopy>b,.tsbest small,.tsfoot>span,.dhead>b,.dhead>span,.dmt>b,.dmt>span,.ss-txt small,.ss-stats,.ss-stats>span,.gd small,.dclaim,.hs-lbl,.actt,#tally,.mem-label,.mem-sub,.ch-label,.ch-pts,.ch-title,.why b,.toast b,#toast b';
+  var PROSE_SEL = 'p,li,h1,h2,h3,h4,h5,h6,blockquote,figcaption,.hand,.binlab-controls>span,.binlab-explain,.mis,.learned b,.learned li,.payoff span,.nextup,.goals li,.sline span,.clines p,.msg,.msg3,.toast,.gate,.warn,.lead,.sub,.rules,.admin-kick,.lbkick,.gcap,.touchnote,.daily-payoff span,.sobj,.wheel-conversion,.econ-modal p,.econ-modal h2,.econ-modal h3,.av-copy,.story-copy,.friend-card p,.fr-banner,#friendToast,#presenceToast,#avToast,#econToast,.wl-lab,.wheel-note,.flocal,.fdot,.report-copy,.pick span,.choice span,.role-card span,.mode-card span,label span,button span,a span,.pwhint,.note,.s-name,.pvlist li,.kstars,.ameta span,.tfootline,.srnote,#gate,footer span,.warnbox,.palt,.pfind,.qrstat,.msg2,.pkick,.meta,.pfine,.msg4,.frnote,.m,.fr-kicker,.home-who,.wotd-def,.wotd-origin,.wotd-ex,.chip,.fbcheck,#msg,.empty,.pvb-k,.pvb-blk,.psteps li div>span,.psum>span,.tscopy>span,.gtxt,.mode-best,.dfoot,.mem-ans,.why li,.toast>div,#toast>div';
   var SKIP_SEL = '.ar-line,.ar-btn,.ar-bilingual,#arToggle,script,style,noscript,template,svg,canvas,pre,code,.blk,.pro-code,.codeview,.console-code,input,textarea';
   var ATTR_SKIP_SEL = '.ar-line,.ar-btn,.ar-bilingual,#arToggle,script,style,noscript,template,svg,canvas,pre,code,.blk,.pro-code,.codeview,.console-code';
 
@@ -2204,14 +2313,13 @@
     var existing = old[0];
     if (existing && existing.textContent === ar && existing.classList.contains(inline ? 'ar-btn' : 'ar-line')) return;
     old.forEach(function (node) { node.remove(); });
-    var phrasing = /^(SPAN|B|SMALL|LABEL|LEGEND|A)$/.test(el.tagName);
-    var tag = document.createElement(inline || phrasing ? 'span' : 'div');
+    var tag = document.createElement('span');
     tag.className = inline ? 'ar-btn' : 'ar-line';
     tag.setAttribute('dir', 'rtl');
     tag.setAttribute('lang', 'ar');
     tag.textContent = ar;
     el.appendChild(tag);
-    if (!inline) requestAnimationFrame(function () { tag.classList.add('show'); });
+    requestAnimationFrame(function () { tag.classList.add('show'); });
   }
 
   function decorate(root) {
@@ -2652,7 +2760,42 @@
   "a variable x is created inside a function. can code outside the function use x?": "يُنشأ المتغير x داخل دالة function. هل يمكن للكود خارج الدالة استخدام x؟",
   "local variables are only visible inside their function.": "المتغيرات المحلية local variables لا تظهر إلا داخل دالتها.",
   "sometimes": "أحياناً",
-  "only in loops": "في الحلقات فقط"
+  "only in loops": "في الحلقات فقط",
+  "Boss · locked": "الزعيم · مقفل",
+  "Signal Found": "الإشارة المكتشفة",
+  "Warm Circuit": "الدائرة الدافئة",
+  "Steady Signal": "الإشارة المستقرة",
+  "Week Signal": "إشارة الأسبوع",
+  "Ten Day Relay": "ترحيل الأيام العشرة",
+  "Two Week Link": "وصلة الأسبوعين",
+  "Habit Protocol": "بروتوكول العادة",
+  "Month of Logic": "شهر المنطق",
+  "Deep Archive": "الأرشيف العميق",
+  "Two Month Core": "نواة الشهرين",
+  "Diamond Signal": "إشارة الماس",
+  "Century Circuit": "دائرة المئة يوم",
+  "Deep Protocol": "البروتوكول العميق",
+  "Long Haul": "الرحلة الطويلة",
+  "Nexus Regular": "منتظم Nexus",
+  "Almost a Year": "عام تقريباً",
+  "Protocol Keeper": "حارس البروتوكول",
+  "Friends needs the online version of the site.": "تحتاج قائمة الأصدقاء إلى النسخة المتصلة بالإنترنت من الموقع.",
+  "Please sign in with a learner account to use Friends.": "يرجى تسجيل الدخول بحساب متعلّم لاستخدام قائمة الأصدقاء.",
+  "Parent and Educator accounts do not have a learner profile. Back to the Parent and Educator area.": "حسابات أولياء الأمور والمربين لا تملك ملف متعلّم. العودة إلى منطقة أولياء الأمور والمربين.",
+  "The administrator account has no learner profile, so it has no friends list. Use a learner account to test this page.": "حساب المسؤول لا يملك ملف متعلّم، لذلك لا توجد له قائمة أصدقاء. استخدم حساب متعلّم لتجربة هذه الصفحة.",
+  "Sign in with a learner account to keep a friend list. Sign in.": "سجّل الدخول بحساب متعلّم للاحتفاظ بقائمة أصدقاء. تسجيل الدخول.",
+  "Request sent. You will see them in Friends when they accept.": "أُرسل الطلب. سترى هذا اللاعب في الأصدقاء عندما يقبله.",
+  "They already sent you a request. Accept it in the Requests panel.": "أرسل لك هذا اللاعب طلباً بالفعل. اقبله من لوحة الطلبات.",
+  "That request is already waiting for a response.": "هذا الطلب بانتظار الرد بالفعل.",
+  "You are already friends.": "أنتما صديقان بالفعل.",
+  "Added on this device. Online requests need the updated online service.": "أُضيف على هذا الجهاز. تحتاج طلبات الأصدقاء عبر الإنترنت إلى خدمة الأصدقاء المحدّثة.",
+  "Friend removed. The friendship was removed for both players.": "أُزيل الصديق. أُزيلت الصداقة بين اللاعبين.",
+  "Request declined.": "رُفض الطلب.",
+  "Request cancelled.": "أُلغي الطلب.",
+  "Open Friends to accept or decline the request.": "افتح الأصدقاء لقبول الطلب أو رفضه.",
+  "You are now friends and can find each other on the Friends board.": "أصبحتما صديقين ويمكنكما العثور على بعضكما في لوحة الأصدقاء.",
+  "The friend request was declined.": "رُفض طلب الصداقة.",
+  "The friendship has been removed.": "أُزيلت الصداقة."
 };
 
   var SITE = {
@@ -3122,6 +3265,13 @@
   "Please sign in with a learner account to use the friend list.": "سجّل الدخول بحساب متعلم لاستخدام قائمة الأصدقاء.",
   "Player ID: Copy": "معرف اللاعب: نسخ",
   "Browsing friends": "تصفح الأصدقاء",
+  "On the home page": "في الصفحة الرئيسية",
+  "In the bonus workshops": "في ورش الأقسام الإضافية",
+  "Playing the game": "يلعب اللعبة",
+  "Checking leaderboards": "يطّلع على لوحات المتصدرين",
+  "Viewing progress": "يعرض التقدم",
+  "Online": "متصل",
+  "Offline": "غير متصل",
   "The Lost Protocol · Administration · Privacy notice": "The Lost Protocol · الإدارة · إشعار الخصوصية",
   "The Lost Protocol · Leaderboards · Privacy notice": "The Lost Protocol · لوحات المتصدرين · إشعار الخصوصية",
   "The Lost Protocol, an interactive educational game · Privacy notice": "The Lost Protocol، لعبة تعليمية تفاعلية · إشعار الخصوصية",
@@ -3217,17 +3367,40 @@
   "Delete permanently": "الحذف نهائياً",
   "SQUAD CONNECTIONS": "روابط الفريق",
   "Friends": "الأصدقاء",
-  "Add friends by their Player ID and see when they are online.": "أضف أصدقاء بمعرف اللاعب الخاص بهم واعرف متى يكونون متصلين.",
+  "Send a request, share progress and see when your friends are online.": "أرسل طلباً، وشارك تقدمك، واعرف متى يكون أصدقاؤك متصلين.",
+  "Notifications": "الإشعارات",
   "You": "أنت",
   "Player": "لاعب",
   "Friends see you as": "يرى الأصدقاء حالتك كـ",
+  "Friends synced online": "الأصدقاء متزامنون عبر الإنترنت",
+  "Browser backup mode": "وضع النسخة الاحتياطية في المتصفح",
+  "Connecting…": "جارٍ الاتصال…",
   "Add a friend": "إضافة صديق",
+  "1 · Find player": "1 · ابحث عن لاعب",
   "Their Player ID, TLP-12345678": "معرف اللاعب، TLP-12345678",
   "Friend Player ID": "معرف اللاعب للصديق",
-  "Add friend": "إضافة صديق",
-  "Both people add each other, because a friend list is kept in each player's own browser.": "يضيف كل شخص الآخر، لأن قائمة الأصدقاء تُحفظ في متصفح كل لاعب.",
+  "Send request": "إرسال طلب",
+  "Sending…": "جارٍ الإرسال…",
+  "Your friend accepts the request before either of you appears on the other's list.": "يقبل صديقك الطلب قبل أن يظهر أي منكما في قائمة الآخر.",
+  "Requests": "الطلبات",
+  "open": "مفتوح",
+  "Received": "المستلمة",
+  "Sent": "المرسلة",
+  "Accept": "قبول",
+  "Decline": "رفض",
+  "Cancel request": "إلغاء الطلب",
+  "No open requests. Send a Player ID above to start.": "لا توجد طلبات مفتوحة. أرسل معرف لاعب أعلاه للبدء.",
+  "Friend requests need the online service. Friends already saved on this device still appear below.": "تحتاج طلبات الأصدقاء إلى الخدمة الإلكترونية. سيظل الأصدقاء المحفوظون على هذا الجهاز ظاهرين أدناه.",
+  "Mark all read": "تحديد الكل كمقروء",
+  "No notifications yet. Requests and friend updates will appear here.": "لا توجد إشعارات بعد. ستظهر هنا طلبات الأصدقاء وتحديثاتهم.",
   "Your friends": "أصدقاؤك",
   "No friends yet. Add a Player ID above.": "لا أصدقاء بعد. أضف معرف لاعب أعلاه.",
+  "Remove": "إزالة",
+  "On this device": "على هذا الجهاز",
+  "Synced friend": "صديق متزامن",
+  "Remove friend?": "إزالة الصديق؟",
+  "Remove friend": "إزالة الصديق",
+  "Keep friend": "الإبقاء على الصديق",
   "Online status comes from a live connection and clears when someone closes the site. A friend can look offline while their browser is asleep.": "تأتي حالة الاتصال من اتصال مباشر وتختفي عند إغلاق الموقع. قد يبدو الصديق غير متصل عندما يكون متصفحه نائماً.",
   "Last updated 16 November 2026.": "آخر تحديث في 16 نوفمبر 2026.",
   "What The Lost Protocol keeps, who can see it, and how to remove it.": "ما الذي يحفظه The Lost Protocol، ومن يمكنه رؤيته، وكيفية إزالته.",
@@ -3324,6 +3497,30 @@
   "System log": "سجل النظام",
   "Dr. Lena Voss": "الدكتورة Lena Voss",
   "RoboUnison": "RoboUnison",
+  "SAVED ON THIS DEVICE": "محفوظ على هذا الجهاز",
+  "SYNCING…": "جارٍ المزامنة…",
+  "AUTO-SAVED": "تم الحفظ تلقائياً",
+  "SYNC PAUSED": "المزامنة متوقفة",
+  "Your look is saved on this device, but it could not sync. Try again when you are online.": "تم حفظ مظهرك على هذا الجهاز، لكن تعذرت مزامنته. حاول مجدداً عند الاتصال.",
+  "SPARKS ECONOMY": "اقتصاد Sparks",
+  "The Exchange": "سوق التبادل",
+  "Earn sparks from missions, quests and streaks. Spend them in the shop or spin the weekly wheel.": "اكسب Sparks من المهام والسلاسل اليومية. أنفقها في المتجر أو أدر العجلة الأسبوعية.",
+  "Daily quests": "المهام اليومية",
+  "Shop": "المتجر",
+  "Page theme": "مظهر الصفحة",
+  "Home calm": "هدوء الرئيسية",
+  "Arcade": "أركيد",
+  "Upbeat": "موسيقى حماسية",
+  "Dark drive": "قيادة ليلية",
+  "Night ops": "عمليات ليلية",
+  "Boss mode": "وضع الزعيم",
+  "THE SPARK VAULT": "خزنة Sparks",
+  "Your next big win.": "ربحك الكبير القادم.",
+  "A fresh prize lineup every week": "تشكيلة جوائز جديدة كل أسبوع",
+  "Spinning…": "جارٍ الدوران…",
+  "Every prize is guaranteed. Legendary drops are rare.": "كل جائزة مضمونة. الجوائز الأسطورية نادرة.",
+  "✦ THIS WEEK'S PRIZES": "✦ جوائز هذا الأسبوع",
+  "RECENT PRIZES": "أحدث الجوائز",
   "CONGRATS! YOU WON": "تهانينا! لقد ربحت",
   "Added to your collection. Equip it now, or choose it later in the avatar menu.": "أُضيف إلى مجموعتك. جهّزه الآن، أو اختره لاحقاً من قائمة الصورة الرمزية.",
   "Equip now": "تجهيز الآن",
@@ -3331,6 +3528,11 @@
   "OOPS! You got something you already have.": "عذراً! حصلت على شيء تملكه بالفعل.",
   "You get 100 Sparks.": "تحصل على 100 Sparks.",
   "TRY AGAIN — MAYBE LUCK WILL BE ON YOUR SIDE.": "حاول مجدداً — ربما يكون الحظ إلى جانبك.",
+  "Your balance is ready for the shop or another spin.": "رصيدك جاهز للمتجر أو لجولة أخرى.",
+  "Kept in your collection. You can equip it anytime in the avatar menu.": "بقي في مجموعتك. يمكنك تجهيزه في أي وقت من قائمة الصورة الرمزية.",
+  "SPARKS": "Sparks",
+  "NEW REWARD": "مكافأة جديدة",
+  "DUPLICATE": "مكرر",
   "Lucky Wheel": "العجلة المحظوظة",
   "Spin the wheel": "أدر العجلة",
   "Spinning...": "جارٍ الدوران...",

@@ -168,20 +168,30 @@
 
 
   function todayProg() {
-    var ch = 0, stars = 0, bosses = 0;
+    var ch = 0, stars = 0, bosses = 0, scope = '', found = false;
     try {
+      var auth = A(), user = auth && auth.currentUser ? auth.currentUser.id : 'guest';
+      scope = 'tlp-v2@' + user + '@' + learnerId() + '@';
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (!k || !/@prog$/.test(k)) continue;
+        if (!k || k.indexOf(scope) !== 0 || !/@prog$/.test(k)) continue;
+        found = true;
         var prog = JSON.parse(localStorage.getItem(k) || '{}');
         Object.keys(prog).forEach(function (key) {
           var n = Number(prog[key]) || 0;
           if (n >= 1) { ch++; stars += Math.min(3, n); }
         });
       }
+      if (!found) {
+        var legacy = JSON.parse(localStorage.getItem('tlp-prog') || '{}');
+        Object.keys(legacy).forEach(function (key) {
+          var n = Number(legacy[key]) || 0;
+          if (n >= 1) { ch++; stars += Math.min(3, n); }
+        });
+      }
       for (var j = 0; j < localStorage.length; j++) {
         var bk = localStorage.key(j);
-        if (!bk || !/@badges$/.test(bk)) continue;
+        if (found ? (!bk || bk.indexOf(scope) !== 0 || !/@badges$/.test(bk)) : bk !== 'tlp-badges') continue;
         try { bosses += (JSON.parse(localStorage.getItem(bk) || '[]') || []).length; } catch (e) {}
       }
     } catch (e) {}
@@ -214,8 +224,8 @@
     return 'Locked — ' + item.hint;
   }
 
-  var cfg = { animal: 'robot', b: 'blue', gear: 'none', hat: 'none', face: 'std', speech: '', pet: 'none', anim: 'idle', pal: null, look: {} };
-  var loaded = false, loadedLearner = '', lookT = null;
+  var cfg = { animal: 'robot', b: 'blue', gear: 'none', hat: 'none', face: 'std', speech: '', pet: 'none', anim: 'idle', pal: null, look: {}, updatedAt: 0 };
+  var loaded = false, loadedLearner = '', lookT = null, saveSeq = 0, syncNoticeAt = 0;
   function learnerId() {
     try { var l = A() && A().getActiveLearner ? A().getActiveLearner() : null; return l && l.id || 'default'; } catch (e) { return 'default'; }
   }
@@ -227,7 +237,7 @@
     try {
       raw = localStorage.getItem('tlp-avatar');
       var owner = localStorage.getItem('tlp-avatar-owner');
-      if (raw && (!owner || owner === id || (owner === 'default' && id !== 'default'))) {
+      if (raw && (!owner || owner === id)) {
         localStorage.setItem(avatarKey(id), raw);
         localStorage.setItem('tlp-avatar-owner', id);
         return JSON.parse(raw);
@@ -235,10 +245,30 @@
     } catch (e) {}
     return null;
   }
+  function avatarTime(value) {
+    var at = Number(value);
+    return Number.isFinite(at) ? Math.max(0, at) : 0;
+  }
   function mergeAvatar(local, cloud) {
-    var out = Object.assign({}, cloud || {}, local || {});
-    out.look = Object.assign({}, (cloud && cloud.look) || {}, (local && local.look) || {});
-    if (!validPalette(out.pal) && cloud && validPalette(cloud.pal)) out.pal = cloud.pal.slice();
+    var localAt = avatarTime(local && local.updatedAt), cloudAt = avatarTime(cloud && cloud.updatedAt);
+    var localNewer = localAt > cloudAt;
+    var localLook = local && local.look && typeof local.look === 'object' && !Array.isArray(local.look) ? local.look : {};
+    var cloudLook = cloud && cloud.look && typeof cloud.look === 'object' && !Array.isArray(cloud.look) ? cloud.look : {};
+    var out = Object.assign({}, local || {}, cloud || {});
+    out.look = Object.assign({}, localLook, cloudLook);
+    if (localNewer) {
+      out = Object.assign({}, cloud || {}, local || {});
+      out.look = Object.assign({}, cloudLook, localLook);
+    }
+    var localEconAt = avatarTime(localLook.econ && localLook.econ.updatedAt), cloudEconAt = avatarTime(cloudLook.econ && cloudLook.econ.updatedAt);
+    if (localEconAt !== cloudEconAt) {
+      var walletLook = cloudEconAt > localEconAt ? cloudLook : localLook;
+      out.look.econ = walletLook.econ;
+      if (Object.prototype.hasOwnProperty.call(walletLook, 'title')) out.look.title = walletLook.title;
+      else delete out.look.title;
+    }
+    out.updatedAt = Math.max(localAt, cloudAt);
+    if (!localNewer && !validPalette(out.pal) && cloud && validPalette(cloud.pal)) out.pal = cloud.pal.slice();
     return out;
   }
 
@@ -253,6 +283,7 @@
 
     out.pal = validPalette(c.pal) ? c.pal.slice() : null;
     out.look = (c.look && typeof c.look === 'object' && !Array.isArray(c.look)) ? c.look : {};
+    out.updatedAt = avatarTime(c.updatedAt);
     return out;
   }
   function load() {
@@ -261,7 +292,7 @@
     loaded = true;
     loadedLearner = id;
     clearTimeout(lookT);
-    cfg = { animal: 'robot', b: 'blue', gear: 'none', hat: 'none', face: 'std', speech: '', pet: 'none', anim: 'idle', pal: null, look: {} };
+    cfg = { animal: 'robot', b: 'blue', gear: 'none', hat: 'none', face: 'std', speech: '', pet: 'none', anim: 'idle', pal: null, look: {}, updatedAt: 0 };
     var local = null;
     try { local = localAvatar(id); } catch (e) {}
     var l = null;
@@ -273,19 +304,50 @@
   function save() {
     load();
     var id = loadedLearner;
+    cfg.updatedAt = Math.max(Date.now(), avatarTime(cfg.updatedAt) + 1);
+    var request = ++saveSeq;
     try {
       localStorage.setItem(avatarKey(id), JSON.stringify(cfg));
       var owner = localStorage.getItem('tlp-avatar-owner');
       if (!owner || owner === 'default' || owner === id) localStorage.setItem('tlp-avatar-owner', id);
     } catch (e) {}
     try { document.dispatchEvent(new CustomEvent('tlp-avatar-change')); } catch (e) {}
+    var label = document.querySelector('.av-save-state');
     var l = null;
     try { l = A() && A().getActiveLearner ? A().getActiveLearner() : null; } catch (e) {}
-    if (!l || l.id !== id || id === 'default' || !A() || !A().supabase || !A().isCloudConfigured || !A().isCloudConfigured()) return;
+    if (!l || l.id !== id || id === 'default' || !A() || !A().supabase || !A().isCloudConfigured || !A().isCloudConfigured()) {
+      if (label) label.textContent = 'SAVED ON THIS DEVICE';
+      return;
+    }
     var payload = JSON.parse(JSON.stringify(cfg));
-    A().supabase.rpc('save_avatar', { p_learner_id: id, p_avatar: payload }).then(function () {
-      try { if (learnerId() === id) l.avatar = payload; } catch (e) {}
-    }).catch(function () {});
+    if (label) label.textContent = 'SYNCING…';
+    A().saveAvatar(id, payload).then(function (saved) {
+      if (learnerId() !== id || request !== saveSeq) return;
+      var synced = saved && typeof saved === 'object' ? saved : payload;
+      cfg.updatedAt = avatarTime(synced.updatedAt) || cfg.updatedAt;
+      try { localStorage.setItem(avatarKey(id), JSON.stringify(cfg)); } catch (e) {}
+      try { l.avatar = synced; } catch (e) {}
+      if (label) label.textContent = 'AUTO-SAVED';
+    }).catch(function () {
+      if (learnerId() !== id || request !== saveSeq) return;
+      if (label) label.textContent = 'SYNC PAUSED';
+      var now = Date.now();
+      if (modal && !modal.hidden && now - syncNoticeAt > 30000) {
+        syncNoticeAt = now;
+        showToast('Your look is saved on this device, but it could not sync. Try again when you are online.');
+      }
+    });
+  }
+  function showToast(text) {
+    var m = document.getElementById('avToast');
+    if (!m) {
+      m = document.createElement('div'); m.id = 'avToast'; m.className = 'av-toast';
+      document.body.appendChild(m);
+    }
+    m.textContent = text;
+    m.classList.add('on');
+    clearTimeout(m._t);
+    m._t = setTimeout(function () { m.classList.remove('on'); }, 4200);
   }
   function equip(group, id) {
     var it = find(group, id);
@@ -300,15 +362,7 @@
     if (window.TLP_COMMON && TLP_COMMON.snd) TLP_COMMON.snd('tick');
   }
   function toastLock(item, st, group) {
-    var m = document.getElementById('avToast');
-    if (!m) {
-      m = document.createElement('div'); m.id = 'avToast'; m.className = 'av-toast';
-      document.body.appendChild(m);
-    }
-    m.textContent = item.name + ' is locked. ' + hintFor(item, st, group);
-    m.classList.add('on');
-    clearTimeout(m._t);
-    m._t = setTimeout(function () { m.classList.remove('on'); }, 3200);
+    showToast(item.name + ' is locked. ' + hintFor(item, st, group));
   }
 
 
@@ -365,7 +419,7 @@
     bunny:   { ty: 20, s: 0.90 },
     horse:   { ty: 20, s: 0.90 },
     tiger:   { ty: 18, s: 0.95 },
-    giraffe: { ty: 10, s: 0.60 },
+    giraffe: { ty: 16, s: 0.62 },
     dragon:  { ty: 19, s: 0.95 }
   };
   function gearTransform(fit) {
@@ -398,7 +452,7 @@
     if (fid === 'mono') return '<rect x="18" y="25" width="28" height="9" rx="4" fill="' + ink + '"/><rect x="21" y="27" width="9" height="2.5" rx="1" fill="#67e8f9" opacity=".8"/>';
     if (fid === 'sleepy') return '<path d="M22 31 q3 3 6 0 M36 31 q3 3 6 0" stroke="' + ink + '" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
     if (fid === 'angry') return '<path d="M20 25 l8 3 M44 25 l-8 3" stroke="' + ink + '" stroke-width="2.2" stroke-linecap="round"/><circle cx="25" cy="31" r="2.6" fill="' + ink + '"/><circle cx="39" cy="31" r="2.6" fill="' + ink + '"/>';
-    if (fid === 'heart') return '<path d="M25 33 c-3-4-8-1-8 2 c0 4 5 7 8 9 c3-2 8-5 8-9 c0-3-5-6-8-2z" fill="#fb7185"/><path d="M39 33 c-3-4-8-1-8 2 c0 4 5 7 8 9 c3-2 8-5 8-9 c0-3-5-6-8-2z" fill="#fb7185"/>';
+    if (fid === 'heart') return '<path d="M25 35 C21 32 16.5 29 16.5 25.2 C16.5 21.8 19.6 20 22.5 21.3 C23.6 21.8 24.4 22.6 25 23.7 C25.6 22.6 26.4 21.8 27.5 21.3 C30.4 20 33.5 21.8 33.5 25.2 C33.5 29 29 32 25 35Z" fill="#fb7185"/><path d="M25 35 C21 32 16.5 29 16.5 25.2 C16.5 21.8 19.6 20 22.5 21.3 C23.6 21.8 24.4 22.6 25 23.7 C25.6 22.6 26.4 21.8 27.5 21.3 C30.4 20 33.5 21.8 33.5 25.2 C33.5 29 29 32 25 35Z" transform="translate(14 0)" fill="#fb7185"/>';
     return '<circle cx="25" cy="30" r="3.2" fill="' + ink + '"/><circle cx="39" cy="30" r="3.2" fill="' + ink + '"/>' +
       '<circle cx="26.1" cy="28.9" r="1" fill="#fff" opacity=".85"/><circle cx="40.1" cy="28.9" r="1" fill="#fff" opacity=".85"/>';
   }
@@ -413,17 +467,17 @@
 
 
     var gloss = '<ellipse cx="25" cy="23" rx="8" ry="3.6" fill="#fff" opacity=".25"/>';
-    var outline = 'stroke="' + shade(col, -35) + '" stroke-opacity=".42" stroke-width="1.55"';
+    var outline = 'stroke="' + shade(col, -46) + '" stroke-opacity=".72" stroke-width="1.8" stroke-linejoin="round"';
     switch (id) {
       case 'axolotl': return '<ellipse cx="32" cy="36" rx="21" ry="15.5" fill="' + col + '" ' + outline + '/><ellipse cx="32" cy="41" rx="13" ry="8" fill="' + col2 + '" opacity=".45"/><path d="M11 30 q-8 -2 -10 -9 M10 36 q-10 0 -12 6 M10 42 q-8 2 -9 9 M53 30 q8 -2 10 -9 M54 36 q10 0 12 6 M54 42 q8 2 9 9" stroke="' + col3 + '" stroke-width="3.6" fill="none" stroke-linecap="round"/>' + gloss;
       case 'cat': return '<path d="M16 25 Q11 6 27 17 Q32 21 32 25 Z M48 25 Q53 6 37 17 Q32 21 32 25 Z" fill="' + col + '" ' + outline + '/><path d="M18 21 Q15 11 24 18 M46 21 Q49 11 40 18" fill="none" stroke="' + col2 + '" stroke-width="2.2" stroke-linecap="round"/><circle cx="32" cy="34" r="18" fill="' + col + '" ' + outline + '/><ellipse cx="32" cy="40" rx="11" ry="7" fill="' + col2 + '" opacity=".38"/>' + gloss;
       case 'dog': return '<path d="M13 25 Q5 12 14 9 Q24 11 21 27 Z M51 25 Q59 12 50 9 Q40 11 43 27 Z" fill="' + col3 + '" ' + outline + '/><ellipse cx="32" cy="34" rx="18" ry="17.5" fill="' + col + '" ' + outline + '/><ellipse cx="32" cy="40" rx="11.5" ry="7.5" fill="' + col2 + '" opacity=".42"/>' + gloss;
       case 'fox': return '<path d="M16 24 L11 7 L28 17 Z M48 24 L53 7 L36 17 Z" fill="' + col + '" ' + outline + '/><path d="M18 21 L14.5 11 L25.5 18 Z M46 21 L49.5 11 L38.5 18 Z" fill="' + col3 + '"/><circle cx="32" cy="34" r="16" fill="' + col + '" ' + outline + '/><path d="M21 41 q11 10 22 0 q-5 11 -11 11 q-6 0 -11 -11z" fill="' + col2 + '"/>' + gloss;
       case 'panda': return '<circle cx="16" cy="18" r="8.5" fill="' + col3 + '" ' + outline + '/><circle cx="48" cy="18" r="8.5" fill="' + col3 + '" ' + outline + '/><ellipse cx="32" cy="34" rx="18.5" ry="17.5" fill="' + col + '" ' + outline + '/><ellipse cx="24" cy="31" rx="5.8" ry="7" fill="' + col3 + '" transform="rotate(-16 24 31)"/><ellipse cx="40" cy="31" rx="5.8" ry="7" fill="' + col3 + '" transform="rotate(16 40 31)"/><ellipse cx="32" cy="41" rx="10" ry="6" fill="' + col2 + '" opacity=".38"/>' + gloss;
-      case 'bunny': return '<ellipse cx="22" cy="9" rx="6.2" ry="13.5" fill="' + col + '" ' + outline + '/><ellipse cx="42" cy="9" rx="6.2" ry="13.5" fill="' + col + '" ' + outline + '/><ellipse cx="22" cy="9" rx="3.3" ry="9.5" fill="' + col2 + '"/><ellipse cx="42" cy="9" rx="3.3" ry="9.5" fill="' + col2 + '"/><ellipse cx="32" cy="35" rx="17" ry="16" fill="' + col + '" ' + outline + '/><ellipse cx="32" cy="40" rx="9.5" ry="6" fill="' + col2 + '" opacity=".42"/>' + gloss;
+      case 'bunny': return '<ellipse cx="22" cy="11" rx="6.2" ry="10.5" fill="' + col + '" ' + outline + '/><ellipse cx="42" cy="11" rx="6.2" ry="10.5" fill="' + col + '" ' + outline + '/><ellipse cx="22" cy="11" rx="3.3" ry="7.4" fill="' + col2 + '"/><ellipse cx="42" cy="11" rx="3.3" ry="7.4" fill="' + col2 + '"/><ellipse cx="32" cy="35" rx="17" ry="16" fill="' + col + '" ' + outline + '/><ellipse cx="32" cy="40" rx="9.5" ry="6" fill="' + col2 + '" opacity=".42"/>' + gloss;
       case 'horse': return '<path d="M18 21 q-4 -13 7 -15 q6 5 4 14 Z M46 21 q4 -13 -7 -15 q-6 5 -4 14 Z" fill="' + col3 + '"/><ellipse cx="32" cy="34" rx="16.8" ry="15.5" fill="' + col + '" ' + outline + '/><path d="M24 21 q8 -6 16 0 l-2 7 q-6 -4 -12 0z" fill="' + col3 + '"/><ellipse cx="32" cy="41" rx="9.5" ry="6.2" fill="' + col2 + '" opacity=".28"/>' + gloss;
       case 'tiger': return '<path d="M16 24 L12 9 L27 17 Z M48 24 L52 9 L37 17 Z" fill="' + col + '" ' + outline + '/><path d="M18 21 L14.5 12 L25 18 Z M46 21 L49.5 12 L39 18 Z" fill="' + col2 + '"/><circle cx="32" cy="34" r="16.2" fill="' + col + '" ' + outline + '/><path d="M23 21 l4 4 M30 18 l3 5 M41 18 l-3 5 M45 22 l-4 3 M20 27 l5 1 M44 27 l-5 1" stroke="' + col3 + '" stroke-width="2" stroke-linecap="round" fill="none"/>' + gloss;
-      case 'giraffe': return '<rect x="27.5" y="28" width="9" height="26" rx="4.5" fill="' + col + '" ' + outline + '/><path d="M20 9 q-5 -5 -10 -3 M30 6 q0 -6 5 -6 M40 7 q5 -4 10 -2" stroke="' + col3 + '" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="32" cy="16" rx="13.5" ry="10.5" fill="' + col + '" ' + outline + '/><ellipse cx="32" cy="20" rx="8" ry="4.5" fill="' + col2 + '" opacity=".62"/><circle cx="26" cy="10" r="3" fill="' + col3 + '"/><circle cx="38" cy="8" r="3" fill="' + col3 + '"/><circle cx="44" cy="13" r="2.4" fill="' + col3 + '"/><circle cx="20" cy="15" r="2.4" fill="' + col3 + '"/><ellipse cx="28" cy="13" rx="4.5" ry="2" fill="#fff" opacity=".12"/>';
+      case 'giraffe': return '<rect x="27.5" y="31" width="9" height="23" rx="4.5" fill="' + col + '" ' + outline + '/><path d="M20 18 q-5 -5 -10 -3 M30 15 q0 -6 5 -6 M40 16 q5 -4 10 -2" stroke="' + col3 + '" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="32" cy="25" rx="14.5" ry="12" fill="' + col + '" ' + outline + '/><ellipse cx="32" cy="29" rx="8.5" ry="5" fill="' + col2 + '" opacity=".62"/><circle cx="26" cy="19" r="3" fill="' + col3 + '"/><circle cx="38" cy="17" r="3" fill="' + col3 + '"/><circle cx="44" cy="22" r="2.4" fill="' + col3 + '"/><circle cx="20" cy="24" r="2.4" fill="' + col3 + '"/><ellipse cx="28" cy="22" rx="4.5" ry="2" fill="#fff" opacity=".12"/>';
       case 'dragon': return '<path d="M15 21 L7 5 L23 14 Z M49 21 L57 5 L41 14 Z" fill="' + col + '" ' + outline + '/><path d="M17 17 L12 8 L23 14 Z M47 17 L52 8 L41 14 Z" fill="' + col2 + '"/><ellipse cx="32" cy="34" rx="17" ry="15" fill="' + col + '" ' + outline + '/><path d="M22 23 q5 4 10 0 M32 21 q5 4 10 0" stroke="' + col3 + '" stroke-width="2.1" fill="none"/><path d="M19 38 q13 8 26 0" stroke="' + col2 + '" stroke-opacity=".35" stroke-width="2" fill="none"/>' + gloss;
       default: return '';
     }
@@ -434,7 +488,7 @@
     var ink = '#0b1220', f = animalEyes(fid);
 
 
-    f = '<ellipse cx="19.5" cy="37" rx="3.2" ry="2.1" fill="#fb8da7" opacity=".58"/><ellipse cx="44.5" cy="37" rx="3.2" ry="2.1" fill="#fb8da7" opacity=".58"/>' + f;
+    f = '<ellipse cx="19.5" cy="37" rx="3.2" ry="2.1" fill="#fb8da7" opacity=".58"/><ellipse cx="44.5" cy="37" rx="3.2" ry="2.1" fill="#fb8da7" opacity=".58"/><g class="av-eye-lights">' + f + '</g>';
     if (id === 'dog') f += '<ellipse cx="32" cy="41" rx="8" ry="6" fill="' + col2 + '"/>';
     if (id === 'panda') f += '<ellipse cx="32" cy="40" rx="5.5" ry="4" fill="' + col3 + '"/>';
     if (id === 'bunny') f += '<path d="M29 43 h6 l-3 4.5z" fill="' + col3 + '"/>';
@@ -444,7 +498,7 @@
     if (id === 'dragon') f += '<path d="M26 41 q6 5 12 0" stroke="' + ink + '" stroke-width="2.2" fill="none" stroke-linecap="round"/>';
     if (id !== 'cat' && id !== 'dragon') f += '<path d="M28 42 q4 3 8 0" stroke="' + ink + '" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".75"/>';
     if (id !== 'dragon') f += animalNose();
-    return id === 'giraffe' ? '<g transform="translate(0 -17)">' + f + '</g>' : f;
+    return id === 'giraffe' ? '<g transform="translate(0 -6)">' + f + '</g>' : f;
   }
 
   function animalArt(id, fid, col, col2, col3) {
@@ -456,7 +510,7 @@
 
   function animalBody(id, col, col2, col3) {
     col2 = col2 || shade(col, 30); col3 = col3 || shade(col, -30);
-    var leg = function (x, y, w, h, f) { return '<rect x="' + x + '" y="' + (y || 55) + '" width="' + (w || 5) + '" height="' + (h || 8) + '" rx="2.4" fill="' + (f || col3) + '"/>'; };
+    var leg = function (x, y, w, h, f) { var lc = f || col3; return '<rect x="' + x + '" y="' + (y || 55) + '" width="' + (w || 5) + '" height="' + (h || 8) + '" rx="2.4" fill="' + lc + '" stroke="' + shade(lc, -34) + '" stroke-width="1.1"/>'; };
     switch (id) {
       case 'axolotl': return '<ellipse cx="32" cy="50" rx="19" ry="11" fill="' + col + '"/><ellipse cx="32" cy="53" rx="11" ry="6" fill="' + col2 + '"/>' + leg(19, 54, 6, 8) + leg(26, 55, 6, 7) + leg(37, 55, 6, 7) + leg(44, 54, 6, 8) + '<path d="M13 47 q-9 2 -10 9" stroke="' + col3 + '" stroke-width="3.4" fill="none" stroke-linecap="round"/>';
       case 'cat': return '<path d="M45 46 q11 -2 9 -15" stroke="' + col3 + '" stroke-width="3.6" fill="none" stroke-linecap="round"/><ellipse cx="32" cy="51" rx="14" ry="10" fill="' + col + '"/><ellipse cx="32" cy="54" rx="8" ry="5" fill="' + col2 + '"/>' + leg(22, 56, 4.6, 7) + leg(28.5, 56, 4.6, 7) + leg(36.5, 56, 4.6, 7) + leg(42.5, 56, 4.6, 7);
@@ -594,6 +648,7 @@
     var pal = paletteOf(c);
     var col = pal[0], col2 = pal[1], col3 = pal[2];
     return '<svg class="av-svg av-animal-svg" viewBox="0 0 64 64" width="' + (px || 40) + '" height="' + (px || 40) + '" aria-hidden="true" focusable="false">' +
+      '<ellipse cx="32" cy="62" rx="17" ry="2.1" fill="#020617" opacity=".22"/>' +
       animalBody(an.id, col, col2, col3) +
       animalHead(an.id, col, col2, col3) +
       gearSvg(gearOf(c).id, col, TORSO[an.id]) +
@@ -609,15 +664,16 @@
   }
 
   function eyes(fid) {
-    if (fid === 'happy') return '<path d="M22 30 q3 -4 6 0 M36 30 q3 -4 6 0" stroke="#0b1220" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
-    if (fid === 'wink') return '<rect x="20" y="27" width="7" height="7" rx="2" fill="#0b1220"/><path d="M37 31 q3 -4 6 0" stroke="#0b1220" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
-    if (fid === 'cool') return '<rect x="17" y="24" width="30" height="10" rx="5" fill="#0b1220"/><rect x="20" y="26" width="10" height="3" rx="1.5" fill="#67e8f9" opacity=".8"/>';
+    var glow = '#bff3ff', screen = '#07111f';
+    if (fid === 'happy') return '<path d="M22 30 q3 -4 6 0 M36 30 q3 -4 6 0" stroke="' + glow + '" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    if (fid === 'wink') return '<rect x="20" y="27" width="7" height="7" rx="2" fill="' + glow + '"/><path d="M37 31 q3 -4 6 0" stroke="' + glow + '" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
+    if (fid === 'cool') return '<rect x="17" y="24" width="30" height="10" rx="5" fill="' + glow + '"/><rect x="20" y="27" width="10" height="4" rx="2" fill="' + screen + '"/><rect x="34" y="27" width="10" height="4" rx="2" fill="' + screen + '"/>';
     if (fid === 'star') return '<path d="M23.5 24 l1.8 3.6 4 .6 -2.9 2.8 .7 4 -3.6-1.9 -3.6 1.9 .7-4 -2.9-2.8 4-.6z" fill="#fde047"/><path d="M40.5 24 l1.8 3.6 4 .6 -2.9 2.8 .7 4 -3.6-1.9 -3.6 1.9 .7-4 -2.9-2.8 4-.6z" fill="#fde047"/>';
-    if (fid === 'mono') return '<rect x="18" y="25" width="28" height="8" rx="4" fill="#0b1220"/><rect x="21" y="27" width="10" height="4" rx="2" fill="#67e8f9"/>';
-    if (fid === 'sleepy') return '<rect x="20" y="29" width="7" height="3" rx="1.5" fill="#0b1220"/><rect x="37" y="29" width="7" height="3" rx="1.5" fill="#0b1220"/><path d="M27 36 h10" stroke="#0b1220" stroke-width="2" stroke-linecap="round"/>';
-    if (fid === 'angry') return '<path d="M19 24 l8 3 M45 24 l-8 3" stroke="#0b1220" stroke-width="2.4" stroke-linecap="round"/><rect x="21" y="28" width="6" height="7" rx="2" fill="#0b1220"/><rect x="37" y="28" width="6" height="7" rx="2" fill="#0b1220"/><path d="M27 37 q5 -3 10 0" stroke="#0b1220" stroke-width="2" fill="none" stroke-linecap="round"/>';
-    if (fid === 'heart') return '<path d="M23.5 33 c-4 -5 -8 -8 -8 -12 a4.4 4.4 0 0 1 8 -2.4 a4.4 4.4 0 0 1 8 2.4 c0 4 -4 7 -8 12z" fill="#fb7185" transform="translate(0,-6) scale(.9)"/><path d="M40.5 33 c-4 -5 -8 -8 -8 -12 a4.4 4.4 0 0 1 8 -2.4 a4.4 4.4 0 0 1 8 2.4 c0 4 -4 7 -8 12z" fill="#fb7185" transform="translate(0,-6) scale(.9)"/>';
-    return '<rect x="20" y="26" width="7" height="9" rx="2" fill="#0b1220"/><rect x="37" y="26" width="7" height="9" rx="2" fill="#0b1220"/><rect x="22" y="28" width="2" height="3" rx="1" fill="#bff3ff"/><rect x="39" y="28" width="2" height="3" rx="1" fill="#bff3ff"/>';
+    if (fid === 'mono') return '<rect x="18" y="25" width="28" height="8" rx="4" fill="' + glow + '"/><rect x="21" y="27" width="22" height="4" rx="2" fill="' + screen + '"/>';
+    if (fid === 'sleepy') return '<rect x="20" y="29" width="7" height="3" rx="1.5" fill="' + glow + '"/><rect x="37" y="29" width="7" height="3" rx="1.5" fill="' + glow + '"/><path d="M27 36 h10" stroke="' + glow + '" stroke-width="2" stroke-linecap="round"/>';
+    if (fid === 'angry') return '<path d="M19 24 l8 3 M45 24 l-8 3" stroke="' + glow + '" stroke-width="2.4" stroke-linecap="round"/><rect x="21" y="28" width="6" height="7" rx="2" fill="' + glow + '"/><rect x="37" y="28" width="6" height="7" rx="2" fill="' + glow + '"/><path d="M27 37 q5 -3 10 0" stroke="' + glow + '" stroke-width="2" fill="none" stroke-linecap="round"/>';
+    if (fid === 'heart') return '<path d="M25 35 C21 32 16.5 29 16.5 25.2 C16.5 21.8 19.6 20 22.5 21.3 C23.6 21.8 24.4 22.6 25 23.7 C25.6 22.6 26.4 21.8 27.5 21.3 C30.4 20 33.5 21.8 33.5 25.2 C33.5 29 29 32 25 35Z" fill="#fb7185"/><path d="M25 35 C21 32 16.5 29 16.5 25.2 C16.5 21.8 19.6 20 22.5 21.3 C23.6 21.8 24.4 22.6 25 23.7 C25.6 22.6 26.4 21.8 27.5 21.3 C30.4 20 33.5 21.8 33.5 25.2 C33.5 29 29 32 25 35Z" transform="translate(14 0)" fill="#fb7185"/>';
+    return '<rect x="20" y="26" width="7" height="9" rx="2" fill="' + glow + '"/><rect x="37" y="26" width="7" height="9" rx="2" fill="' + glow + '"/><rect x="22" y="28" width="2" height="3" rx="1" fill="#fff"/><rect x="39" y="28" width="2" height="3" rx="1" fill="#fff"/>';
   }
 
 
@@ -703,7 +759,9 @@
 
     var pc = paletteOf(c);
     var bc = pc[0];
-    var bubble = s.id ? '<g class="av-bubble"><rect x="40" y="2" width="22" height="12" rx="6" fill="#0b1220" stroke="' + bc + '" stroke-width="1.4"/><text x="51" y="11" text-anchor="middle" font-size="7.5" font-family="monospace" fill="#e2f3ff">' + esc(s.id) + '</text></g>' : '';
+    var bubbleW = Math.min(31, Math.max(22, s.id.length * 4.7 + 7));
+    var bubbleX = 62 - bubbleW;
+    var bubble = s.id ? '<g class="av-bubble"><path d="M' + (bubbleX + bubbleW - 9) + ' 14 l3 4 3 -4" fill="#0b1220"/><rect x="' + bubbleX + '" y="2" width="' + bubbleW + '" height="12" rx="6" fill="#0b1220" stroke="' + bc + '" stroke-width="1.4"/><text x="' + (bubbleX + bubbleW / 2) + '" y="11" text-anchor="middle" font-size="' + (s.id.length > 5 ? 6.8 : 7.4) + '" font-family="monospace" fill="#e2f3ff">' + esc(s.id) + '</text></g>' : '';
     if (an.id !== 'robot') return animalAvatar(c, an, h, f, s, bubble, px);
     var rc2 = pc[1], rc3 = pc[2];
 
@@ -748,20 +806,36 @@
 
   function mini(cfgIn, px) {
     var c = normalize(cfgIn || {});
-    return '<span class="av-mini ' + animClass(c) + '" aria-hidden="true">' + svg(c, px || 26) + '</span>';
+    var fx = true;
+    try { fx = !(document.documentElement.classList.contains('reduce-fx') || (window.TLP_COMMON && TLP_COMMON.FX.get())); } catch (e) {}
+    return '<span class="av-mini ' + animClass(c, fx) + '" aria-hidden="true">' + svg(c, px || 26) + '</span>';
   }
 
 
 
 
-  var modal = null, activeGroup = 'animal';
+  var modal = null, activeGroup = 'animal', modalOpener = null, bodyOverflow = '';
+  function closeModal() {
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    document.body.style.overflow = bodyOverflow;
+    if (modalOpener && document.documentElement.contains(modalOpener)) modalOpener.focus();
+  }
+  function trapModalFocus(e) {
+    if (!modal || modal.hidden || e.key !== 'Tab') return;
+    var focusable = Array.prototype.filter.call(modal.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'), function (el) { return el.getClientRects().length > 0; });
+    if (!focusable.length) return;
+    var first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
   function ensureModal() {
     if (modal) return modal;
     modal = document.createElement('div');
     modal.id = 'avMenu'; modal.className = 'tlpm'; modal.hidden = true;
     modal.innerHTML = '<div class="tlpm-pan av-pan" role="dialog" aria-modal="true" aria-labelledby="avT">' +
       '<button class="tlpm-x" type="button" id="avX" aria-label="Close"><i class="ic ic-close"></i></button>' +
-      '<div class="av-studio-head"><div><span class="av-studio-kicker">CHARACTER STUDIO</span><h2 id="avT">Customize your character</h2><p class="s">Make the explorer yours. Preview a style, then choose an unlocked item to wear.</p></div><span class="av-save-state"><i></i> AUTO-SAVED</span></div>' +
+      '<div class="av-studio-head"><div><span class="av-studio-kicker">CHARACTER STUDIO</span><h2 id="avT">Customize your character</h2><p class="s">Make the explorer yours. Preview a style, then choose an unlocked item to wear.</p></div><span class="av-save-state" role="status" aria-live="polite"><i></i> AUTO-SAVED</span></div>' +
       '<div class="av-stage"><div class="av-big" id="avBig"></div><div class="av-meta" id="avMeta"></div></div>' +
       '<div id="avGroups"></div>' +
       '<div class="tlpm-row" id="avAdminRow" hidden>' +
@@ -770,10 +844,11 @@
       '<div class="tlpm-row"><button class="tlpm-btn pri" id="avDone" type="button">Done</button></div>' +
       '</div>';
     document.body.appendChild(modal);
-    modal.addEventListener('click', function (e) { if (e.target === modal) modal.hidden = true; });
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') modal.hidden = true; });
-    modal.querySelector('#avX').onclick = function () { modal.hidden = true; };
-    modal.querySelector('#avDone').onclick = function () { modal.hidden = true; };
+    modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+    modal.addEventListener('keydown', trapModalFocus);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.hidden) { e.preventDefault(); closeModal(); } });
+    modal.querySelector('#avX').onclick = closeModal;
+    modal.querySelector('#avDone').onclick = closeModal;
     modal.querySelector('#avPlayerView').onclick = function () {
       viewAsPlayer = !viewAsPlayer;
       this.setAttribute('aria-pressed', String(viewAsPlayer));
@@ -786,10 +861,10 @@
     if (!modal || modal.hidden) return;
     var st = todayProg();
     var big = modal.querySelector('#avBig');
-    big.innerHTML = '<span class="av-anim ' + animClass() + '">' + svg(cfg, 154) + '</span>';
+    big.innerHTML = '<span class="av-anim ' + animClass() + '" aria-hidden="true">' + svg(cfg, 154) + '</span>';
     var meta = modal.querySelector('#avMeta');
     var learner = A() && A().getActiveLearner && A().getActiveLearner(), name = learner && learner.name || 'Player';
-    var loadout = GROUPS.slice(0, 4).map(function (g) { var item = find(g.key, cfg[g.key]); return '<span><i>' + esc(g.title) + '</i><b>' + esc(item ? item.name : 'Default') + '</b></span>'; }).join('');
+    var loadout = GROUPS.map(function (g) { var item = find(g.key, cfg[g.key]); return '<span><i>' + esc(g.title) + '</i><b>' + esc(item ? item.name : 'Default') + '</b></span>'; }).join('');
     meta.innerHTML = '<span class="av-studio-kicker">YOUR EXPLORER</span><b class="av-player-name">' + esc(animalOf(cfg).name) + '</b><span class="av-player-by">Designed by ' + esc(name) + '</span>' +
       (window.TLP_ECONOMY && TLP_ECONOMY.titleHtml ? TLP_ECONOMY.titleHtml() : '') +
       '<div class="av-loadout">' + loadout + '</div><small class="av-progression">' + st.ch + ' chapters cleared <span>·</span> ' + st.stars + ' stars <span>·</span> ' + st.streak + '-day streak</small>';
@@ -798,15 +873,16 @@
     var currentGroup = GROUPS.filter(function (g) { return g.key === activeGroup; })[0] || GROUPS[0];
     activeGroup = currentGroup.key;
     var tabs = '<nav class="av-nav" role="tablist" aria-label="Character customization">' + GROUPS.map(function (g) {
-      var equipped = find(g.key, cfg[g.key]);
-      return '<button type="button" role="tab" class="av-tab' + (g.key === activeGroup ? ' on' : '') + '" data-av-tab="' + g.key + '" aria-selected="' + (g.key === activeGroup) + '"><span>' + esc(g.title) + '</span><small>' + esc(equipped ? equipped.name : '') + '</small></button>';
+      var equipped = find(g.key, cfg[g.key]), on = g.key === activeGroup;
+      return '<button type="button" role="tab" class="av-tab' + (on ? ' on' : '') + '" id="av-tab-' + g.key + '" data-av-tab="' + g.key + '" aria-controls="avPanel" aria-selected="' + on + '" tabindex="' + (on ? '0' : '-1') + '"><span>' + esc(g.title) + '</span><small>' + esc(equipped ? equipped.name : '') + '</small></button>';
     }).join('') + '</nav>';
-    var panel = '<section class="av-group" role="tabpanel"><div class="av-group-head"><div><span class="av-studio-kicker">CUSTOMIZE</span><h3>' + esc(currentGroup.title) + '</h3></div><span class="av-item-count">' + currentGroup.items.length + (currentGroup.key === 'b' ? ' sets' : ' styles') + '</span></div>' +
+    var panel = '<section class="av-group" id="avPanel" role="tabpanel" aria-labelledby="av-tab-' + activeGroup + '"><div class="av-group-head"><div><span class="av-studio-kicker">CUSTOMIZE</span><h3>' + esc(currentGroup.title) + '</h3></div><span class="av-item-count">' + currentGroup.items.length + (currentGroup.key === 'b' ? ' sets' : ' styles') + '</span></div>' +
       (currentGroup.key === 'b' ? '<p class="av-palette-note">Each set has three matching colours for the body, markings and glowing details. Unlock more in the Shop or Lucky Wheel.</p>' : '') +
       '<div class="av-grid">' + currentGroup.items.map(function (it) {
       var on = cfg[currentGroup.key] === it.id, ok = unlocked(it, st, currentGroup.key);
       var swatches = currentGroup.key === 'b' && it.pal ? '<span class="av-swatches" aria-label="Three-colour set">' + it.pal.map(function (c) { return '<i style="--sw:' + c + '"></i>'; }).join('') + '</span>' : '';
       return '<button type="button" class="av-item' + (on ? ' on' : '') + (ok ? '' : ' locked') + '" data-g="' + currentGroup.key + '" data-id="' + it.id + '"' +
+        ' aria-pressed="' + on + '" aria-label="' + esc(it.name + '. ' + (on ? 'Equipped' : ok ? 'Unlocked' : 'Locked. ' + hintFor(it, st, currentGroup.key))) + '"' +
         (ok ? '' : ' aria-disabled="true"') + ' title="' + esc(hintFor(it, st, currentGroup.key)) + '">' +
         '<span class="av-prev">' + svg(pickCfg(currentGroup.key, it.id), 42) + '</span>' +
         '<b>' + esc(it.name) + '</b>' + swatches +
@@ -816,10 +892,23 @@
     }).join('') + '</div></section>';
     wrap.innerHTML = tabs + panel;
     wrap.querySelectorAll('[data-av-tab]').forEach(function (button) {
-      button.onclick = function () { activeGroup = button.dataset.avTab; renderOpen(); };
+      button.onclick = function () { activeGroup = button.dataset.avTab; renderOpen(); var tab = wrap.querySelector('[data-av-tab="' + activeGroup + '"]'); if (tab) tab.focus(); };
     });
+    wrap.onkeydown = function (e) {
+      var tab = e.target.closest('[data-av-tab]');
+      if (!tab || ['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(e.key) < 0) return;
+      e.preventDefault();
+      var index = GROUPS.findIndex(function (g) { return g.key === tab.dataset.avTab; });
+      if (e.key === 'Home') index = 0;
+      else if (e.key === 'End') index = GROUPS.length - 1;
+      else index = (index + (e.key === 'ArrowRight' ? 1 : -1) + GROUPS.length) % GROUPS.length;
+      activeGroup = GROUPS[index].key;
+      renderOpen();
+      var next = wrap.querySelector('[data-av-tab="' + activeGroup + '"]');
+      if (next) next.focus();
+    };
     wrap.querySelectorAll('.av-item').forEach(function (b) {
-      b.onclick = function () { equip(b.dataset.g, b.dataset.id); };
+      b.onclick = function () { equip(b.dataset.g, b.dataset.id); var item = wrap.querySelector('.av-item[data-id="' + b.dataset.id + '"]'); if (item) item.focus(); };
     });
     var admRow = modal.querySelector('#avAdminRow');
     admRow.hidden = !isAdmin();
@@ -855,7 +944,7 @@
         (isAdmin() ? 'As admin you can preview the locked look with “View as player”.' : '') + '</p>' +
         '<button class="btn sm" type="button">Got it</button>';
       modal.querySelector('.tlpm-pan').appendChild(t);
-      t.querySelector('button').onclick = function () { t.remove(); };
+      t.querySelector('button').onclick = function () { t.remove(); modal.querySelector('#avX').focus(); };
     }, 600);
   }
 
@@ -863,8 +952,14 @@
     ensureModal();
     load();
     adminMode = isAdmin();
+    if (modal.hidden) {
+      modalOpener = document.activeElement;
+      bodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
     modal.hidden = false;
     renderOpen();
+    modal.querySelector('#avX').focus();
     maybeTutorial();
   }
 
@@ -875,8 +970,8 @@
     if (!el || el.querySelector('.av-btn')) return el && el.querySelector('.av-btn');
     load();
     var btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'av-btn'; btn.title = 'Customize R-067';
-    btn.setAttribute('aria-label', 'Customize your robot avatar');
+    btn.type = 'button'; btn.className = 'av-btn'; btn.title = 'Customize your avatar';
+    btn.setAttribute('aria-label', 'Customize your avatar');
     btn.innerHTML = '<span class="av-dot ' + animClass() + '">' + svg(cfg, 30) + '</span>';
     btn.onclick = open;
     el.appendChild(btn);
@@ -914,12 +1009,14 @@
     setLook: function (o) {
       load();
       cfg.look = Object.assign({}, cfg.look || {}, o || {});
+      cfg.updatedAt = Math.max(Date.now(), avatarTime(cfg.updatedAt) + 1);
+      saveSeq++;
       try { localStorage.setItem(avatarKey(loadedLearner), JSON.stringify(cfg)); } catch (e) {}
       clearTimeout(lookT);
       lookT = setTimeout(save, 700);
     },
     stats: todayProg,
-    catalog: { animals: ANIMALS, bodies: BODIES, hats: HATS, faces: FACES, speech: SPEECH, anims: ANIMS, pets: PETS },
+    catalog: { animals: ANIMALS, bodies: BODIES, gear: GEAR, hats: HATS, faces: FACES, speech: SPEECH, anims: ANIMS, pets: PETS },
     palette: function (id) { var b = find('b', id); return b && validPalette(b.pal) ? b.pal.slice() : null; },
     has: function (group, id) { return !!find(group, id); },
     get: function () { load(); return normalize(cfg); },

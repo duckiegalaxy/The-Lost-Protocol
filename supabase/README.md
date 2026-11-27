@@ -1,6 +1,6 @@
 # Supabase
 
-The live project is authoritative. Repository SQL mirrors the database; it does not define it.
+The live project is authoritative. Repository SQL is historical reference; it does not define the current database.
 
 - Project: `gkycmrivyqxknvkgdffr` (EU West, Postgres 17)
 - Dashboard: https://supabase.com/dashboard/project/gkycmrivyqxknvkgdffr
@@ -14,7 +14,10 @@ The live project is authoritative. Repository SQL mirrors the database; it does 
 | `migrations/20261115000002_grant_browser_table_access.sql` | Browser role privileges; score inserts remain RPC-only. |
 | `migrations/20261115000003_learner_login_allowlist.sql` | Service-role-only allowlist for educator-created learners. |
 | `migrations/20261117000000_learner_signin_tokens.sql` | Single-use, short-lived parent-issued sign-in codes. |
-| `migrations/20261124000003_remove_coop.sql` | Removes the retired co-op schema objects and stored results. Apply this migration to the live project. |
+| `migrations/20261122000000_lifeline_avatar.sql` | Avatar columns, public leaderboard avatar projection and lifeline RPCs. Inspect the live schema before reuse. |
+| `migrations/20261124000003_remove_coop.sql` | Historical removal of the retired co-op schema. Do not apply it to the current live project; co-op was rebuilt later. |
+| `migrations/20261125000000_persist_avatar_customization.sql` | Validated avatar persistence for learner and parent-owned profiles. |
+| `migrations/20261126000000_friend_requests.sql` | Pending requests, reciprocal friendships, notifications, ownership checks and realtime policies. |
 | `functions/learner-admin/` | Parent-only learner creation and password resets. |
 | `functions/learner-qr/` | Parent-issued one-time sign-in codes. |
 
@@ -32,8 +35,8 @@ The live project is authoritative. Repository SQL mirrors the database; it does 
 - Never re-run old `legacy/*.sql` files. They predate the live schema and can overwrite current functions.
 - Keep the browser key publishable. The service-role key belongs only in edge-function secrets.
 - `public.site_owner` stays locked (RLS on, no policies). Only `is_admin()` reads it.
-- Leaderboard scores are computed server-side from saved progress.
+- Leaderboard totals are recomputed server-side from saved progress; the client remains responsible for single-player progress integrity.
 - Trigger-bound security-definer functions must not be executable through the API. Keep only intentional RPC entry points granted to `authenticated`.
 - Auth dashboard settings are not SQL; record any changes separately.
 
-The checked-in baseline is historical and includes objects that were subsequently retired. New installations must apply migrations in timestamp order, including the final removal migration, to reach the current schema. The live database remains authoritative.
+The checked-in baseline and removal migration are historical. They do not capture the rebuilt co-op schema. Inspect and export the live schema before setting up a new database, and do not apply these migrations blindly. The live database remains authoritative.

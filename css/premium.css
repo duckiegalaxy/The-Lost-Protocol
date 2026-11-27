@@ -249,11 +249,11 @@ table.t tr:last-child td { border-bottom: 0; }
 .wheel-rim { box-shadow: 0 16px 38px rgba(0,0,0,.34), inset 0 2px 8px rgba(255,255,255,.4), inset 0 -10px 20px rgba(0,0,0,.24); }
 
 footer { border-color: var(--surface-line); padding-block: 26px 34px; color: var(--mut); }
-footer .wrap { max-width: 1200px; }
+footer .wrap { max-width: 1200px; padding-inline: clamp(18px, 3vw, 36px); }
 
 @media (max-width: 900px) {
   header nav .wrap { justify-content: center; }
-  header nav .logo { flex-basis: 100%; margin: 0 0 2px; text-align: center; }
+  header nav .logo { flex-basis: 100%; max-width: none; margin: 0 0 2px; text-align: center; }
   header nav .tools { flex: 1 1 100%; justify-content: center; }
 }
 @media (max-width: 600px) {
@@ -431,7 +431,7 @@ html.reduce-fx .goal-marker, html.reduce-fx .chip::before, html.reduce-fx .goal-
 #avMenu .av-big::before { content: ""; position: absolute; left: 13%; right: 13%; bottom: 13%; height: 14%; border-radius: 50%; background: color-mix(in srgb, var(--a) 28%, transparent); filter: blur(18px); }
 #avMenu .av-big .av-svg { position: relative; z-index: 1; width: 89%; height: 89%; filter: drop-shadow(0 16px 12px rgba(0, 0, 0, .24)) drop-shadow(0 0 14px color-mix(in srgb, var(--a) 15%, transparent)); }
 #avMenu .av-big .av-tip { transform-box: fill-box; transform-origin: center; animation: avatarTipPulse 1.8s ease-in-out infinite; }
-#avMenu .av-big .av-eye-lights { transform-box: fill-box; transform-origin: center; animation: avatarEyesPulse 2.8s ease-in-out infinite; }
+#avMenu .av-big .av-anim:not(.av-blink) .av-eye-lights { transform-box: fill-box; transform-origin: center; animation: avatarEyesPulse 2.8s ease-in-out infinite; }
 #avMenu .av-big .av-core { transform-box: fill-box; transform-origin: center; animation: avatarCorePulse 1.6s ease-in-out infinite; }
 #avMenu .av-meta { min-width: 0; display: grid; align-content: center; justify-items: start; gap: 8px; }
 #avMenu .av-player-name { display: block; color: var(--fg); font: 850 clamp(25px, 3vw, 34px)/1.05 var(--sans); letter-spacing: -.04em; }
@@ -449,6 +449,7 @@ html.reduce-fx .goal-marker, html.reduce-fx .chip::before, html.reduce-fx .goal-
 #avMenu .av-nav { position: sticky; top: 0; z-index: 4; display: flex; gap: 8px; margin: 0 -2px 18px; padding: 10px 2px 13px; overflow-x: auto; scrollbar-width: thin; background: color-mix(in srgb, var(--surface-0) 94%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 #avMenu .av-tab { flex: 0 0 auto; min-width: 102px; display: grid; gap: 5px; padding: 10px 13px; border: 1px solid var(--surface-line); border-radius: 13px; color: var(--mut); background: var(--surface-1); text-align: left; cursor: pointer; transition: border-color .18s, background .18s, transform .18s; }
 #avMenu .av-tab:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--a) 45%, var(--surface-line)); }
+#avMenu .av-tab:focus-visible, #avMenu .av-item:focus-visible, #avMenu .tlpm-x:focus-visible, #avMenu .tlpm-btn:focus-visible, #avMenu .av-tut .btn:focus-visible { outline: 3px solid color-mix(in srgb, var(--a) 82%, #fff); outline-offset: 3px; }
 #avMenu .av-tab.on { border-color: color-mix(in srgb, var(--a) 68%, var(--fg)); color: var(--fg); background: color-mix(in srgb, var(--a) 15%, var(--surface-1)); box-shadow: inset 0 -3px var(--a), 0 6px 18px color-mix(in srgb, var(--a) 10%, transparent); }
 #avMenu .av-tab span { font: 800 11px var(--sans); }
 #avMenu .av-tab small { max-width: 92px; overflow: hidden; color: var(--mut); font: 600 9px var(--sans); text-overflow: ellipsis; white-space: nowrap; }

@@ -9,7 +9,7 @@
   function key() { return 'tlp-econ:' + learnerId(); }
   var RECENT_LIMIT = 4;
   function blank() {
-    return { sparks: 0, owned: {}, titles: {}, titlePref: '', recent: [], wheelDate: '', spins: 0, quests: {}, coadmin: 'none', lastDay: '' };
+    return { sparks: 0, owned: {}, titles: {}, titlePref: '', recent: [], wheelDate: '', spins: 0, quests: {}, coadmin: 'none', lastDay: '', updatedAt: 0 };
   }
   var S = blank(), loaded = false, loadedLearner = '';
   function recentFrom(raw) {
@@ -33,6 +33,7 @@
     var out = Object.assign(blank(), raw);
     out.sparks = Math.max(0, Number(out.sparks) || 0);
     out.spins = Math.max(0, Number(out.spins) || 0);
+    out.updatedAt = Math.max(0, Number(out.updatedAt) || 0);
     out.titlePref = typeof out.titlePref === 'string' ? out.titlePref.slice(0, 24) : '';
     out.recent = recentFrom(out.recent);
     ['owned', 'titles', 'quests'].forEach(function (f) {
@@ -41,12 +42,48 @@
     if (['none', 'pending', 'approved'].indexOf(out.coadmin) < 0) out.coadmin = 'none';
     return out;
   }
+  function mergeQuests(local, cloud) {
+    var days = {}, out = {};
+    [cloud, local].forEach(function (wallet) {
+      var quests = wallet && wallet.quests;
+      if (!quests || typeof quests !== 'object' || Array.isArray(quests)) return;
+      Object.keys(quests).forEach(function (day) { days[day] = 1; });
+    });
+    Object.keys(days).sort().slice(-7).forEach(function (day) {
+      var prog = {}, claimed = {};
+      [cloud, local].forEach(function (wallet) {
+        var quest = wallet && wallet.quests && wallet.quests[day];
+        if (!quest || typeof quest !== 'object' || Array.isArray(quest)) return;
+        if (quest.prog && typeof quest.prog === 'object' && !Array.isArray(quest.prog)) {
+          Object.keys(quest.prog).forEach(function (id) {
+            prog[id] = Math.max(Number(prog[id]) || 0, Number(quest.prog[id]) || 0);
+          });
+        }
+        if (quest.claimed && typeof quest.claimed === 'object' && !Array.isArray(quest.claimed)) {
+          Object.keys(quest.claimed).forEach(function (id) { if (quest.claimed[id]) claimed[id] = 1; });
+        }
+      });
+      out[day] = { prog: prog, claimed: claimed };
+    });
+    return out;
+  }
   function mergeWallet(local, cloud) {
-    var out = walletFrom(Object.assign({}, cloud || {}, local || {}));
+    var newer = (Number(local && local.updatedAt) || 0) >= (Number(cloud && cloud.updatedAt) || 0) ? local : cloud;
+    var out = walletFrom(newer);
     out.owned = Object.assign({}, (cloud && cloud.owned) || {}, (local && local.owned) || {});
     out.titles = Object.assign({}, (cloud && cloud.titles) || {}, (local && local.titles) || {});
+    out.quests = mergeQuests(local, cloud);
     out.recent = recentFrom(((local && local.recent) || []).concat((cloud && cloud.recent) || []));
     return out;
+  }
+  function syncedWallet() {
+    var owned = {}, titles = {};
+    SHOP.forEach(function (it) {
+      var key = it.kind === 'title' ? it.id : 'av:' + it.id;
+      if (S.owned[key]) owned[key] = 1;
+      if (it.kind === 'title' && titleOwned(it.id.slice(6))) titles[it.id.slice(6)] = 1;
+    });
+    return { sparks: S.sparks, owned: owned, titles: titles, titlePref: S.titlePref, recent: S.recent, wheelDate: S.wheelDate, spins: S.spins, quests: mergeQuests(S, null), coadmin: S.coadmin, lastDay: S.lastDay, updatedAt: S.updatedAt };
   }
   function load() {
     var id = learnerId();
@@ -86,8 +123,9 @@
     }
   }
   function persist() {
+    S.updatedAt = Math.max(Date.now(), (Number(S.updatedAt) || 0) + 1);
     try { localStorage.setItem(key(), JSON.stringify(S)); } catch (e) {}
-    try { if (window.TLP_AVATAR && TLP_AVATAR.setLook) TLP_AVATAR.setLook({ econ: { sparks: S.sparks, owned: S.owned, titles: S.titles, titlePref: S.titlePref, recent: S.recent, wheelDate: S.wheelDate, spins: S.spins, coadmin: S.coadmin, lastDay: S.lastDay }, title: titleKey() }); } catch (e) {}
+    try { if (window.TLP_AVATAR && TLP_AVATAR.setLook) TLP_AVATAR.setLook({ econ: syncedWallet(), title: titleKey() }); } catch (e) {}
     try { document.dispatchEvent(new CustomEvent('tlp-econ-change')); } catch (e) {}
   }
   function dayKey() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
@@ -290,7 +328,7 @@
     { label: 'Puppy',     kind: 'item', id: 'pet:puppy', v: 0, w: 7, r: 'common' },
     { label: 'Pocket bot', kind: 'item', id: 'pet:mini', v: 0, w: 7, r: 'common' },
     { label: '60⚡',      kind: 'sparks', v: 60,   w: 12, r: 'common' },
-    { label: 'Duck',      kind: 'item', id: 'pet:duck', v: 0, w: 7, r: 'common' },
+    { label: 'Duck',      kind: 'item', id: 'pet:duck', v: 0, w: 7, r: 'rare' },
     { label: 'Happy hop', kind: 'item', id: 'anim:hop', v: 0, w: 6, r: 'common' },
     { label: 'Lagoon set', kind: 'item', id: 'b:lagoon', v: 0, w: 9, r: 'common' },
     { label: 'Coral set', kind: 'item', id: 'b:coral', v: 0, w: 8, r: 'rare' },
@@ -301,7 +339,7 @@
     { label: '120⚡',     kind: 'sparks', v: 120,  w: 8,  r: 'rare' },
     { label: 'Halo',      kind: 'item', id: 'hat:halo', v: 0, w: 5, r: 'rare' },
     { label: 'Backpack',  kind: 'item', id: 'gear:backpack', v: 0, w: 5, r: 'rare' },
-    { label: 'GG bubble', kind: 'item', id: 'speech:GG', v: 0, w: 5, r: 'rare' },
+    { label: 'GG bubble', kind: 'item', id: 'speech:GG', v: 0, w: 5, r: 'common' },
     { label: 'Solar set', kind: 'item', id: 'b:solar', v: 0, w: 7, r: 'rare' },
     { label: 'Matcha set', kind: 'item', id: 'b:matcha', v: 0, w: 6, r: 'rare' },
     { label: '200⚡',     kind: 'sparks', v: 200,  w: 6,  r: 'epic' },
@@ -365,11 +403,14 @@
   }
 
   var wheelRot = 0, spinning = false;
-  var wheelSfxTimer = null, spinStageTimers = [];
+  var spinStageTimers = [], spinFrame = 0, spinContext = null;
   var SPIN_MS = 6200;
 
 
   function fxReduced() {
+    try {
+      if (document.documentElement.classList.contains('reduce-fx') || (window.TLP_COMMON && TLP_COMMON.FX.get())) return true;
+    } catch (e) {}
     try {
       if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
     } catch (e) {}
@@ -384,7 +425,31 @@
   function clearSpinTimers() {
     spinStageTimers.forEach(function (t) { clearTimeout(t); });
     spinStageTimers = [];
-    clearTimeout(wheelSfxTimer); wheelSfxTimer = null;
+    if (spinFrame) cancelAnimationFrame(spinFrame);
+    spinFrame = 0;
+  }
+  function cancelSpin(message) {
+    if (!spinContext) return;
+    var ctx = spinContext;
+    spinContext = null;
+    clearSpinTimers();
+    spinning = false;
+    ctx.wallet.sparks += WHEEL_COST;
+    ctx.wallet.spins = Math.max(0, ctx.wallet.spins - 1);
+    var currentLearner = learnerId();
+    if (currentLearner === ctx.learner) persist();
+    else {
+      ctx.wallet.updatedAt = Math.max(Date.now(), (Number(ctx.wallet.updatedAt) || 0) + 1);
+      try { localStorage.setItem('tlp-econ:' + ctx.learner, JSON.stringify(ctx.wallet)); } catch (e) {}
+    }
+    ctx.wheel.classList.remove('spinning');
+    ctx.wheel.style.transition = '';
+    ctx.wheel.style.transform = 'rotate(' + ctx.fromRot + 'deg)';
+    wheelRot = ctx.fromRot;
+    if (ctx.stage) ctx.stage.classList.remove('is-spinning', 'wheel-hit', 'flash');
+    if (!message) message = 'Spin cancelled. Your Sparks were refunded.';
+    toast(message);
+    if (learnerId() === ctx.learner) renderWheel();
   }
 
 
@@ -400,14 +465,16 @@
       o.start(); o.stop(AC.currentTime + (dur || 0.05));
     } catch (e) {}
   }
-  function wheelTick() { blip(1400 + Math.random() * 300, 0.03, 'square', 0.025); }
   function wheelWin() { [523, 659, 784, 1047].forEach(function (f, i) { setTimeout(function () { blip(f, 0.16, 'triangle', 0.06); }, i * 90); }); }
   function spinWheel() {
     load();
     if (spinning) return;
+    var wheel = document.getElementById('econWheel');
+    if (!wheel) { toast('Open the Wheel tab to spin.'); return; }
     if (S.wheelDate !== weekKey()) { S.wheelDate = weekKey(); S.spins = 0; persist(); }
     if (!spend(WHEEL_COST)) { toast('Not enough sparks for a spin (' + WHEEL_COST + '⚡). Keep playing!'); return; }
     S.spins++; persist();
+    var spinLearner = loadedLearner, spinWallet = S;
 
     var wheels = weekWheels();
     var total = wheels.reduce(function (a, s) { return a + s.w; }, 0), r = Math.random() * total, seg = wheels[0];
@@ -422,13 +489,12 @@
     var delta = 360 * 5 + (((align - current) % 360) + 360) % 360;
     wheelRot = fromRot + delta;
 
-    var wheel = document.getElementById('econWheel');
     var stage = document.querySelector('.wheel-stage');
     var slow = fxReduced();
-    if (!wheel) { award(seg); return; }
 
     spinning = true;
     clearSpinTimers();
+    spinContext = { wheel: wheel, stage: stage, wallet: spinWallet, learner: spinLearner, fromRot: fromRot };
     if (stage) { stage.classList.remove('wheel-hit', 'flash'); stage.classList.add('is-spinning'); }
     var result = modal && modal.querySelector('#wheelResult');
     if (result) { result.className = 'wheel-result'; result.textContent = ''; }
@@ -437,8 +503,13 @@
     var done = false;
     function finish() {
       if (done) return;
+      if (learnerId() !== spinLearner) {
+        cancelSpin('Spin cancelled because the learner changed. Your Sparks were refunded.');
+        return;
+      }
       done = true;
       spinning = false;
+      spinContext = null;
       clearSpinTimers();
       if (stage) stage.classList.remove('is-spinning');
       wheel.classList.remove('spinning');
@@ -467,9 +538,9 @@
       var p = Math.min(1, (now - spinStarted) / SPIN_MS);
       var eased = 1 - Math.pow(1 - p, 4);
       wheel.style.transform = 'rotate(' + (fromRot + delta * eased).toFixed(3) + 'deg)';
-      if (p < 1) requestAnimationFrame(animateSpin);
+      if (p < 1) spinFrame = requestAnimationFrame(animateSpin);
     }
-    requestAnimationFrame(animateSpin);
+    spinFrame = requestAnimationFrame(animateSpin);
     spinStageTimers.push(setTimeout(finish, SPIN_MS + 150));
   }
   function recordRecent(seg, outcome) {
@@ -492,7 +563,6 @@
       outcome.kind = (seg.id.indexOf('title:') === 0 ? titleOwned(seg.id.slice(6)) : S.owned[key2]) ? 'duplicate' : 'fresh';
       if (outcome.kind === 'fresh') S.owned[key2] = 1;
       else { S.sparks += 100; outcome.amount = 100; }
-      toast('🎡 ' + seg.label + (outcome.kind === 'fresh' ? ' — added to your collection!' : ' — duplicate converted to 100 Sparks.'));
       try { if (window.TLP_AVATAR && TLP_AVATAR.render) TLP_AVATAR.render(); } catch (e) {}
     }
     recordRecent(seg, outcome);
@@ -850,12 +920,9 @@
   function wheelHTML() {
 
 
-    var wheels = weekWheels(), slices = wheelSlices(wheels), gap = 0.8, dark = '#0a0e17';
+    var wheels = weekWheels(), slices = wheelSlices(wheels);
     var segs = wheels.map(function (s, i) {
-      var a0 = slices[i].start.toFixed(2), a1 = slices[i].end.toFixed(2);
-      var inset = Math.min(gap, (slices[i].end - slices[i].start) / 4);
-      var g0 = (slices[i].start + inset).toFixed(2), g1 = (slices[i].end - inset).toFixed(2);
-      return dark + ' ' + a0 + 'deg ' + g0 + 'deg,' + RARITY[s.r].c + ' ' + g0 + 'deg ' + g1 + 'deg,' + dark + ' ' + g1 + 'deg ' + a1 + 'deg';
+      return RARITY[s.r].c + ' ' + (slices[i].start - 0.03).toFixed(2) + 'deg ' + (slices[i].end + 0.03).toFixed(2) + 'deg';
     }).join(',');
     var labels = wheels.map(function (s, i) {
       var shortLabel = s.label.replace(/\s+(plate|eyes|bubble|dance|zoom)$/i, '').replace(' JACKPOT', '');
@@ -1000,7 +1067,12 @@
     renderAll();
     if (tab === 'wheel') startWheelTimer();
   }
-  function close() { if (modal) modal.hidden = true; document.body.classList.remove('tlpm-open'); clearInterval(wheelTimerInt); }
+  function close() {
+    if (spinning) cancelSpin();
+    if (modal) modal.hidden = true;
+    document.body.classList.remove('tlpm-open');
+    clearInterval(wheelTimerInt);
+  }
 
 
 
@@ -1073,8 +1145,17 @@
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
-  window.addEventListener('tlp-auth-ready', function () { load(); updateBadge(); updateMenuBar(); if (modal && !modal.hidden) renderAll(); });
+  window.addEventListener('tlp-auth-ready', function () {
+    if (spinning && spinContext && learnerId() !== spinContext.learner) cancelSpin('Spin cancelled because the learner changed. Your Sparks were refunded.');
+    load(); updateBadge(); updateMenuBar(); if (modal && !modal.hidden) renderAll();
+  });
   document.addEventListener('tlp-econ-change', updateBadge);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden' && spinning) cancelSpin('Spin interrupted. Your Sparks were refunded.');
+  });
+  window.addEventListener('pagehide', function () {
+    if (spinning) cancelSpin('Spin interrupted. Your Sparks were refunded.');
+  });
 
   window.TLP_ECONOMY = {
     open: open, earn: earn, earnAmount: earnAmount, spend: spend, sparks: function () { load(); return S.sparks; },

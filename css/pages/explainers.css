@@ -63,9 +63,11 @@
 .room.inner{border-style:dashed;border-color:var(--a);background:color-mix(in srgb,var(--a) 9%,transparent)}
 .mirror{border-radius:6px 6px 2px 2px;box-shadow:0 0 0 2px color-mix(in srgb,var(--a) 35%,transparent) inset;padding:8px 12px;font:700 11px var(--sans);background:linear-gradient(160deg,color-mix(in srgb,var(--a) 16%,transparent),transparent)}
 .mirror:nth-child(2){transform:scale(.92)}
-.bit{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:99px;border:2px solid var(--line);font:800 14px var(--sans);color:var(--mut);background:color-mix(in srgb,var(--bg) 55%,transparent)}
-.bit.on{border-color:var(--a);color:#0b0f14;background:var(--a);box-shadow:0 0 14px color-mix(in srgb,var(--a) 55%,transparent)}
+.ex-bit{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:99px;border:2px solid var(--line);font:800 14px var(--sans);color:var(--mut);background:color-mix(in srgb,var(--bg) 55%,transparent)}
+.ex-bit.on{border-color:var(--a);color:#0b0f14;background:var(--a);box-shadow:0 0 14px color-mix(in srgb,var(--a) 55%,transparent)}
 .bitsrow{display:flex;gap:6px;align-items:center;justify-content:center}
+.bitsrow.byte{gap:3px}
+.bitsrow.byte .ex-bit{width:27px;height:29px;font-size:11px}
 .bitsrow.res{margin-top:2px;padding-top:6px;border-top:1px solid var(--line)}
 .in{border-radius:99px;min-width:54px;min-height:38px;padding:4px 10px}
 .gate{clip-path:polygon(0 0,42% 0,72% 18%,88% 50%,72% 82%,42% 100%,0 100%);padding:12px 20px;border-radius:0;background:color-mix(in srgb,var(--a) 22%,transparent);border-color:var(--a);font-weight:800;letter-spacing:.06em}
@@ -81,7 +83,7 @@
 @keyframes exPop{0%{transform:scale(.9)}55%{transform:scale(1.05)}100%{transform:none}}
 @keyframes exGlitch{0%,92%,100%{transform:none}94%{transform:translateX(-2px)}96%{transform:translateX(2px)}}
 @keyframes exSpinSlow{to{transform:rotate(360deg)}}
-@media(max-width:420px){.nd{min-width:52px;padding:6px 9px}.ex-stage{min-height:120px}.ex-cap{font-size:13px;min-height:3.2em}}
+@media(max-width:420px){.nd{min-width:52px;padding:6px 9px}.ex-stage{min-height:120px}.ex-cap{font-size:13px;min-height:3.2em}.bitsrow.byte{gap:2px}.bitsrow.byte .ex-bit{width:24px;height:27px;font-size:10px}}
 @media(prefers-reduced-motion:reduce){.ex-el,.ex-el.now,.glitch,.conv{animation:none!important;transition-duration:.01s!important}}
 
 

@@ -1,4 +1,4 @@
-const CACHE = 'tlp-2026-11-26-04';
+const CACHE = 'tlp-2026-11-27-09';
 const CDN = /^https:\/\/(fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net)\//;
 const SHELL = [
   'index.html', 'webgame.html', 'bonus.html', 'auth.html', 'parent.html',

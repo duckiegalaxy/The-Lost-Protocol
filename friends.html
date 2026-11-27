@@ -14,9 +14,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,800;1,9..144,500;1,9..144,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
 <script src="js/theme.js?v=15"></script>
-<link rel="stylesheet" href="css/style.css?v=31">
-<link rel="stylesheet" href="css/pages/friends.css?v=14">
-<link rel="stylesheet" href="css/premium.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=34">
+<link rel="stylesheet" href="css/pages/friends.css?v=18">
+<link rel="stylesheet" href="css/premium.css?v=12">
 </head>
 <body data-music="home" data-activity="Browsing friends">
 <canvas id="rain"></canvas>
@@ -34,40 +34,75 @@
 <main>
 <div class="wrap fr">
   <div class="fr-hero">
-    <p class="fr-kicker">SQUAD CONNECTIONS</p>
-    <h1>Friends</h1>
-    <p class="lead">Add friends by their Player ID and see when they are online.</p>
+    <div>
+      <p class="fr-kicker">SQUAD CONNECTIONS</p>
+      <h1>Friends</h1>
+      <p class="lead">Send a request, share progress and see when your friends are online.</p>
+    </div>
+    <button class="fr-notif-btn" id="notifBtn" type="button" aria-expanded="false" aria-controls="notificationPanel">
+      <span aria-hidden="true">✦</span><span>Notifications</span><b id="notifCount" hidden>0</b>
+    </button>
   </div>
   <div id="gate" class="pn" hidden></div>
+  <div id="friendBanner" class="fr-banner" role="status" aria-live="polite" hidden></div>
 
   <div id="app" hidden>
     <div class="pn self">
-      <div>
-        <small>You</small>
-        <h2 id="meName">Player</h2>
-        <p class="m">Player ID: <b id="mePid"></b> <button class="btn ghost sm" id="copyPid" type="button">Copy</button></p>
+      <div class="self-profile">
+        <div id="meAvatar" class="self-avatar" aria-hidden="true"></div>
+        <div>
+          <small>You</small>
+          <h2 id="meName">Player</h2>
+          <p class="m">Player ID: <b id="mePid"></b> <button class="btn ghost sm" id="copyPid" type="button">Copy</button></p>
+        </div>
       </div>
-      <div class="selfact"><small>Friends see you as</small><b id="meActivity">Browsing friends</b></div>
+      <div class="selfact"><small>Friends see you as</small><b id="meActivity">Browsing friends</b><span id="syncMode" class="sync-mode">Connecting…</span><button class="btn ghost sm" id="syncRetry" type="button" hidden>Retry connection</button></div>
     </div>
 
-    <div class="pn">
-      <h2>Add a friend</h2>
-      <div class="row3">
-        <input type="text" id="addPid" maxlength="26" placeholder="Their Player ID, TLP-12345678" aria-label="Friend Player ID" autocomplete="off">
-        <button class="btn" id="addBtn" type="button">Add friend</button>
-      </div>
-      <p class="m">Both people add each other, because a friend list is kept in each player's own browser.</p>
-      <p class="msg4" id="addMsg" role="status" aria-live="polite"></p>
+    <div class="fr-layout">
+      <section class="pn fr-add">
+        <div class="frhead"><h2>Add a friend</h2><span class="fr-step">1 · Find player</span></div>
+        <form id="addForm" class="row3">
+          <input type="text" id="addPid" maxlength="26" placeholder="Their Player ID, TLP-12345678" aria-label="Friend Player ID" autocomplete="off">
+          <button class="btn" id="addBtn" type="submit">Send request</button>
+        </form>
+        <div id="addPreview" class="fr-preview" hidden></div>
+        <p class="m">Your friend accepts the request before either of you appears on the other's list.</p>
+        <p class="msg4" id="addMsg" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="pn fr-requests" id="requestPanel" aria-labelledby="requestTitle">
+        <div class="frhead"><h2 id="requestTitle" tabindex="-1">Requests</h2><span class="m" id="requestCount"></span></div>
+        <div id="incomingList" class="fr-request-list"></div>
+        <div id="outgoingList" class="fr-request-list"></div>
+      </section>
     </div>
 
-    <div class="pn">
-      <div class="frhead"><h2>Your friends</h2><span class="m" id="frCount"></span></div>
+    <section class="pn fr-notifications" id="notificationPanel" role="region" aria-labelledby="notifTitle" hidden>
+      <div class="frhead"><h2 id="notifTitle" tabindex="-1">Notifications</h2><button class="btn ghost sm" id="markRead" type="button">Mark all read</button></div>
+      <div id="notificationList" class="fr-notification-list"></div>
+    </section>
+
+    <section class="pn" aria-labelledby="friendsTitle">
+      <div class="frhead"><h2 id="friendsTitle" tabindex="-1">Your friends</h2><span class="m" id="frCount"></span></div>
       <div id="frBoard" class="frboard" hidden></div>
-      <div id="frList" class="frgrid"><p class="m">No friends yet. Add a Player ID above.</p></div>
-    </div>
+      <div id="frList" class="frgrid"><p class="m frempty">No friends yet. Add a Player ID above.</p></div>
+      <div class="fr-safety" role="note"><b>Safety first</b><p>Blocking hides a player on this device only. Report opens a private feedback message for the site owner. Never share your password or personal details in a report.</p></div>
+      <details id="blockedPanel" class="fr-blocked" hidden><summary>Blocked on this device <span id="blockedCount">0</span></summary><p class="m">This list stays in this browser. Unblocking does not add the player back as a friend.</p><div id="blockedList"></div></details>
+    </section>
 
     <p class="frnote">Online status comes from a live connection and clears when someone closes the site. A friend can look offline while their browser is asleep.</p>
   </div>
+
+  <div id="removeConfirm" class="fr-confirm" role="dialog" aria-modal="true" aria-labelledby="removeTitle" hidden>
+    <div class="fr-confirm-card">
+      <h2 id="removeTitle">Remove friend?</h2>
+      <p id="removeText">This removes the friendship for both players.</p>
+      <div class="row3"><button class="btn danger" id="removeYes" type="button">Remove friend</button><button class="btn ghost" id="removeNo" type="button">Keep friend</button></div>
+    </div>
+  </div>
+  <div id="friendToast" class="av-toast" role="status" aria-live="polite"></div>
+  <div id="friendLive" class="sr-only" aria-live="polite"></div>
 </div>
 </main>
 
@@ -75,13 +110,14 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js?v=13"></script>
-<script src="js/tlp-auth.js?v=15"></script>
-<script src="js/tlp-common.js?v=19"></script>
-<script src="js/tlp-arabic.js?v=41"></script>
+<script src="js/tlp-auth.js?v=20"></script>
+<script src="js/tlp-common.js?v=21"></script>
+<script src="js/tlp-arabic.js?v=51"></script>
 <script src="js/tlp-background.js?v=14"></script>
-<script src="js/tlp-presence.js?v=13"></script>
+<script src="js/tlp-avatar.js?v=29"></script>
+<script src="js/tlp-presence.js?v=21"></script>
 <script src="js/music.js?v=13"></script>
-<script src="js/pages/friends.js?v=13"></script>
+<script src="js/pages/friends.js?v=16"></script>
 <script src="js/tlp-look.js?v=13"></script>
 </body>
 </html>

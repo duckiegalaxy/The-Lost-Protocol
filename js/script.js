@@ -565,6 +565,15 @@ $('#fbchips').addEventListener('click', e => {
     b.classList.toggle('on');
     FB.tags = $$('#fbchips button.on').map(x => x.textContent);
 });
+try {
+  const report = JSON.parse(sessionStorage.getItem('tlp-feedback-prefill') || 'null');
+  if (report && report.message) {
+    $('#fbmsg').value = String(report.message).slice(0, 800);
+    FB.tags = ['Friend safety'];
+    sessionStorage.removeItem('tlp-feedback-prefill');
+    openFb();
+  }
+} catch (e) {}
 fbFlush();
 
 
